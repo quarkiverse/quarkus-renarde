@@ -154,7 +154,7 @@ public class Router {
 
     private static Map<String, RouterMethod> routerMethods = new HashMap<>();
 
-    // Called by generated class __VixenInit for each controller route
+    // Called by generated class __RenardeInit for each controller route
     public static void registerRoute(String route, RouterMethod method) {
         if (routerMethods.containsKey(route)) {
             System.err.println("WARNING: duplicate route registered for " + route);

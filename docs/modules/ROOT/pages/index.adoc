@@ -25,25 +25,25 @@ This guide is maintained in the main Quarkus repository
 and pull requests should be submitted there:
 https://github.com/quarkusio/quarkus/tree/main/docs/src/main/asciidoc
 ////
-= Vixen Web Framework
+= Renarde Web Framework
 
 include::./attributes.adoc[]
 :config-file: application.properties
 
-Vixen is a server-side Web Framework based on Quarkus, xref:qute-reference.adoc[Qute], 
+Renarde is a server-side Web Framework based on Quarkus, xref:qute-reference.adoc[Qute], 
 xref:hibernate-orm-panache.adoc[Hibernate] and xref:resteasy-reactive.adoc[RESTEasy Reactive].
 
 [source,xml]
 ----
 <dependency>
-  <groupId>io.quarkus</groupId>
-  <artifactId>quarkus-vixen</artifactId>
+  <groupId>io.quarkiverse</groupId>
+  <artifactId>quarkus-renarde</artifactId>
 </dependency>
 ----
 
 == First: an example
 
-Let's see how you can quickly build a Web Application with Vixen. Let's start with a _Controller_:
+Let's see how you can quickly build a Web Application with Renarde. Let's start with a _Controller_:
 
 [source,java]
 ----
@@ -53,7 +53,7 @@ import javax.ws.rs.Path;
 
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
-import io.quarkus.vixen.Controller;
+import io.quarkiverse.renarde.Controller;
 
 public class Application extends Controller {
 
@@ -426,9 +426,9 @@ as the `it` parameter.
 
 See the xref:qute-reference.adoc#user_tags[Qute documentation] for more information.
 
-=== Vixen tags
+=== Renarde tags
 
-Vixen comes with a few extra tags to make your life easier:
+Renarde comes with a few extra tags to make your life easier:
 
 [cols="1,1"]
 |===
@@ -489,7 +489,7 @@ This one declares an additional method on the `Date` type, allowing you to test 
 {/if}
 ----
 
-=== Vixen extension methods
+=== Renarde extension methods
 
 [cols="1,1,1"]
 |===
@@ -564,7 +564,7 @@ A lot of the time, you need to send data from the browser to your endpoints, whi
 
 === The HTML form
 
-Creating forms in Vixen is easy: let's see an example of how to do it in Qute:
+Creating forms in Renarde is easy: let's see an example of how to do it in Qute:
 
 [source,html]
 ----
@@ -624,7 +624,7 @@ As you can see, we have default values for certain attributes, a special error c
 error, and we default the value to the one preserved in the flash scope, which is filled whenever validation
 fails, so that the user can see the validation error without losing their form values.
 
-As for the `form` Vixen tag, it is also fairly simple, and only includes an authenticity token for CRSF protection.
+As for the `form` Renarde tag, it is also fairly simple, and only includes an authenticity token for CRSF protection.
 
 [source,html]
 ----
@@ -724,7 +724,7 @@ conditional tag, or the `{#error field/}` tag which accesses the error message f
 == Routing, URI mapping, redirects
 
 We have seen how to declare endpoints and how URIs map to them, but very often we need to map from endpoints to
-URIs, which Vixen makes easy.
+URIs, which Renarde makes easy.
 
 === Redirects after POST
 
@@ -742,7 +742,7 @@ import javax.ws.rs.Path;
 
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
-import io.quarkus.vixen.Controller;
+import io.quarkiverse.renarde.Controller;
 
 public class Application extends Controller {
 
@@ -780,7 +780,7 @@ import org.jboss.resteasy.reactive.RestQuery;
 
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
-import io.quarkus.vixen.Controller;
+import io.quarkiverse.renarde.Controller;
 
 public class Application extends Controller {
 
@@ -817,7 +817,7 @@ package rest;
 
 import javax.ws.rs.POST;
 
-import io.quarkus.vixen.Controller;
+import io.quarkiverse.renarde.Controller;
 
 public class Application extends Controller {
 
@@ -847,8 +847,8 @@ import org.jboss.resteasy.reactive.RestQuery;
 
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
-import io.quarkus.vixen.Controller;
-import io.quarkus.vixen.router.Router;
+import io.quarkiverse.renarde.Controller;
+import io.quarkiverse.renarde.router.Router;
 
 public class Application extends Controller {
     
@@ -1067,8 +1067,8 @@ import org.jboss.resteasy.reactive.RestForm;
 import io.quarkus.elytron.security.common.BcryptUtil;
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
-import io.quarkus.vixen.Controller;
-import io.quarkus.vixen.router.Router;
+import io.quarkiverse.renarde.Controller;
+import io.quarkiverse.renarde.router.Router;
 import model.User;
 
 public class Login extends Controller {

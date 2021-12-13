@@ -15,7 +15,7 @@ public class RouterMethodVisitor extends MethodVisitor {
     public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle,
             Object... bootstrapMethodArguments) {
         if (name.equals("method")
-                && descriptor.startsWith("()Lio/quarkus/vixen/router/Method")
+                && descriptor.startsWith("()Lio/quarkiverse/renarde/router/Method")
                 && bootstrapMethodArguments.length > 2) {
             Handle targetDescriptor = (Handle) bootstrapMethodArguments[1];
             // FIXME: extract to all classes using Router, not just controllers
@@ -30,7 +30,7 @@ public class RouterMethodVisitor extends MethodVisitor {
     @Override
     public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
         if (opcode == Opcodes.INVOKESTATIC) {
-            if (owner.equals("io/quarkus/vixen/router/Router") && name.equals("getURI")) {
+            if (owner.equals(ControllerVisitor.ROUTER_BINARY_NAME) && name.equals("getURI")) {
                 // replace by a call to the uri/varargs method
                 owner = targetIndyDescriptor.getOwner();
                 name = ControllerVisitor.ControllerClassVisitor.uriVarargsName(targetIndyDescriptor.getName(),

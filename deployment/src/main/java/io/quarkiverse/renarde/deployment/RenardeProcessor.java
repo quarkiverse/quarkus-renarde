@@ -286,7 +286,7 @@ public class RenardeProcessor {
             Map<String, ControllerClass> methodsByClass) {
         ClassOutput beansClassOutput = new GeneratedBeanGizmoAdaptor(generatedBeans);
         try (ClassCreator beanClassCreator = ClassCreator.builder().classOutput(beansClassOutput)
-                .className("__VixenInit")
+                .className("__RenardeInit")
                 .build()) {
             beanClassCreator.addAnnotation(Singleton.class);
 

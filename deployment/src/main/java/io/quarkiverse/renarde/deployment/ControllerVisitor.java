@@ -11,10 +11,16 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import io.quarkiverse.renarde.Controller;
+import io.quarkiverse.renarde.router.Router;
 import io.quarkus.deployment.util.AsmUtil;
 import io.quarkus.runtime.util.HashUtil;
 
 public class ControllerVisitor implements BiFunction<String, ClassVisitor, ClassVisitor> {
+
+    public static final String ROUTER_BINARY_NAME = Router.class.getName().replace('.', '/');
+    public static final String CONTROLLER_BINARY_NAME = Controller.class.getName().replace('.', '/');
+    public static final String CONTROLLER_DESCRIPTOR = "L" + CONTROLLER_BINARY_NAME + ";";
 
     static abstract class UriPart {
     }
@@ -129,7 +135,7 @@ public class ControllerVisitor implements BiFunction<String, ClassVisitor, Class
                             cleanupTarget = true;
                         } else if (owner.equals(className)
                                 && name.equals("redirect")
-                                && descriptor.equals("(Ljava/lang/Class;)Lio/quarkus/vixen/Controller;")) {
+                                && descriptor.equals("(Ljava/lang/Class;)" + CONTROLLER_DESCRIPTOR)) {
                             /*
                              * We replace this.redirect(Class) calls with null on the stack
                              */
@@ -249,7 +255,7 @@ public class ControllerVisitor implements BiFunction<String, ClassVisitor, Class
                 index += AsmUtil.getParameterSize(parameterType);
             }
             visitor.visitMethodInsn(Opcodes.INVOKESTATIC, className, "__uri$" + method.name, uriDescriptor(method), false);
-            visitor.visitMethodInsn(Opcodes.INVOKESTATIC, "io/quarkus/vixen/Controller", "seeOther",
+            visitor.visitMethodInsn(Opcodes.INVOKESTATIC, CONTROLLER_BINARY_NAME, "seeOther",
                     "(Ljava/net/URI;)Ljavax/ws/rs/core/Response;", false);
             visitor.visitInsn(Opcodes.POP);
 
@@ -297,7 +303,7 @@ public class ControllerVisitor implements BiFunction<String, ClassVisitor, Class
                     "__uri$" + method.name, descriptor, null, null);
             // UriBuilder uri = Router.getUriBuilder(absolute)
             visitor.visitVarInsn(Opcodes.ILOAD, 0);
-            visitor.visitMethodInsn(Opcodes.INVOKESTATIC, "io/quarkus/vixen/router/Router", "getUriBuilder",
+            visitor.visitMethodInsn(Opcodes.INVOKESTATIC, ROUTER_BINARY_NAME, "getUriBuilder",
                     "(Z)Ljavax/ws/rs/core/UriBuilder;", false);
             visitor.visitVarInsn(Opcodes.ASTORE, uriBuilderIndex);
             for (UriPart part : method.parts) {
