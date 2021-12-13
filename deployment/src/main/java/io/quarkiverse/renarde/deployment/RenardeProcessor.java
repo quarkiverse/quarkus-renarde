@@ -5,8 +5,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.net.URI;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -75,7 +73,6 @@ import io.quarkus.deployment.builditem.LaunchModeBuildItem;
 import io.quarkus.deployment.builditem.RunTimeConfigurationDefaultBuildItem;
 import io.quarkus.deployment.logging.LogCleanupFilterBuildItem;
 import io.quarkus.deployment.util.AsmUtil;
-import io.quarkus.deployment.util.IoUtil;
 import io.quarkus.gizmo.BytecodeCreator;
 import io.quarkus.gizmo.ClassCreator;
 import io.quarkus.gizmo.ClassOutput;
@@ -83,8 +80,6 @@ import io.quarkus.gizmo.FunctionCreator;
 import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
 import io.quarkus.hibernate.validator.runtime.jaxrs.ResteasyReactiveEndPointValidationInterceptor;
-import io.quarkus.qute.Variant;
-import io.quarkus.qute.deployment.TemplateTagBuildItem;
 import io.quarkus.resteasy.reactive.server.spi.AnnotationsTransformerBuildItem;
 import io.quarkus.resteasy.reactive.spi.AdditionalResourceClassBuildItem;
 import io.quarkus.resteasy.reactive.spi.ParamConverterBuildItem;
@@ -197,27 +192,6 @@ public class RenardeProcessor {
     @BuildStep
     ExcludedTypeBuildItem removeOriginalValidatorInterceptor() {
         return new ExcludedTypeBuildItem(ResteasyReactiveEndPointValidationInterceptor.class.getName());
-    }
-
-    @BuildStep
-    void produceTags(BuildProducer<TemplateTagBuildItem> tags) {
-        tags.produce(addTag("authenticityToken"));
-        tags.produce(addTag("error"));
-        tags.produce(addTag("form"));
-        tags.produce(addTag("gravatar"));
-        tags.produce(addTag("ifError"));
-    }
-
-    private TemplateTagBuildItem addTag(String tagName) {
-        URL resource = QuteResolvers.class.getClassLoader().getResource("/templates/tags/" + tagName + ".html");
-        byte[] bytes;
-        try {
-            bytes = IoUtil.readBytes(resource.openStream());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return new TemplateTagBuildItem(tagName, new String(bytes, StandardCharsets.UTF_8),
-                Variant.forContentType(Variant.TEXT_HTML));
     }
 
     @BuildStep
