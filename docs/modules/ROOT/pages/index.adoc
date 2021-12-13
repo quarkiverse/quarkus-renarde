@@ -1,43 +1,17 @@
-= Quarkus - Renarde
-:extension-status: preview
-
-Describe what the extension does here.
-
-== Installation
-
-If you want to use this extension, you need to add the `io.quarkiverse.renarde:quarkus-renarde` extension first.
-In your `pom.xml` file, add:
-
-[source,xml]
-----
-<dependency>
-    <groupId>io.quarkiverse.renarde</groupId>
-    <artifactId>quarkus-renarde</artifactId>
-</dependency>
-----
-
-[[extension-configuration-reference]]
-== Extension Configuration Reference
-
-include::config.adoc[leveloffset=+1, opts=optional]
-////
-This guide is maintained in the main Quarkus repository
-and pull requests should be submitted there:
-https://github.com/quarkusio/quarkus/tree/main/docs/src/main/asciidoc
-////
 = Renarde Web Framework
 
-include::./attributes.adoc[]
+include::./includes/attributes.adoc[]
 :config-file: application.properties
 
 Renarde is a server-side Web Framework based on Quarkus, xref:qute-reference.adoc[Qute], 
 xref:hibernate-orm-panache.adoc[Hibernate] and xref:resteasy-reactive.adoc[RESTEasy Reactive].
 
-[source,xml]
+[source,xml,subs=attributes+]
 ----
 <dependency>
   <groupId>io.quarkiverse</groupId>
   <artifactId>quarkus-renarde</artifactId>
+  <version>{quarkus-renarde-version}</version>
 </dependency>
 ----
 
@@ -1257,3 +1231,8 @@ You can push values in the Flash scope in an endpoint using the `flash(name, val
 You can read values from the Flash scope in your Qute views using the `{flash:name}` namespace.
 
 The Flash scope only lasts from one request to the next and is cleared at each request.
+
+[[extension-configuration-reference]]
+== Extension Configuration Reference
+
+include::includes/quarkus-renarde.adoc[opts=optional]
