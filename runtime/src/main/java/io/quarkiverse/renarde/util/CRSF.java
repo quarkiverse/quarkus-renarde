@@ -29,8 +29,8 @@ public class CRSF {
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private final static int CRSF_SIZE = 16;
-    private final static String CRSF_COOKIE_NAME = "_aviouf_crsf";
-    private final static String CRSF_FORM_NAME = "_aviouf_crsf_token";
+    private final static String CRSF_COOKIE_NAME = "_renarde_crsf";
+    private final static String CRSF_FORM_NAME = "_renarde_crsf_token";
 
     public void setCRSFCookie() {
         // FIXME: expiry, others?

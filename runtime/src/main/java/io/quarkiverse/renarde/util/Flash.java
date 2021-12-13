@@ -34,7 +34,7 @@ public class Flash {
     private Map<String, Object> values = new HashMap<>();
     private Map<String, Object> futureValues = new HashMap<>();
 
-    private final static String FLASH_COOKIE_NAME = "_aviouf_flash";
+    private final static String FLASH_COOKIE_NAME = "_renarde_flash";
 
     public void setFlashCookie() {
         setFlashCookie(request.response(), futureValues);
