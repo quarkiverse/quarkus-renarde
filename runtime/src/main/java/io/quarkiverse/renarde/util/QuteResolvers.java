@@ -14,7 +14,6 @@ import io.quarkus.qute.EngineBuilder;
 import io.quarkus.qute.EvalContext;
 import io.quarkus.qute.Expression;
 import io.quarkus.qute.NamespaceResolver;
-import io.quarkus.qute.TemplateException;
 import io.quarkus.qute.ValueResolver;
 import io.smallrye.mutiny.Uni;
 
@@ -60,15 +59,6 @@ public class QuteResolvers {
 
     private URI findURI(EvalContext ctx, List<?> paramValues) {
         BoundRouter boundRouter = (BoundRouter) ctx.getBase();
-        Class<?>[] paramClasses = new Class[paramValues.size()];
-        int i = 0;
-        for (Object val : paramValues) {
-            if (val == null) {
-                throw new TemplateException("Failed to find route to " + boundRouter.target + "." + ctx.getName()
-                        + " due to a null parameter: " + paramValues);
-            }
-            paramClasses[i++] = val.getClass();
-        }
         // FIXME: make it work for multiple sets of parameters? with optional query params that's a bit harder
         // but probably GET/PUT/POST/DELETE will all have the same required set and URI?
         String route = boundRouter.target + "." + ctx.getName();

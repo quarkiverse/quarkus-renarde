@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
+import org.jboss.jandex.DotName;
 import org.jboss.jandex.Type;
 import org.jboss.jandex.Type.Kind;
 import org.objectweb.asm.ClassVisitor;
@@ -17,6 +18,8 @@ import io.quarkus.deployment.util.AsmUtil;
 import io.quarkus.runtime.util.HashUtil;
 
 public class ControllerVisitor implements BiFunction<String, ClassVisitor, ClassVisitor> {
+
+    public static final DotName DOTNAME_LONG = DotName.createSimple(Long.class.getName());
 
     public static final String ROUTER_BINARY_NAME = Router.class.getName().replace('.', '/');
     public static final String CONTROLLER_BINARY_NAME = Controller.class.getName().replace('.', '/');
@@ -198,11 +201,11 @@ public class ControllerVisitor implements BiFunction<String, ClassVisitor, Class
                 visitor.visitIntInsn(Opcodes.BIPUSH, index);
                 visitor.visitInsn(Opcodes.AALOAD);
                 if (parameterType.kind() == Kind.PRIMITIVE) {
-                    // this produces the CHECKCAST and unbox call
-                    AsmUtil.unboxIfRequired(visitor, parameterType);
+                    unboxOrWidenIfRequired(visitor, parameterType);
                 } else {
                     visitor.visitTypeInsn(Opcodes.CHECKCAST, parameterType.name().toString('/'));
                 }
+
                 visitor.visitJumpInsn(Opcodes.GOTO, end);
                 visitor.visitLabel(elseBranch);
                 // default value
@@ -237,6 +240,44 @@ public class ControllerVisitor implements BiFunction<String, ClassVisitor, Class
             visitor.visitInsn(Opcodes.ARETURN);
             visitor.visitMaxs(0, 0);
             visitor.visitEnd();
+        }
+
+        public static void unboxOrWidenIfRequired(MethodVisitor mv, Type jandexType) {
+            if (jandexType.kind() == Kind.PRIMITIVE) {
+                switch (jandexType.asPrimitiveType().primitive()) {
+                    case BOOLEAN:
+                        unbox(mv, "java/lang/Boolean", "booleanValue", "Z");
+                        break;
+                    case BYTE:
+                        unbox(mv, "java/lang/Number", "byteValue", "B");
+                        break;
+                    case CHAR:
+                        unbox(mv, "java/lang/Character", "charValue", "C");
+                        break;
+                    case DOUBLE:
+                        unbox(mv, "java/lang/Number", "doubleValue", "D");
+                        break;
+                    case FLOAT:
+                        unbox(mv, "java/lang/Number", "floatValue", "F");
+                        break;
+                    case INT:
+                        unbox(mv, "java/lang/Number", "intValue", "I");
+                        break;
+                    case LONG:
+                        unbox(mv, "java/lang/Number", "longValue", "J");
+                        break;
+                    case SHORT:
+                        unbox(mv, "java/lang/Number", "shortValue", "S");
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Unknown primitive type: " + jandexType);
+                }
+            }
+        }
+
+        private static void unbox(MethodVisitor mv, String owner, String methodName, String returnTypeSignature) {
+            mv.visitTypeInsn(Opcodes.CHECKCAST, owner);
+            mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, owner, methodName, "()" + returnTypeSignature, false);
         }
 
         static String uriVarargsName(String name, String descriptor) {

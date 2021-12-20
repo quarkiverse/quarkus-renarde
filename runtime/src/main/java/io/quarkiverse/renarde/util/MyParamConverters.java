@@ -32,7 +32,28 @@ public class MyParamConverters implements ParamConverterProvider {
         @Override
         public String toString(Date value) {
             // FIXME: is this used?
+            if (value == null)
+                return null;
             return JavaExtensions.internetDateFormat(value);
+        }
+    }
+
+    public static class CharacterParamConverter implements ParamConverter<Character> {
+
+        @Override
+        public Character fromString(String value) {
+            if (StringUtils.isEmpty(value))
+                return null;
+            if (value.length() != 1)
+                throw new RuntimeException("Invalid character: " + value);
+            return value.charAt(0);
+        }
+
+        @Override
+        public String toString(Character value) {
+            if (value == null)
+                return null;
+            return value.toString();
         }
     }
 
@@ -40,6 +61,8 @@ public class MyParamConverters implements ParamConverterProvider {
     public <T> ParamConverter<T> getConverter(Class<T> rawType, Type genericType, Annotation[] annotations) {
         if (rawType == Date.class)
             return (ParamConverter<T>) new DateParamConverter();
+        if (rawType == Character.class || rawType == char.class)
+            return (ParamConverter<T>) new CharacterParamConverter();
         return null;
     }
 
