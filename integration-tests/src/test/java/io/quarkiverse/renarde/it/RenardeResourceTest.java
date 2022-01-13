@@ -67,10 +67,10 @@ public class RenardeResourceTest {
                 .when().get("/Application/router")
                 .then()
                 .statusCode(200)
-                .body(is("http://localhost:8081/absolute"
-                        + "\nhttp://localhost:8081/Application/index"
-                        + "\nhttp://localhost:8081/Application/params/first/42?q=search"
-                        + "\nhttp://localhost:8081/Application/primitiveParams?b=true&c=a&bite=2&s=3&i=4&l=5&f=6.0&d=7.0"));
+                .body(is("/absolute"
+                        + "\n/Application/index"
+                        + "\n/Application/params/first/42?q=search"
+                        + "\n/Application/primitiveParams?b=true&c=a&bite=2&s=3&i=4&l=5&f=6.0&d=7.0"));
     }
 
     @Test
@@ -79,9 +79,13 @@ public class RenardeResourceTest {
                 .when().get("/Application/routingTags")
                 .then()
                 .statusCode(200)
-                .body(is("http://localhost:8081/absolute"
+                .body(is("/absolute"
+                        + "\nhttp://localhost:8081/absolute"
+                        + "\n/Application/index"
                         + "\nhttp://localhost:8081/Application/index"
+                        + "\n/Application/params/first/42?q=search"
                         + "\nhttp://localhost:8081/Application/params/first/42?q=search"
+                        + "\n/Application/primitiveParams?b=true&c=a&bite=2&s=3&i=4&l=5&f=6.0&d=7.0"
                         + "\nhttp://localhost:8081/Application/primitiveParams?b=true&c=a&bite=2&s=3&i=4&l=5&f=6.0&d=7.0"));
     }
 }

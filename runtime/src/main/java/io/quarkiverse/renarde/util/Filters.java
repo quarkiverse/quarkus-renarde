@@ -24,7 +24,7 @@ public class Filters {
     @Inject
     CRSF crsf;
 
-    @ServerRequestFilter
+    @ServerRequestFilter(readBody = true)
     public void filterRequest(HttpServerRequest req) {
         flash.handleFlashCookie();
         crsf.readCRSFCookie();

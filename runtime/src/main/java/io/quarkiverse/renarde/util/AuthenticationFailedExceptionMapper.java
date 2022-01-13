@@ -41,7 +41,6 @@ public class AuthenticationFailedExceptionMapper {
                     return;
                 }
                 // FIXME: what now?
-                routingContext.end();
             }
 
             private void redirectToRoot(RoutingContext routingContext, String message) {

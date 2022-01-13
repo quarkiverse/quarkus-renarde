@@ -1,9 +1,9 @@
-= Renarde Web Framework
+= Renarde 🦊 Web Framework
 
 include::./includes/attributes.adoc[]
 :config-file: application.properties
 
-Renarde is a server-side Web Framework based on Quarkus, xref:qute-reference.adoc[Qute], 
+Renarde 🦊 is a server-side Web Framework based on Quarkus, xref:qute-reference.adoc[Qute], 
 xref:hibernate-orm-panache.adoc[Hibernate] and xref:resteasy-reactive.adoc[RESTEasy Reactive].
 
 [source,xml,subs=attributes+]
@@ -616,12 +616,12 @@ Most forms will be a `@POST` endpoint, with each form element having a correspon
 ----
 @POST
 public void complete(@RestQuery String confirmationCode, 
-		@RestForm String userName, 
-		@RestForm String password, 
-		@RestForm String password2, 
-		@RestForm String firstName, 
-		@RestForm String lastName) {
-	// do something with the form parameters
+        @RestForm String userName, 
+        @RestForm String password, 
+        @RestForm String password2, 
+        @RestForm String firstName, 
+        @RestForm String lastName) {
+    // do something with the form parameters
 }
 ----
 
@@ -633,16 +633,16 @@ You can also group parameters in a POJO, but for now you have to add a special
 @Consumes(MediaType.MULTIPART_FORM_DATA)
 @POST
 public void complete(@RestQuery String confirmationCode, 
-		FormData form) {
-	// do something with the form parameters
+        FormData form) {
+    // do something with the form parameters
 }
 
 public static class FormData {
-	@RestForm String userName; 
-	@RestForm String password;
-	@RestForm String password2; 
-	@RestForm String firstName; 
-	@RestForm String lastName;
+    @RestForm String userName; 
+    @RestForm String password;
+    @RestForm String password2; 
+    @RestForm String firstName; 
+    @RestForm String lastName;
 }
 ----
 
@@ -667,22 +667,22 @@ public Response complete(@RestQuery String confirmationCode,
     // Find the user for this confirmation code
     User user = User.findForContirmation(confirmationCode);
     if(user == null){
-    	validation.addError("confirmationCode", "Invalid confirmation code");
+        validation.addError("confirmationCode", "Invalid confirmation code");
     }
     
-    // Make sure the passwords match	
+    // Make sure the passwords match    
     validation.equals("password", password, password2);
     
     // Make sure the username is free
     if(User.findByUserName(userName) != null){
         validation.addError("userName", "User name already taken");
     }
-	
+    
     // If validation failed, redirect to the confirm page
     if(validationFailed()){
         confirm(confirmationCode);
     }
-	
+    
     // Now proceed to complete user registration
     ...
 }
@@ -879,22 +879,22 @@ import io.quarkus.qute.CheckedTemplate;
 import model.User;
 
 public class Emails {
-	
-	private static final String FROM = "Todos <todos@example.com>";
-	private static final String SUBJECT_PREFIX = "[Todos] ";
+    
+    private static final String FROM = "Todos <todos@example.com>";
+    private static final String SUBJECT_PREFIX = "[Todos] ";
 
-	@CheckedTemplate
-	static class Templates {
-	    public static native MailTemplateInstance confirm(User user);
-	}
-	
-	public static void confirm(User user) {
-	    Templates.confirm(user)
-		.subject(SUBJECT_PREFIX + "Please confirm your email address")
-		.to(user.email)
-		.from(FROM)
-		.send().await().indefinitely();
-	}
+    @CheckedTemplate
+    static class Templates {
+        public static native MailTemplateInstance confirm(User user);
+    }
+    
+    public static void confirm(User user) {
+        Templates.confirm(user)
+        .subject(SUBJECT_PREFIX + "Please confirm your email address")
+        .to(user.email)
+        .from(FROM)
+        .send().await().indefinitely();
+    }
 }
 ----
 
@@ -976,249 +976,6 @@ otherwise the links won't work for your email recipients.
 
 You can find more information in the xref:mailer.adoc[Quarkus mailer documentation].
 
-== Authentication
-
-=== Custom authentication with JWT
-
-In order to handle your own authentication by storing users in your database, you can use xref:security-jwt.adoc[JWT tokens].
-Start with importing those modules:
-
-[source,xml]
-----
-<dependency>
-  <groupId>io.quarkus</groupId>
-  <artifactId>quarkus-elytron-security-common</artifactId>
-</dependency>
-<dependency>
-  <groupId>io.quarkus</groupId>
-  <artifactId>quarkus-smallrye-jwt-build</artifactId>
-</dependency>
-----
-
-And set those configuration values: 
-
-[source,properties]
-----
-mp.jwt.verify.issuer=https://example.com/issuer
-mp.jwt.token.header=Cookie
-mp.jwt.token.cookie=QuarkusUser
-
-quarkus.http.auth.proactive=false
-----
-
-Your entity can look like this:
-
-[source,java]
-----
-@Entity
-@Table(name = "user_table")
-public class User extends PanacheEntity {
-	
-    @Column(unique = true)
-    public String userName;
-    public String password;
-    public boolean isAdmin;
-
-    public static User findByUserName(String username) {
-        return find("LOWER(userName) = ?1", username.toLowerCase()).firstResult();
-    }
-}
-----
-
-And your login endpoint can look like this to build the JWT token:
-
-[source,java]
-----
-package rest;
-
-import javax.validation.constraints.NotBlank;
-import javax.ws.rs.POST;
-import javax.ws.rs.core.NewCookie;
-import javax.ws.rs.core.Response;
-
-import org.jboss.resteasy.reactive.RestForm;
-
-import io.quarkus.elytron.security.common.BcryptUtil;
-import io.quarkus.qute.CheckedTemplate;
-import io.quarkus.qute.TemplateInstance;
-import io.quarkiverse.renarde.Controller;
-import io.quarkiverse.renarde.router.Router;
-import model.User;
-
-public class Login extends Controller {
-    
-    @CheckedTemplate
-    public static class Templates {
-        public static native TemplateInstance login();
-    }
-    
-    public TemplateInstance loginForm() {
-        return Templates.login();
-    }
-
-    @POST
-    public Response login(@NotBlank @RestForm String userName, 
-            @NotBlank @RestForm String password) {
-        // validation check first
-        if(validationFailed()) {
-            loginForm();
-        }
-        // look for the user
-        User user = User.findByUserName(userName);
-        // make sure user is found and password matches
-        if(user == null
-                || !BcryptUtil.matches(password, user.password)) {
-            validation.addError("userName", "Invalid username/pasword");
-            prepareForErrorRedirect();
-            loginForm();
-        }
-        // make a JWT cookie
-        NewCookie cookie = Register.makeUserCookie(user);
-        // redirect to the index page with the new cookie
-        return Response.seeOther(Router.getURI(Application::index)).cookie(cookie).build();
-    }
-    
-    public Response logout() {
-        // build a clearing cookie
-        NewCookie cookie = new NewCookie("QuarkusUser", null, "/", null, null, 0, false, true);
-        // redirect to the index page with the new cookie
-        return Response.seeOther(Router.getURI(Application::index)).cookie(cookie).build();
-    }
-}
-----
-
-The `Register` controller will handle creating new users and contains the code required to create a valid JWT
-token:
-
-[source,java]
-----
-@POST
-public Response complete(@RestQuery String confirmationCode, 
-        @RestForm @NotBlank @Length(max = Util.VARCHAR_SIZE) String userName, 
-        @RestForm @NotBlank @Length(min = 8, max = Util.VARCHAR_SIZE) String password, 
-        @RestForm @NotBlank @Length(max = Util.VARCHAR_SIZE) String password2, 
-        @RestForm @NotBlank @Length(max = Util.VARCHAR_SIZE) String firstName, 
-        @RestForm @NotBlank @Length(max = Util.VARCHAR_SIZE) String lastName) {
-    // do the validation
-    ...
-
-    // create the user
-    User user = new User();
-    user.userName = userName;
-    user.password = BcryptUtil.bcryptHash(password);
-    user.firstName = firstName;
-    user.lastName = lastName;
-    user.persist();
-
-    NewCookie cookie = makeUserCookie(user);
-    // make sure we set the user on the request scope
-    security.setUser(user);
-    // send the cookie to the user
-    return Response.ok(Templates.complete(user)).cookie(cookie).build();
-}
-
-static NewCookie makeUserCookie(User user) {
-    Set<String> roles = new HashSet<>();
-    if(user.isAdmin) {
-        roles.add("admin");
-    }
-    String token =
-            Jwt.issuer("https://example.com/issuer") 
-            .upn(user.userName) 
-             .groups(roles)
-             .expiresIn(Duration.ofDays(10))
-           .innerSign().encrypt();
-    return new NewCookie("QuarkusUser", token, "/", null, Cookie.DEFAULT_VERSION, null, NewCookie.DEFAULT_MAX_AGE, null, false, false);
-}
-----
-
-We've seen how to login, logout and create a new user, so all that is left is how to obtain the current user.
-Quarkus handles the part that associates the `QuarkusUser` JWT cookie to a `SecurityIdentity` but that is
-not very useful, so we often want to create a request bean that will load the corresponding `User` from the
-database:
-
-[source,java]
-----
-package util;
-
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Named;
-
-import io.quarkus.security.identity.SecurityIdentity;
-import model.User;
-
-@RequestScoped
-public class Security {
-    
-    private final static User NO_USER = new User();
-    
-    @Inject
-    SecurityIdentity identity;
-
-    User user;
-    
-    @Named("user")
-    @Produces
-    public User getUser() {
-        if(user != null) {
-            // turn our null marker into null
-            return user == NO_USER ? null : user;
-        }
-        if(!identity.isAnonymous()) {
-            user = User.findByUserName(identity.getPrincipal().getName());
-            if(user == null) {
-                // FIXME: error for invalid user?
-                // avoid looking it up again
-                user = NO_USER;
-            }
-        }
-        return user;
-    }
-    
-    // for initial login, since we can't arbitrarily set request-scoped values
-    public void setUser(User user) {
-        this.user = user;
-    }
-}
-----
-
-This will make sure that we produce a `user` named bean containing the current user if there is a
-logged-in user. You can then use it in your views with `inject:user` or by injecting it in
-your endpoints.
-
-You can also use the `@Authenticated` and `@RolesAllowed("admin")` annotations on your endpoints.
-
-==== Private/public keys
-
-In DEV mode, your private/public keys will be generated for you at startup if they do not exist and
-are not specified. Cleaning your project will remove those keys, so previous JWT tokens won't be valid
-anymore on restart.
-
-In production environments you will need to generate and specify your private and public keys using the following
-commands:
-
-[source,shell]
-----
-$ openssl genrsa -out rsaPrivateKey.pem 2048
-$ openssl rsa -pubout -in rsaPrivateKey.pem -out src/main/resources/publicKey.pem
-$ openssl pkcs8 -topk8 -nocrypt -inform pem -in rsaPrivateKey.pem -outform pem -out src/main/resources/privateKey.pem
-----
-
-You can then point to those files in your `application.properties` Quarkus configuration:
-
-[source,properties]
-----
-mp.jwt.verify.publickey.location=publicKey.pem
-mp.jwt.decrypt.key.location=privateKey.pem
-smallrye.jwt.sign.key.location=privateKey.pem
-smallrye.jwt.encrypt.key.location=publicKey.pem
- 
-quarkus.native.resources.includes=publicKey.pem
-quarkus.native.resources.includes=privateKey.pem
-----
-
 == Flash scope
 
 If you need to pass values from one endpoint to another request after a redirect, you can use the Flash scope.
@@ -1231,6 +988,10 @@ You can push values in the Flash scope in an endpoint using the `flash(name, val
 You can read values from the Flash scope in your Qute views using the `{flash:name}` namespace.
 
 The Flash scope only lasts from one request to the next and is cleared at each request.
+
+== Security
+
+xref:security.adoc[Read the Renarde security guide]
 
 [[extension-configuration-reference]]
 == Extension Configuration Reference

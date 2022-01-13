@@ -1,5 +1,6 @@
 package io.quarkiverse.renarde.deployment;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -78,11 +79,26 @@ public class ControllerVisitor implements BiFunction<String, ClassVisitor, Class
 
     static class ControllerClass {
         public final String className;
+        public final String superClass;
+        public final boolean isAbstract;
         public final Map<String, ControllerMethod> methods;
 
-        public ControllerClass(String className, Map<String, ControllerMethod> methods) {
+        public ControllerClass(String className, String superClass, boolean isAbstract, Map<String, ControllerMethod> methods) {
             this.className = className;
+            this.superClass = superClass;
+            this.isAbstract = isAbstract;
             this.methods = methods;
+        }
+
+        public Map<String, ControllerMethod> getMethods(Map<String, ControllerClass> methodsByClass) {
+            ControllerClass superController = methodsByClass.get(superClass);
+            if (superController == null) {
+                return methods;
+            }
+            Map<String, ControllerMethod> superMethods = superController.getMethods(methodsByClass);
+            Map<String, ControllerMethod> allMethods = new HashMap<>(superMethods);
+            allMethods.putAll(methods);
+            return allMethods;
         }
     }
 

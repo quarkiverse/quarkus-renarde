@@ -66,8 +66,8 @@ import io.quarkus.deployment.Capability;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.AdditionalIndexedClassesBuildItem;
-import io.quarkus.deployment.builditem.ApplicationIndexBuildItem;
 import io.quarkus.deployment.builditem.BytecodeTransformerBuildItem;
+import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.LaunchModeBuildItem;
 import io.quarkus.deployment.builditem.RunTimeConfigurationDefaultBuildItem;
@@ -195,7 +195,7 @@ public class RenardeProcessor {
     }
 
     @BuildStep
-    void collectControllers(ApplicationIndexBuildItem indexBuildItem,
+    void collectControllers(CombinedIndexBuildItem indexBuildItem,
             BuildProducer<AdditionalResourceClassBuildItem> additionalResourceClassBuildItems,
             BuildProducer<AnnotationsTransformerBuildItem> annotationTransformerBuildItems,
             BuildProducer<io.quarkus.arc.deployment.AnnotationsTransformerBuildItem> arcTransformers,
@@ -205,12 +205,13 @@ public class RenardeProcessor {
         Set<DotName> controllers = new HashSet<>();
         Map<String, ControllerVisitor.ControllerClass> methodsByClass = new HashMap<>();
         for (ClassInfo controllerInfo : indexBuildItem.getIndex().getAllKnownSubclasses(DOTNAME_CONTROLLER)) {
-            // skip abstract classes
-            if (Modifier.isAbstract(controllerInfo.flags()))
-                continue;
-            additionalResourceClassBuildItems.produce(new AdditionalResourceClassBuildItem(controllerInfo, ""));
+            System.err.println("Renarde registering controller: " + controllerInfo.name());
             controllers.add(controllerInfo.name());
-            unremovableBeans.produce(UnremovableBeanBuildItem.beanTypes(controllerInfo.name()));
+            // do not register abstract controllers as beans or resources
+            if (!Modifier.isAbstract(controllerInfo.flags())) {
+                additionalResourceClassBuildItems.produce(new AdditionalResourceClassBuildItem(controllerInfo, ""));
+                unremovableBeans.produce(UnremovableBeanBuildItem.beanTypes(controllerInfo.name()));
+            }
             methodsByClass.put(controllerInfo.name().toString(), scanController(controllerInfo));
         }
         for (DotName controller : controllers) {
@@ -235,6 +236,7 @@ public class RenardeProcessor {
                     @Override
                     public void transform(TransformationContext transformationContext) {
                         if (transformationContext.isClass()
+                                && !Modifier.isAbstract(transformationContext.getTarget().asClass().flags())
                                 && controllers.contains(transformationContext.getTarget().asClass().name())) {
                             // FIXME: probably don't add a scope annotation if it has one already?
                             transformationContext.transform().add(ResteasyReactiveDotNames.REQUEST_SCOPED)
@@ -267,12 +269,17 @@ public class RenardeProcessor {
             try (MethodCreator methodCreator = beanClassCreator.getMethodCreator("init", void.class, StartupEvent.class)) {
                 methodCreator.getParameterAnnotations(0).addAnnotation(Observes.class);
                 for (ControllerClass controllerClass : methodsByClass.values()) {
+                    // do not register routes for abstract controllers
+                    if (controllerClass.isAbstract) {
+                        continue;
+                    }
                     String simpleControllerName = controllerClass.className;
                     int lastDot = simpleControllerName.lastIndexOf('.');
                     if (lastDot != -1) {
                         simpleControllerName = simpleControllerName.substring(lastDot + 1);
                     }
-                    for (ControllerMethod method : controllerClass.methods.values()) {
+                    // register all methods for this controller, including super methods, but on this controller name
+                    for (ControllerMethod method : controllerClass.getMethods(methodsByClass).values()) {
                         FunctionCreator function = methodCreator.createFunction(RouterMethod.class);
                         String uriMethodName = ControllerVisitor.ControllerClassVisitor.uriVarargsName(method.name,
                                 method.descriptor);
@@ -366,7 +373,8 @@ public class RenardeProcessor {
             methods.put(key, new ControllerMethod(method.name(), descriptor, parts,
                     method.parameters()));
         }
-        return new ControllerVisitor.ControllerClass(controllerInfo.name().toString(), methods);
+        return new ControllerVisitor.ControllerClass(controllerInfo.name().toString(), controllerInfo.superName().toString(),
+                Modifier.isAbstract(controllerInfo.flags()), methods);
     }
 
     private boolean isControllerMethod(MethodInfo method) {
@@ -380,7 +388,7 @@ public class RenardeProcessor {
 
     private void transformController(TransformationContext ti, Set<DotName> controllers) {
         ClassInfo klass = ti.getTarget().asClass();
-        if (controllers.contains(klass.name())) {
+        if (controllers.contains(klass.name()) && !Modifier.isAbstract(klass.flags())) {
             if (klass.classAnnotation(ResteasyReactiveDotNames.PATH) == null) {
                 ti.transform().add(ResteasyReactiveDotNames.PATH, AnnotationValue.createStringValue("value", "")).done();
             }

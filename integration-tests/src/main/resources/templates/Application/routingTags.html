@@ -1,4 +1,8 @@
 {uri:Application.absolutePath()}
+{uriabs:Application.absolutePath()}
 {uri:Application.index()}
+{uriabs:Application.index()}
 {uri:Application.params("first",42l,"search")}
+{uriabs:Application.params("first",42l,"search")}
 {#let c='a'}{uri:Application.primitiveParams(true,c.charAt(0),2,3,4,5l,6f,7d).raw}{/let}
+{#let c='a'}{uriabs:Application.primitiveParams(true,c.charAt(0),2,3,4,5l,6f,7d).raw}{/let}

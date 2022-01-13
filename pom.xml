@@ -15,6 +15,8 @@
   <modules>
     <module>deployment</module>
     <module>runtime</module>
+    <module>oidc</module>
+    <module>oidc-tests</module>
     <module>docs</module>
   </modules>
   <properties>
