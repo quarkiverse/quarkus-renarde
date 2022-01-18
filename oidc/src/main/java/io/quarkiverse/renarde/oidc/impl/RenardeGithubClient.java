@@ -8,7 +8,7 @@ import javax.ws.rs.Path;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
-@RegisterRestClient
+@RegisterRestClient(baseUri = "https://api.github.com")
 @Path("/")
 public interface RenardeGithubClient {
 

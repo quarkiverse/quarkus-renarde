@@ -34,7 +34,7 @@ public class Flash {
     private Map<String, Object> values = new HashMap<>();
     private Map<String, Object> futureValues = new HashMap<>();
 
-    private final static String FLASH_COOKIE_NAME = "_renarde_flash";
+    public final static String FLASH_COOKIE_NAME = "_renarde_flash";
 
     public void setFlashCookie() {
         setFlashCookie(request.response(), futureValues);
@@ -45,26 +45,39 @@ public class Flash {
         // in some cases with exception mappers, it appears the filters get invoked twice
         if (!response.headWritten())
             response.addCookie(
-                    Cookie.cookie(FLASH_COOKIE_NAME, Base64.getEncoder().encodeToString(marshallMap(values)))
+                    Cookie.cookie(FLASH_COOKIE_NAME, encodeCookieValue(values))
                             .setPath("/"));
+    }
+
+    public static String encodeCookieValue(Map<String, Object> values) {
+        return Base64.getEncoder().encodeToString(marshallMap(values));
     }
 
     public void handleFlashCookie() {
         Cookie cookie = request.getCookie(FLASH_COOKIE_NAME);
         if (cookie != null) {
-            byte[] bytes = cookie.getValue().getBytes();
-            if (bytes != null && bytes.length != 0) {
-                byte[] decoded = Base64.getDecoder().decode(bytes);
-                // API says it can't be null
-                if (decoded.length > 0) {
-                    Map<String, Object> data = unmarshallMap(decoded);
-                    values.putAll(data);
-                    validation.loadErrorsFromFlash();
-                }
+            Map<String, Object> data = decodeCookieValue(cookie.getValue());
+            if (data != null) {
+                values.putAll(data);
+                validation.loadErrorsFromFlash();
             }
         }
         // must do this after we've read the value, otherwise we can't read it, for some reason
         request.response().removeCookie(FLASH_COOKIE_NAME);
+    }
+
+    public static Map<String, Object> decodeCookieValue(String value) {
+        if (value != null && !value.isEmpty()) {
+            byte[] bytes = value.getBytes();
+            if (bytes != null && bytes.length != 0) {
+                byte[] decoded = Base64.getDecoder().decode(bytes);
+                // API says it can't be null
+                if (decoded.length > 0) {
+                    return unmarshallMap(decoded);
+                }
+            }
+        }
+        return null;
     }
 
     private static byte[] marshallMap(Map<String, Object> data) {

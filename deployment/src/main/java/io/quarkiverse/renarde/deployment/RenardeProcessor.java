@@ -9,6 +9,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -116,6 +117,68 @@ public class RenardeProcessor {
     }
 
     @BuildStep
+    void setupSecurity(LaunchModeBuildItem launchMode, Capabilities capabilities,
+            BuildProducer<RunTimeConfigurationDefaultBuildItem> runtimeConfigurationBuildItem)
+            throws IOException, NoSuchAlgorithmException {
+        // make sure we have minimal config
+        final Config config = ConfigProvider.getConfig();
+        if (capabilities.isPresent(Capability.JWT)) {
+            // this allows me to create an exception mapper for auth failures (expired token, invalid user)
+            // even with this I can't use an exception mapper apparently, but need to register a reactive route
+            if (!config.getOptionalValue("quarkus.http.auth.proactive", String.class).isPresent()) {
+                runtimeConfigurationBuildItem
+                        .produce(new RunTimeConfigurationDefaultBuildItem("quarkus.http.auth.proactive", "false"));
+            }
+            // not sure this one matters, just has to be set to any value AFAICT
+            if (!config.getOptionalValue("mp.jwt.verify.issuer", String.class).isPresent()) {
+                runtimeConfigurationBuildItem
+                        .produce(
+                                new RunTimeConfigurationDefaultBuildItem("mp.jwt.verify.issuer", "https://example.com/issuer"));
+            }
+            // those are the better defaults
+            if (!config.getOptionalValue("mp.jwt.token.header", String.class).isPresent()) {
+                runtimeConfigurationBuildItem
+                        .produce(new RunTimeConfigurationDefaultBuildItem("mp.jwt.token.header", "Cookie"));
+            }
+            if (!config.getOptionalValue("mp.jwt.token.cookie", String.class).isPresent()) {
+                runtimeConfigurationBuildItem
+                        .produce(new RunTimeConfigurationDefaultBuildItem("mp.jwt.token.cookie", "QuarkusUser"));
+            }
+
+            // workaround https://github.com/quarkusio/quarkus/issues/22404
+            if (!config.getOptionalValue("quarkus.smallrye-jwt.disable-challenge", String.class).isPresent()) {
+                runtimeConfigurationBuildItem
+                        .produce(new RunTimeConfigurationDefaultBuildItem("quarkus.smallrye-jwt.disable-challenge", "true"));
+            }
+        }
+        // Apparently, no OIDC capability to check
+        boolean needsTokenCache = false;
+        for (String provider : Arrays.asList("facebook", "apple", "github", "microsoft", "google")) {
+            if ((config.getOptionalValue("quarkus.oidc." + provider + ".provider", String.class).isPresent()
+                    || config.getOptionalValue("quarkus.oidc." + provider + ".client-id", String.class).isPresent())
+                    && !config.getOptionalValue("quarkus.oidc." + provider + ".authentication.redirect-path", String.class)
+                            .isPresent()) {
+                String target = "oidc-success";
+                if (provider.equals("github") || provider.equals("facebook")) {
+                    needsTokenCache = true;
+                    target = provider + "-success";
+                }
+                runtimeConfigurationBuildItem
+                        .produce(new RunTimeConfigurationDefaultBuildItem(
+                                "quarkus.oidc." + provider + ".authentication.redirect-path",
+                                "/_renarde/security/" + target));
+            }
+        }
+        if (needsTokenCache
+                && !config.getOptionalValue("quarkus.oidc.token-cache.max-size", String.class).isPresent()) {
+            runtimeConfigurationBuildItem
+                    .produce(new RunTimeConfigurationDefaultBuildItem(
+                            "quarkus.oidc.token-cache.max-size",
+                            "128"));
+        }
+    }
+
+    @BuildStep
     void setupJWT(LaunchModeBuildItem launchMode, Capabilities capabilities,
             BuildProducer<RunTimeConfigurationDefaultBuildItem> runtimeConfigurationBuildItem)
             throws IOException, NoSuchAlgorithmException {
@@ -189,6 +252,12 @@ public class RenardeProcessor {
 
     }
 
+    // Doesn't work yet
+    //    @BuildStep
+    //    void registerCustomExceptionMappers(BuildProducer<CustomExceptionMapperBuildItem> customExceptionMapper) {
+    //        customExceptionMapper.produce(new CustomExceptionMapperBuildItem(AuthenticationFailedExceptionMapper.class.getName()));
+    //    }
+    //
     @BuildStep
     ExcludedTypeBuildItem removeOriginalValidatorInterceptor() {
         return new ExcludedTypeBuildItem(ResteasyReactiveEndPointValidationInterceptor.class.getName());
