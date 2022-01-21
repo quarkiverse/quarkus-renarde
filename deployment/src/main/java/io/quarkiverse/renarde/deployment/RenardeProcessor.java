@@ -125,31 +125,12 @@ public class RenardeProcessor {
         if (capabilities.isPresent(Capability.JWT)) {
             // this allows me to create an exception mapper for auth failures (expired token, invalid user)
             // even with this I can't use an exception mapper apparently, but need to register a reactive route
-            if (!config.getOptionalValue("quarkus.http.auth.proactive", String.class).isPresent()) {
-                runtimeConfigurationBuildItem
-                        .produce(new RunTimeConfigurationDefaultBuildItem("quarkus.http.auth.proactive", "false"));
-            }
+            defineUnlessPresent("quarkus.http.auth.proactive", "false", config, runtimeConfigurationBuildItem);
             // not sure this one matters, just has to be set to any value AFAICT
-            if (!config.getOptionalValue("mp.jwt.verify.issuer", String.class).isPresent()) {
-                runtimeConfigurationBuildItem
-                        .produce(
-                                new RunTimeConfigurationDefaultBuildItem("mp.jwt.verify.issuer", "https://example.com/issuer"));
-            }
+            defineUnlessPresent("mp.jwt.verify.issuer", "https://example.com/issuer", config, runtimeConfigurationBuildItem);
             // those are the better defaults
-            if (!config.getOptionalValue("mp.jwt.token.header", String.class).isPresent()) {
-                runtimeConfigurationBuildItem
-                        .produce(new RunTimeConfigurationDefaultBuildItem("mp.jwt.token.header", "Cookie"));
-            }
-            if (!config.getOptionalValue("mp.jwt.token.cookie", String.class).isPresent()) {
-                runtimeConfigurationBuildItem
-                        .produce(new RunTimeConfigurationDefaultBuildItem("mp.jwt.token.cookie", "QuarkusUser"));
-            }
-
-            // workaround https://github.com/quarkusio/quarkus/issues/22404
-            if (!config.getOptionalValue("quarkus.smallrye-jwt.disable-challenge", String.class).isPresent()) {
-                runtimeConfigurationBuildItem
-                        .produce(new RunTimeConfigurationDefaultBuildItem("quarkus.smallrye-jwt.disable-challenge", "true"));
-            }
+            defineUnlessPresent("mp.jwt.token.header", "Cookie", config, runtimeConfigurationBuildItem);
+            defineUnlessPresent("mp.jwt.token.cookie", "QuarkusUser", config, runtimeConfigurationBuildItem);
         }
         // Apparently, no OIDC capability to check
         boolean needsTokenCache = false;
@@ -159,7 +140,7 @@ public class RenardeProcessor {
                     && !config.getOptionalValue("quarkus.oidc." + provider + ".authentication.redirect-path", String.class)
                             .isPresent()) {
                 String target = "oidc-success";
-                if (provider.equals("github") || provider.equals("facebook")) {
+                if (provider.equals("github")) {
                     needsTokenCache = true;
                     target = provider + "-success";
                 }
@@ -168,13 +149,28 @@ public class RenardeProcessor {
                                 "quarkus.oidc." + provider + ".authentication.redirect-path",
                                 "/_renarde/security/" + target));
             }
+            // still required until we support it officially
+            if (provider.equals("apple")) {
+                defineUnlessPresent("quarkus.oidc.apple.authentication.extra-params.response_mode", "form_post", config,
+                        runtimeConfigurationBuildItem);
+            }
+            // required, not sure if needed unless using ngrok
+            if (provider.equals("facebook") || provider.equals("apple")) {
+                defineUnlessPresent("quarkus.oidc." + provider + ".authentication.force-redirect-https-scheme", "true", config,
+                        runtimeConfigurationBuildItem);
+            }
+
         }
-        if (needsTokenCache
-                && !config.getOptionalValue("quarkus.oidc.token-cache.max-size", String.class).isPresent()) {
+        if (needsTokenCache) {
+            defineUnlessPresent("quarkus.oidc.token-cache.max-size", "128", config, runtimeConfigurationBuildItem);
+        }
+    }
+
+    private void defineUnlessPresent(String key, String value, Config config,
+            BuildProducer<RunTimeConfigurationDefaultBuildItem> runtimeConfigurationBuildItem) {
+        if (!config.getOptionalValue(key, String.class).isPresent()) {
             runtimeConfigurationBuildItem
-                    .produce(new RunTimeConfigurationDefaultBuildItem(
-                            "quarkus.oidc.token-cache.max-size",
-                            "128"));
+                    .produce(new RunTimeConfigurationDefaultBuildItem(key, value));
         }
     }
 

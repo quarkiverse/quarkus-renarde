@@ -1,6 +1,10 @@
 package io.quarkiverse.renarde.oidc.test;
 
 import java.lang.annotation.Annotation;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -51,6 +55,19 @@ public abstract class MockOidcTestResource<ConfigAnnotation extends Annotation>
     public void stop() {
         System.err.println("Closing OIDC Mock: " + name);
         httpServer.closeAndAwait();
+    }
+
+    protected String hashAccessToken(String string) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] digest = md.digest(string.getBytes(StandardCharsets.UTF_8));
+            // keep 128 first bits, so 8 bytes
+            byte[] part = new byte[8];
+            System.arraycopy(digest, 0, part, 0, 8);
+            return Base64.getUrlEncoder().encodeToString(part);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
 }

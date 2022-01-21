@@ -2,10 +2,8 @@ package io.quarkiverse.renarde.oidc.test;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Duration;
@@ -215,19 +213,6 @@ public class MockMicrosoftOidcTestResource extends MockOidcTestResource<MockMicr
         rc.response()
                 .putHeader("Content-Type", "application/json")
                 .endAndForget(data);
-    }
-
-    private String hashAccessToken(String string) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] digest = md.digest(string.getBytes(StandardCharsets.UTF_8));
-            // keep 128 first bits, so 8 bytes
-            byte[] part = new byte[8];
-            System.arraycopy(digest, 0, part, 0, 8);
-            return Base64.getUrlEncoder().encodeToString(part);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException(e);
-        }
     }
 
     /*

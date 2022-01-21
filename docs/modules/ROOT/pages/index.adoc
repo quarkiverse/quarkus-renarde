@@ -542,7 +542,7 @@ Creating forms in Renarde is easy: let's see an example of how to do it in Qute:
 
 [source,html]
 ----
-{#form uri:Register.complete(newUser.confirmationCode)}
+{#form uri:Login.complete(newUser.confirmationCode)}
 
 <fieldset>
     <legend>Complete registration for {newUser.email}</legend>
@@ -948,7 +948,7 @@ You can then use those templates in your emails in `src/main/resources/templates
 </p>
 
 <p>
- If you want to register, <a href="{uriabs:Register.confirm(user.confirmationCode)}">complete your registration</a>.
+ If you want to register, <a href="{uriabs:Login.confirm(user.confirmationCode)}">complete your registration</a>.
 </p>
 {/include}
 ----
@@ -967,7 +967,7 @@ If you don't want to register, you can safely ignore this email.
 
 If you want to register, complete your registration by going to the following address:
 
-{uriabs:Register.confirm(user.confirmationCode)}
+{uriabs:Login.confirm(user.confirmationCode)}
 {/include}
 ----
 

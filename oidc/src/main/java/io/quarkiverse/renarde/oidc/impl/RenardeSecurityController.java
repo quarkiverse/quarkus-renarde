@@ -72,14 +72,6 @@ public class RenardeSecurityController extends Controller {
         oidcHandler.oidcSuccess(oidcSession.getTenantId(), authId);
     }
 
-    @Authenticated
-    @Path("facebook-success")
-    public void facebookSuccess() {
-        // something is coming
-        String authId = userInfo.getString("id");
-        oidcHandler.oidcSuccess(oidcSession.getTenantId(), authId);
-    }
-
     // for every provider
     @Authenticated
     @Path("oidc-success")

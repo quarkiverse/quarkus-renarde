@@ -3,10 +3,8 @@ package io.quarkiverse.renarde.oidc.test;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Duration;
@@ -136,6 +134,11 @@ public class MockAppleOidcTestResource extends MockOidcTestResource<MockAppleOid
         String scope = rc.request().params().get("scope");
         String state = rc.request().params().get("state");
         String redirect_uri = rc.request().params().get("redirect_uri");
+        // make sure we'ret getting HTTPS (required by apple)
+        if (!redirect_uri.startsWith("https://")) {
+            rc.response().setStatusCode(400).sendAndForget("HTTPS is required");
+            return;
+        }
         UUID code = UUID.randomUUID();
         rc.response()
                 .putHeader("Content-Type", "application/json")
@@ -186,7 +189,6 @@ public class MockAppleOidcTestResource extends MockOidcTestResource<MockAppleOid
         UUID token2 = UUID.randomUUID();
         String hashedToken = hashAccessToken(token.toString());
         String idToken = Jwt.issuer("https://appleid.apple.com")
-                .audience("CLIENT")
                 .audience(UUID.randomUUID().toString())
                 .expiresIn(Duration.ofDays(1))
                 .issuedAt(Instant.now())
@@ -210,19 +212,6 @@ public class MockAppleOidcTestResource extends MockOidcTestResource<MockAppleOid
         rc.response()
                 .putHeader("Content-Type", "application/json")
                 .endAndForget(data);
-    }
-
-    private String hashAccessToken(String string) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] digest = md.digest(string.getBytes(StandardCharsets.UTF_8));
-            // keep 128 first bits, so 8 bytes
-            byte[] part = new byte[8];
-            System.arraycopy(digest, 0, part, 0, 8);
-            return Base64.getUrlEncoder().encodeToString(part);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException(e);
-        }
     }
 
     /*

@@ -29,9 +29,8 @@ public class RenardeSecurityIdentityAugmentor implements SecurityIdentityAugment
             return Uni.createFrom().item(identity);
         DefaultJWTCallerPrincipal oldPrincipal = (DefaultJWTCallerPrincipal) identity.getPrincipal();
         String tenantId = identity.getAttribute(OidcUtils.TENANT_ID_ATTRIBUTE);
-        // only do this for github and facebook
-        if ("github".equals(tenantId)
-                || "facebook".equals(tenantId)) {
+        // only do this for github
+        if ("github".equals(tenantId)) {
             String rawToken = oldPrincipal.getClaim(Claims.raw_token);
             JwtClaims claims;
             claims = new JwtClaims();

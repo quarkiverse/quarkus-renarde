@@ -6,10 +6,15 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.Map;
 import java.util.UUID;
 
+import org.eclipse.microprofile.jwt.Claims;
+
+import io.smallrye.jwt.build.Jwt;
 import io.vertx.mutiny.ext.web.Router;
 import io.vertx.mutiny.ext.web.RoutingContext;
 import io.vertx.mutiny.ext.web.handler.BodyHandler;
@@ -29,7 +34,6 @@ public class MockFacebookOidcTestResource extends MockOidcTestResource<MockFaceb
         router.get("/dialog/oauth/").handler(this::authorize);
         router.post("/v12.0/oauth/access_token").handler(bodyHandler).handler(this::accessTokenJson);
         router.get("/.well-known/oauth/openid/jwks/").handler(this::getKeys);
-        router.get("/me/").handler(this::getUser);
 
         KeyPairGenerator kpg;
         try {
@@ -47,7 +51,6 @@ public class MockFacebookOidcTestResource extends MockOidcTestResource<MockFaceb
         ret.put("quarkus.oidc.facebook.token-path", baseURI + "/v12.0/oauth/access_token");
         ret.put("quarkus.oidc.facebook.authorization-path", baseURI + "/dialog/oauth/");
         ret.put("quarkus.oidc.facebook.jwks-path", baseURI + "/.well-known/oauth/openid/jwks/");
-        ret.put("quarkus.oidc.facebook.user-info-path", baseURI + "/me/?fields=id,name,email,first_name,last_name");
         return ret;
     }
 
@@ -109,6 +112,11 @@ public class MockFacebookOidcTestResource extends MockOidcTestResource<MockFaceb
         String scope = rc.request().params().get("scope");
         String state = rc.request().params().get("state");
         String redirect_uri = rc.request().params().get("redirect_uri");
+        // make sure we'ret getting HTTPS (required by facebook)
+        if (!redirect_uri.startsWith("https://")) {
+            rc.response().setStatusCode(400).sendAndForget("HTTPS is required");
+            return;
+        }
         UUID code = UUID.randomUUID();
         URI redirect;
         try {
@@ -131,10 +139,26 @@ public class MockFacebookOidcTestResource extends MockOidcTestResource<MockFaceb
      * returns:
      * {
      * "access_token":TOKEN,
+     * "id_token":JWT,
      * "token_type":"bearer",
      * "expires_in":5172337
      * }
      * 
+     * {
+     * "iss": "https://www.facebook.com",
+     * "aud": "XXX",
+     * "sub": "XXX",
+     * "iat": 1642590366,
+     * "exp": 1642593966,
+     * "jti": "XXX",
+     * "nonce": "",
+     * "at_hash": "XXX",
+     * "email": "XXX",
+     * "given_name": "Foo",
+     * "family_name": "Bar",
+     * "name": "Foo Bar",
+     * "picture": "https://platform-lookaside.fbsbx.com/platform/profilepic/XXX"
+     * }
      */
     private void accessTokenJson(RoutingContext rc) {
         String authorization_code = rc.request().formAttributes().get("authorization_code");
@@ -142,9 +166,27 @@ public class MockFacebookOidcTestResource extends MockOidcTestResource<MockFaceb
         String redirect_uri = rc.request().formAttributes().get("redirect_uri");
 
         UUID token = UUID.randomUUID();
+        String hashedToken = hashAccessToken(token.toString());
+        String idToken = Jwt.issuer("https://www.facebook.com")
+                .audience(UUID.randomUUID().toString())
+                .subject("USERID")
+                .issuedAt(Instant.now())
+                .expiresIn(Duration.ofDays(1))
+                .claim(Claims.jti, UUID.randomUUID().toString())
+                .claim(Claims.nonce, "")
+                .claim(Claims.at_hash, hashedToken)
+                .claim(Claims.email, "facebook@example.com")
+                .claim(Claims.given_name, "Foo")
+                .claim(Claims.family_name, "Bar")
+                .claim("name", "Foo Bar")
+                .claim("picture", "https://platform-lookaside.fbsbx.com/platform/profilepic/XXX")
+                .jws()
+                .keyId("KEYID")
+                .sign(kp.getPrivate());
 
         String data = "{\n"
                 + " \"access_token\":\"" + token + "\",\n"
+                + " \"id_token\":\"" + idToken + "\",\n"
                 + " \"token_type\":\"bearer\",\n"
                 + " \"expires_in\":5172337\n"
                 + "} ";
@@ -173,29 +215,4 @@ public class MockFacebookOidcTestResource extends MockOidcTestResource<MockFaceb
                 .putHeader("Content-Type", "application/json")
                 .endAndForget(data);
     }
-
-    /*
-     * GET /me/?fields=id,name,email,first_name,last_name HTTP/1.1
-     * authorization: Bearer TOKEN
-     * 
-     * {
-     * "id":"USERID",
-     * "name":"Foo Bar",
-     * "email":"facebook@example.com",
-     * "first_name":"Foo",
-     * "last_name":"Bar"
-     * }
-     */
-    private void getUser(RoutingContext rc) {
-        rc.response()
-                .putHeader("Content-Type", "application/json")
-                .endAndForget("{\n"
-                        + " \"id\":\"USERID\",\n"
-                        + " \"name\":\"Foo Bar\",\n"
-                        + " \"email\":\"facebook@example.com\",\n"
-                        + " \"first_name\":\"Foo\",\n"
-                        + " \"last_name\":\"Bar\"\n"
-                        + "} ");
-    }
-
 }

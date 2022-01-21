@@ -134,8 +134,6 @@ public class RenardeSecurity {
                     }
                 }
                 return null;
-            case "facebook":
-                return userInfo.getString("email");
             default:
                 return idToken.getClaim(Claims.email);
         }
@@ -146,8 +144,6 @@ public class RenardeSecurity {
         switch (tenantId) {
             case "github":
                 return firstPart(userInfo.getString("name"));
-            case "facebook":
-                return userInfo.getString("first_name");
             case "microsoft":
                 return firstPart(idToken.getClaim("name"));
             default:
@@ -182,8 +178,6 @@ public class RenardeSecurity {
         switch (tenantId) {
             case "github":
                 return secondPart(userInfo.getString("name"));
-            case "facebook":
-                return userInfo.getString("last_name");
             case "microsoft":
                 return secondPart(idToken.getClaim("name"));
             default:
