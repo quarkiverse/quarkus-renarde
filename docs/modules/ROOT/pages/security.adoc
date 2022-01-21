@@ -131,60 +131,12 @@ public class MyOidcSetup implements RenardeUserProvider {
 }
 ----
 
-You can make sure that you produce your user type in the request scope with this:
-
-[source,java]
-----
-package util;
-
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Named;
-
-import io.quarkiverse.renarde.oidc.RenardeSecurity;
-import model.User;
-
-@RequestScoped
-public class MySecurity {
-    
-    @Inject
-    RenardeSecurity security;
-    
-    @Named("user")
-    @Produces
-    public User getUser() {
-        return (User) security.getUser();
-    }
-}
-----
-
-This will make sure that we produce a `user` named bean containing the current user if there is a
+With this, Renarde will make sure that we produce a `user` named bean containing the current user if there is a
 logged-in user. You can then use it in your views with `inject:user` or by injecting it in
 your endpoints.
 
-A `ControllerWithUser` class might be handy to access the current user for all controllers
-that need a user:
-
-[source,java]
-----
-package rest;
-
-import javax.inject.Inject;
-
-import io.quarkiverse.renarde.Controller;
-import io.quarkiverse.renarde.oidc.RenardeSecurity;
-import model.User;
-
-public abstract class ControllerWithUser extends Controller {
-    @Inject
-    protected RenardeSecurity security;
-
-    protected User getUser() {
-        return (User) security.getUser();
-    }
-}
-----
+Renarde also provides a `ControllerWithUser` class which you can extend to access the current user for all controllers
+that need a user.
 
 Now you can write your login and registration page like this:
 
@@ -288,7 +240,7 @@ import io.quarkus.security.Authenticated;
 import model.User;
 import model.UserStatus;
 
-public class Login extends ControllerWithUser {
+public class Login extends ControllerWithUser<User> {
 
     @Inject
     RenardeSecurity security;

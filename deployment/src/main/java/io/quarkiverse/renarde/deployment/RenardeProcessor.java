@@ -18,7 +18,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Observes;
+import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.transaction.Transactional;
 import javax.ws.rs.Priorities;
@@ -67,6 +71,7 @@ import io.quarkus.deployment.Capability;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.AdditionalIndexedClassesBuildItem;
+import io.quarkus.deployment.builditem.ApplicationIndexBuildItem;
 import io.quarkus.deployment.builditem.BytecodeTransformerBuildItem;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
@@ -77,9 +82,12 @@ import io.quarkus.deployment.util.AsmUtil;
 import io.quarkus.gizmo.BytecodeCreator;
 import io.quarkus.gizmo.ClassCreator;
 import io.quarkus.gizmo.ClassOutput;
+import io.quarkus.gizmo.FieldCreator;
+import io.quarkus.gizmo.FieldDescriptor;
 import io.quarkus.gizmo.FunctionCreator;
 import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
+import io.quarkus.gizmo.ResultHandle;
 import io.quarkus.hibernate.validator.runtime.jaxrs.ResteasyReactiveEndPointValidationInterceptor;
 import io.quarkus.resteasy.reactive.server.spi.AnnotationsTransformerBuildItem;
 import io.quarkus.resteasy.reactive.spi.AdditionalResourceClassBuildItem;
@@ -94,6 +102,9 @@ public class RenardeProcessor {
     public static final DotName DOTNAME_ROUTER = DotName.createSimple(Router.class.getName());
     public static final DotName DOTNAME_UNREMOVABLE = DotName.createSimple(Unremovable.class.getName());
     public static final DotName DOTNAME_TRANSACTIONAL = DotName.createSimple(Transactional.class.getName());
+    public static final DotName DOTNAME_USER = DotName.createSimple("io.quarkiverse.renarde.oidc.RenardeUser");
+    public static final DotName DOTNAME_SECURITY = DotName.createSimple("io.quarkiverse.renarde.oidc.RenardeSecurity");
+    public static final DotName DOTNAME_NAMED = DotName.createSimple(Named.class.getName());
 
     private static final String FEATURE = "renarde";
 
@@ -260,6 +271,59 @@ public class RenardeProcessor {
     }
 
     @BuildStep
+    void produceUserInRequestScope(ApplicationIndexBuildItem indexBuildItem,
+            BuildProducer<GeneratedBeanBuildItem> generatedBeans) {
+        Set<ClassInfo> users = indexBuildItem.getIndex().getAllKnownImplementors(DOTNAME_USER);
+        if (users.isEmpty())
+            return;
+        if (users.size() > 2) {
+            System.err.println(
+                    "Unable to generate request-scoped user producer: more than one user implementation found: " + users);
+            return;
+        }
+        ClassInfo userClass = users.iterator().next();
+        /*
+         * @RequestScoped
+         * public class MySecurity {
+         * 
+         * @Inject
+         * RenardeSecurity security;
+         * 
+         * @Named("user")
+         * 
+         * @Produces
+         * public User getUser() {
+         * return (User) security.getUser();
+         * }
+         * }
+         */
+        ClassOutput beansClassOutput = new GeneratedBeanGizmoAdaptor(generatedBeans);
+        try (ClassCreator beanClassCreator = ClassCreator.builder().classOutput(beansClassOutput)
+                .className("__RenardeUserProducer")
+                .build()) {
+            beanClassCreator.addAnnotation(RequestScoped.class);
+
+            FieldCreator fieldCreator = beanClassCreator.getFieldCreator("security", DOTNAME_SECURITY.toString());
+            fieldCreator.addAnnotation(Inject.class);
+            fieldCreator.setModifiers(0);
+
+            try (MethodCreator methodCreator = beanClassCreator.getMethodCreator("getUser", userClass.name().toString())) {
+                methodCreator.addAnnotation(Produces.class);
+                AnnotationInstance annotationInstance = AnnotationInstance.create(DOTNAME_NAMED, null,
+                        Arrays.asList(AnnotationValue.createStringValue("value", "user")));
+                methodCreator.addAnnotation(annotationInstance);
+
+                ResultHandle security = methodCreator.readInstanceField(
+                        FieldDescriptor.of(beanClassCreator.getClassName(), "security", DOTNAME_SECURITY.toString()),
+                        methodCreator.getThis());
+                ResultHandle user = methodCreator.invokeVirtualMethod(
+                        MethodDescriptor.ofMethod(DOTNAME_SECURITY.toString(), "getUser", DOTNAME_USER.toString()), security);
+                methodCreator.returnValue(methodCreator.checkCast(user, userClass.name().toString()));
+            }
+        }
+    }
+
+    @BuildStep
     void collectControllers(CombinedIndexBuildItem indexBuildItem,
             BuildProducer<AdditionalResourceClassBuildItem> additionalResourceClassBuildItems,
             BuildProducer<AnnotationsTransformerBuildItem> annotationTransformerBuildItems,
@@ -270,7 +334,6 @@ public class RenardeProcessor {
         Set<DotName> controllers = new HashSet<>();
         Map<String, ControllerVisitor.ControllerClass> methodsByClass = new HashMap<>();
         for (ClassInfo controllerInfo : indexBuildItem.getIndex().getAllKnownSubclasses(DOTNAME_CONTROLLER)) {
-            System.err.println("Renarde registering controller: " + controllerInfo.name());
             controllers.add(controllerInfo.name());
             // do not register abstract controllers as beans or resources
             if (!Modifier.isAbstract(controllerInfo.flags())) {
