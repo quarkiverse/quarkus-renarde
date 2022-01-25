@@ -1,23 +1,29 @@
 # Quarkus - Renarde
 
-## Welcome to Quarkiverse!
+This is the Quarkus Renarde Web Framework.
 
-Congratulations and thank you for creating a new Quarkus extension project in Quarkiverse!
+You can read the (currently unrendered) [user documentation](/blob/main/docs/modules/ROOT/pages/index.adoc).
 
-Feel free to replace this content with the proper description of your new project and necessary instructions how to use and contribute to it.
+At the moment, Quarkus Renarde is not yet released, so you need to build it to try it out:
 
-You can find the basic info, Quarkiverse policies and conventions in [the Quarkiverse wiki](https://github.com/quarkiverse/quarkiverse/wiki).
+You will need to build a specific branch of Quarkus in order to use Quarkus Renarde at the moment (until all
+patches are merged upstream):
 
-In case you are creating a Quarkus extension project for the first time, please follow [Building My First Extension](https://quarkus.io/guides/building-my-first-extension) guide.
+```shell
+$ git clone https://github.com/FroMage/quarkus.git
+$ cd quarkus
+$ git checkout renarde
+$ mvn -T C1 -Dquickly
+$ cd ..
+```
 
-Other useful articles related to Quarkus extension development can be found under the [Writing Extensions](https://quarkus.io/guides/#writing-extensions) guide category on the [Quarkus.io](http://quarkus.io) website.
+Then you need to build Quarkus Renarde:
 
-Thanks again, good luck and have fun!
+```shell
+$ git clone https://github.com/quarkiverse/quarkus-renarde.git
+$ cd quarkus-renarde
+$ mvn clean install
+$ cd ..
+```
 
-## Documentation
-
-The documentation for this extension should be maintained as part of this repository and it is stored in the `docs/` directory. 
-
-The layout should follow the [Antora's Standard File and Directory Set](https://docs.antora.org/antora/2.3/standard-directories/).
-
-Once the docs are ready to be published, please open a PR including this repository in the [Quarkiverse Docs Antora playbook](https://github.com/quarkiverse/quarkiverse-docs/blob/main/antora-playbook.yml#L7). See an example [here](https://github.com/quarkiverse/quarkiverse-docs/pull/1).
+Please check out [a sample TODO application](https://github.com/FroMage/quarkus-renarde-todo) for inspiration.
