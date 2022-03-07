@@ -2,7 +2,7 @@
 
 This is the Quarkus Renarde Web Framework.
 
-You can read the (currently unrendered) [user documentation](/blob/main/docs/modules/ROOT/pages/index.adoc).
+You can read the (currently unrendered) [user documentation](/docs/modules/ROOT/pages/index.adoc).
 
 At the moment, Quarkus Renarde is not yet released, so you need to build it to try it out:
 
