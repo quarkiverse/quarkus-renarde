@@ -1,4 +1,4 @@
-<form action="{it}" method="{method ?: 'POST'}" class="{klass ?: ''}">
+<form action="{it}" method="{method ?: 'POST'}" {#if class??}class="{class}"{/if} {#if id??}id="{id}"{/if}>
  {#authenticityToken/}
  {nested-content}
 </form>
