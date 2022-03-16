@@ -36,6 +36,7 @@ import org.jboss.jandex.AnnotationValue;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.MethodInfo;
+import org.jboss.jandex.Type;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.common.processor.ResteasyReactiveDotNames;
 import org.jboss.resteasy.reactive.common.processor.transformation.AnnotationsTransformer;
@@ -93,11 +94,15 @@ import io.quarkus.resteasy.reactive.server.spi.AnnotationsTransformerBuildItem;
 import io.quarkus.resteasy.reactive.spi.AdditionalResourceClassBuildItem;
 import io.quarkus.resteasy.reactive.spi.ParamConverterBuildItem;
 import io.quarkus.runtime.StartupEvent;
+import io.smallrye.mutiny.Multi;
+import io.smallrye.mutiny.Uni;
 
 public class RenardeProcessor {
 
     private static final Logger logger = Logger.getLogger(RenardeProcessor.class);
 
+    public static final DotName DOTNAME_UNI = DotName.createSimple(Uni.class.getName());
+    public static final DotName DOTNAME_MULTI = DotName.createSimple(Multi.class.getName());
     public static final DotName DOTNAME_CONTROLLER = DotName.createSimple(Controller.class.getName());
     public static final DotName DOTNAME_ROUTER = DotName.createSimple(Router.class.getName());
     public static final DotName DOTNAME_UNREMOVABLE = DotName.createSimple(Unremovable.class.getName());
@@ -374,6 +379,7 @@ public class RenardeProcessor {
                             MethodInfo method = transformationContext.getTarget().asMethod();
                             if (controllers.contains(method.declaringClass().name())
                                     && !method.hasAnnotation(DOTNAME_TRANSACTIONAL)
+                                    && !isAsync(method.returnType())
                                     && (method.hasAnnotation(ResteasyReactiveDotNames.POST)
                                             || method.hasAnnotation(ResteasyReactiveDotNames.PUT)
                                             || method.hasAnnotation(ResteasyReactiveDotNames.DELETE))) {
@@ -384,6 +390,15 @@ public class RenardeProcessor {
                     }
                 }));
 
+    }
+
+    protected boolean isAsync(Type type) {
+        if (type.kind() == Type.Kind.CLASS
+                || type.kind() == Type.Kind.PARAMETERIZED_TYPE) {
+            return type.name().equals(DOTNAME_UNI)
+                    || type.name().equals(DOTNAME_MULTI);
+        }
+        return false;
     }
 
     private void generateRouterInit(BuildProducer<GeneratedBeanBuildItem> generatedBeans,
