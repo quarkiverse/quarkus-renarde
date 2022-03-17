@@ -6,13 +6,12 @@ You can read the (currently unrendered) [user documentation](/docs/modules/ROOT/
 
 At the moment, Quarkus Renarde is not yet released, so you need to build it to try it out:
 
-You will need to build a specific branch of Quarkus in order to use Quarkus Renarde at the moment (until all
-patches are merged upstream):
+You will need to build the current head of Quarkus in order to use Quarkus Renarde at the moment (until 2.8
+is released):
 
 ```shell
-$ git clone https://github.com/FroMage/quarkus.git
+$ git clone https://github.com/quarkusio/quarkus.git
 $ cd quarkus
-$ git checkout renarde
 $ mvn -T C1 -Dquickly
 $ cd ..
 ```

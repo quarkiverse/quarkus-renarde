@@ -1,9 +1,13 @@
-= Renarde 🦊 Web Framework
+= Renarde image:renarde-head.svg[width=25em] Web Framework
 
 include::./includes/attributes.adoc[]
 :config-file: application.properties
 
-Renarde 🦊 is a server-side Web Framework based on Quarkus, xref:qute-reference.adoc[Qute], 
+[.float-group]
+--
+image::renarde.svg[alt=Renarde,width=100,float="right"]
+
+Renarde image:renarde-head.svg[width=15em] is a server-side Web Framework based on Quarkus, xref:qute-reference.adoc[Qute], 
 xref:hibernate-orm-panache.adoc[Hibernate] and xref:resteasy-reactive.adoc[RESTEasy Reactive].
 
 [source,xml,subs=attributes+]
@@ -14,6 +18,7 @@ xref:hibernate-orm-panache.adoc[Hibernate] and xref:resteasy-reactive.adoc[RESTE
   <version>{quarkus-renarde-version}</version>
 </dependency>
 ----
+--
 
 == First: an example
 
@@ -414,8 +419,8 @@ Renarde comes with a few extra tags to make your life easier:
 |`{#error 'field'/}`
 |Inserts the error message for the given field name
 
-|`{#form uri method='POST' klass='css'}...{/form}`
-|Generates an HTML form for the given `URI`, `method` (defaults to `POST`) and optional CSS classes. Includes a CRSF token.
+|`{#form uri method='POST' class='css' id='id'}...{/form}`
+|Generates an HTML form for the given `URI`, `method` (defaults to `POST`) and optional CSS classes and IDs. Includes a CRSF token.
 
 |`{#gravatar email size='mm'/}`
 |Inserts a gravatar image for the given `email`, with optional `size` (defaults to `mm`)
