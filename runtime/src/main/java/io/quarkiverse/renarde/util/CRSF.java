@@ -1,6 +1,5 @@
 package io.quarkiverse.renarde.util;
 
-import java.security.SecureRandom;
 import java.util.Base64;
 
 import javax.enterprise.context.RequestScoped;
@@ -27,7 +26,6 @@ public class CRSF {
 
     private String crsfToken;
 
-    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private final static int CRSF_SIZE = 16;
     private final static String CRSF_COOKIE_NAME = "_renarde_crsf";
     private final static String CRSF_FORM_NAME = "_renarde_crsf_token";
@@ -53,7 +51,7 @@ public class CRSF {
             crsfToken = cookie.getValue();
         } else {
             byte[] bytes = new byte[CRSF_SIZE];
-            SECURE_RANDOM.nextBytes(bytes);
+            RandomHolder.SECURE_RANDOM.nextBytes(bytes);
             crsfToken = Base64.getEncoder().encodeToString(bytes);
         }
     }

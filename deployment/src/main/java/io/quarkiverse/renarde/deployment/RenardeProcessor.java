@@ -58,6 +58,7 @@ import io.quarkiverse.renarde.util.JavaExtensions;
 import io.quarkiverse.renarde.util.MyParamConverters;
 import io.quarkiverse.renarde.util.MyValidationInterceptor;
 import io.quarkiverse.renarde.util.QuteResolvers;
+import io.quarkiverse.renarde.util.RandomHolder;
 import io.quarkiverse.renarde.util.RedirectExceptionMapper;
 import io.quarkiverse.renarde.util.RenderArgs;
 import io.quarkiverse.renarde.util.Validation;
@@ -78,6 +79,7 @@ import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.LaunchModeBuildItem;
 import io.quarkus.deployment.builditem.RunTimeConfigurationDefaultBuildItem;
+import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
 import io.quarkus.deployment.logging.LogCleanupFilterBuildItem;
 import io.quarkus.deployment.util.AsmUtil;
 import io.quarkus.gizmo.BytecodeCreator;
@@ -116,6 +118,11 @@ public class RenardeProcessor {
     @BuildStep
     FeatureBuildItem feature() {
         return new FeatureBuildItem(FEATURE);
+    }
+
+    @BuildStep
+    RuntimeInitializedClassBuildItem cryptoConfiguration() {
+        return new RuntimeInitializedClassBuildItem(RandomHolder.class.getCanonicalName());
     }
 
     @BuildStep
