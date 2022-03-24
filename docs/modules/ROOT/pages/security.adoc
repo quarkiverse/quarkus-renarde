@@ -1,8 +1,8 @@
-= Renarde 🦊 Web Framework Security guide
+= Renarde image:renarde-head.svg[width=25em]  Web Framework Security guide
 
 include::./includes/attributes.adoc[]
 
-Renarde 🦊 can help you deal with security and user registration, either manually, using OIDC, or
+Renarde image:renarde-head.svg[width=15em] can help you deal with security and user registration, either manually, using OIDC, or
 a mix of both.
 
 == Custom authentication with JWT
