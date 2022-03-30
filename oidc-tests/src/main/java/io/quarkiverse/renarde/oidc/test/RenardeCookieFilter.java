@@ -21,6 +21,7 @@ import io.restassured.response.Response;
 import io.restassured.specification.FilterableRequestSpecification;
 import io.restassured.specification.FilterableResponseSpecification;
 
+// Fix for https://github.com/rest-assured/rest-assured/issues/1430
 public class RenardeCookieFilter implements Filter {
     private final boolean allowMultipleCookiesWithTheSameName;
     private final CookieSpec cookieSpec;
