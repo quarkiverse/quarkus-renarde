@@ -2,7 +2,7 @@ package io.quarkiverse.renarde.util;
 
 import javax.ws.rs.core.Response;
 
-import io.quarkus.narayana.jta.Rollback;
+import io.quarkus.transaction.annotations.Rollback;
 
 @Rollback(false)
 @SuppressWarnings("serial")
