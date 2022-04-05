@@ -157,13 +157,13 @@ public class RenardeProcessor {
         }
         // Apparently, no OIDC capability to check
         boolean needsTokenCache = false;
-        for (String provider : Arrays.asList("facebook", "apple", "github", "microsoft", "google")) {
+        for (String provider : Arrays.asList("facebook", "apple", "github", "microsoft", "google", "twitter")) {
             if ((config.getOptionalValue("quarkus.oidc." + provider + ".provider", String.class).isPresent()
                     || config.getOptionalValue("quarkus.oidc." + provider + ".client-id", String.class).isPresent())
                     && !config.getOptionalValue("quarkus.oidc." + provider + ".authentication.redirect-path", String.class)
                             .isPresent()) {
                 String target = "oidc-success";
-                if (provider.equals("github")) {
+                if (provider.equals("github") || provider.equals("twitter")) {
                     needsTokenCache = true;
                     target = provider + "-success";
                 }

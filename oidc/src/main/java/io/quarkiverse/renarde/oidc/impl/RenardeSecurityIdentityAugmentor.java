@@ -29,8 +29,8 @@ public class RenardeSecurityIdentityAugmentor implements SecurityIdentityAugment
             return Uni.createFrom().item(identity);
         DefaultJWTCallerPrincipal oldPrincipal = (DefaultJWTCallerPrincipal) identity.getPrincipal();
         String tenantId = identity.getAttribute(OidcUtils.TENANT_ID_ATTRIBUTE);
-        // only do this for github
-        if ("github".equals(tenantId)) {
+        // only do this for github and twitter
+        if ("github".equals(tenantId) || "twitter".equals(tenantId)) {
             String rawToken = oldPrincipal.getClaim(Claims.raw_token);
             JwtClaims claims;
             claims = new JwtClaims();
@@ -38,7 +38,12 @@ public class RenardeSecurityIdentityAugmentor implements SecurityIdentityAugment
                 claims.setClaim(claim, oldPrincipal.getClaim(claim));
             }
             UserInfo userInfo = identity.getAttribute(OidcUtils.USER_INFO_ATTRIBUTE);
-            JsonValue id = (JsonValue) userInfo.get("id");
+            JsonValue id;
+            if ("github".equals(tenantId)) {
+                id = (JsonValue) userInfo.get("id");
+            } else {
+                id = userInfo.getObject("data").get("id");
+            }
             String idString;
             switch (id.getValueType()) {
                 case NUMBER:

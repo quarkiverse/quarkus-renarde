@@ -67,8 +67,14 @@ public class RenardeSecurityController extends Controller {
     @Authenticated
     @Path("github-success")
     public void githubSuccess() {
-        // something is coming
         String authId = userInfo.getLong("id").toString();
+        oidcHandler.oidcSuccess(oidcSession.getTenantId(), authId);
+    }
+
+    @Authenticated
+    @Path("twitter-success")
+    public void twitterSuccess() {
+        String authId = userInfo.getObject("data").getString("id");
         oidcHandler.oidcSuccess(oidcSession.getTenantId(), authId);
     }
 
