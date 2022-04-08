@@ -1037,6 +1037,63 @@ You can now configure your your `application.properties`:
 
 [source,properties]
 ----
+quarkus.oidc.facebook.provider=facebook
 quarkus.oidc.facebook.client-id=<App ID>
 quarkus.oidc.facebook.credentials.secret=<App secret>
+----
+
+=== Setting up OIDC for Twitter
+
+You can use Twitter for OIDC login, but at the moment, it restricts access to the user's email, which means you
+will have to obtain it and verify it yourself.
+
+In order to set up OIDC for Twitter start by https://developer.twitter.com/en/portal/projects/new[Creating a project], enter a project name, and press `Next`:
+
+image::oidc-twitter-1.png[role="thumb"]
+
+Enter a use case, and press `Next`:
+
+image::oidc-twitter-2.png[role="thumb"]
+
+Enter a project description, and press `Next`:
+
+image::oidc-twitter-3.png[role="thumb"]
+
+Now enter an application name, and press `Next`:
+
+image::oidc-twitter-4.png[role="thumb"]
+
+Write down your keys, because they will not be displayed again, and press `App Settings`:
+
+image::oidc-twitter-5.png[role="thumb"]
+
+Navigate down to the `User authentication settings` section and press `Set up`:
+
+image::oidc-twitter-6.png[role="thumb"]
+
+Check the `OAuth 2.0` check box:
+
+image::oidc-twitter-7.png[role="thumb"]
+
+Select `Web App` as application type, then fill in your application details (use `<host>/_renarde/security/twitter-success`
+for the `Callback URI`).
+
+NOTE: Twitter doesn't require https usage in practice, but won't accept your `Website URL` without it, so
+you can still use ngrok for it.
+
+Now press `Save`:
+
+image::oidc-twitter-8.png[role="thumb"]
+
+You can now copy your `Client ID` and `Client Secret` and press `Done`:
+
+image::oidc-twitter-9.png[role="thumb"]
+
+You can now configure your your `application.properties`:
+
+[source,properties]
+----
+quarkus.oidc.twitter.provider=twitter
+quarkus.oidc.twitter.client-id=<Client ID>
+quarkus.oidc.twitter.credentials.secret=<Client Secret>
 ----
