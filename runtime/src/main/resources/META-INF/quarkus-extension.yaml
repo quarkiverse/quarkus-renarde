@@ -1,9 +1,11 @@
-name: Renarde
-#description: Renarde ...
+name: "Renarde"
+description: "Renarde is a server-side Web Framework based on Quarkus, Qute, Hibernate and RESTEasy Reactive."
 metadata:
-#  keywords:
-#    - renarde
-#  guide: ...
-#  categories:
-#    - "miscellaneous"
-#  status: "preview"
+  keywords:
+  - "renarde"
+  - "web"
+  - "rest"
+  guide: "https://quarkiverse.github.io/quarkiverse-docs/quarkus-renarde/dev/index.html"
+  categories:
+  - "web"
+  status: "preview"
