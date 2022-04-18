@@ -13,7 +13,7 @@ xref:hibernate-orm-panache.adoc[Hibernate] and xref:resteasy-reactive.adoc[RESTE
 [source,xml,subs=attributes+]
 ----
 <dependency>
-  <groupId>io.quarkiverse</groupId>
+  <groupId>io.quarkiverse.renarde</groupId>
   <artifactId>quarkus-renarde</artifactId>
   <version>{quarkus-renarde-version}</version>
 </dependency>
