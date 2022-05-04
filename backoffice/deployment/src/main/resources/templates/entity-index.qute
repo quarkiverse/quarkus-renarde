@@ -1,0 +1,29 @@
+\{#include main.html }
+\{#title}{entity}\{/title}
+
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Home</a></li>
+    <li class="breadcrumb-item"><a href="../index">BackOffice</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{entity}</li>
+  </ol>
+</nav>
+
+<a href="create" class="btn btn-success"><i class="bi bi-plus"></i>Create</a>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">{entity}</th>
+    </tr>
+  </thead>
+  <tbody>
+    \{#for entity in entities}
+    <tr>
+      <td><a href="edit/\{entity.id}">\{entity.toString()}</a></td>
+    </tr>
+    \{/for}
+  </tbody>
+</table>
+
+\{/include}

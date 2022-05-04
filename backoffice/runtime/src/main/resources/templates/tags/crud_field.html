@@ -1,0 +1,12 @@
+{@java.lang.String name} 
+{@java.lang.String label}
+<div class="form-group">
+  <label for="{name}">{label}</label>
+  {nested-content}
+  {#ifError name}
+    <span class="invalid-feedback">​{#error name/}</span>​
+  {/ifError}
+  {#if help??}
+  <small class="form-text text-muted">{help}</small>
+  {/if}
+</div>

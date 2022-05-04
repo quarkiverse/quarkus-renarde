@@ -16,6 +16,18 @@ import io.quarkus.qute.TemplateExtension;
 @TemplateExtension
 public class JavaExtensions {
 
+    public static String prepend(String string, Object value) {
+        return value + string;
+    }
+
+    public static String append(String string, Object value) {
+        return string + value;
+    }
+
+    public static String htmlNormalised(Date date) {
+        return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(date);
+    }
+
     public static String format(Date date) {
         // FIXME: L10N
         return new SimpleDateFormat("dd/MM/yyyy").format(date);
@@ -87,6 +99,13 @@ public class JavaExtensions {
         if (val == null)
             return false;
         return val.getClass().getName().equals(type);
+    }
+
+    public static String capitalised(String val) {
+        if (val == null || val.isEmpty())
+            return val;
+        // FIXME: doesn't respect codepoints, perhaps not even the Turkish capital i?
+        return val.substring(0, 1).toUpperCase() + val.substring(1);
     }
 
     @TemplateExtension(namespace = "flash", matchName = "*")

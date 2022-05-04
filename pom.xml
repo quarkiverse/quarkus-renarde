@@ -17,6 +17,7 @@
     <module>oidc</module>
     <module>oidc-tests</module>
     <module>docs</module>
+    <module>backoffice</module>
   </modules>
   <properties>
     <compiler-plugin.version>3.8.1</compiler-plugin.version>

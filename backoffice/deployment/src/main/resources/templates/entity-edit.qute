@@ -1,0 +1,40 @@
+\{#include main.html }
+\{#title}{entity} \{entity.toString()}\{/title}
+
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Home</a></li>
+    <li class="breadcrumb-item"><a href="../../index">BackOffice</a></li>
+    <li class="breadcrumb-item"><a href="../index">{entity}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">\{entity.toString}</li>
+  </ol>
+</nav>
+
+<h2>
+ Edit {entity} \{entity.id}
+ \{#form entity.id.toString().prepend("../delete/")}
+  <button class="btn btn-danger"><i class="bi bi-trash"></i>Delete</button>
+ \{/form}
+</h2>
+\{#form entity.id.toString()}
+ {#for field in fields}
+ \{#crud_field name="{field.name}" label="{field.label}"}
+  {#if field.type == "datetime-local"}
+   \{#crud_input name="{field.name}" type="datetime-local" value=entity.{field.name}.htmlNormalised??/}
+  {#else if field.type == "checkbox"}
+   \{#crud_input name="{field.name}" type="checkbox" value=entity.{field.name}/}
+  {#else if field.type == "relation"}
+   \{#crud_select name="{field.name}" value=entity.{field.name}.id.toString() values={field.name}Values nullable=true/}
+  {#else if field.type == "enum"}
+   \{#crud_select name="{field.name}" value=entity.{field.name}.name() values={field.name}Values/}
+  {#else if field.type == "number"}
+   \{#crud_input name="{field.name}" value=entity.{field.name} type="number"/}
+  {#else}
+   \{#crud_input name="{field.name}" value=entity.{field.name}/}
+  {/if}
+ \{/crud_field}
+ {/for}
+ <button class="btn btn-primary">Save</button>
+\{/form}
+
+\{/include}

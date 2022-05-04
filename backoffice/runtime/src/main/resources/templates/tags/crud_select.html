@@ -1,0 +1,15 @@
+{@java.lang.String name}
+{@java.lang.String value}
+{@java.util.Map<java.lang.String,java.lang.String> values}
+{@boolean nullable}
+
+{#let val=inject:flash.get(name).or(value??)}
+<select class="form-control" name="{name}">
+  {#if nullable??}
+   <option {#if !val}selected{/if} value="">(None)</option>
+  {/if}
+  {#for opt in values}
+   <option {#if val == opt.key}selected{/if} value="{opt.key}">{opt.value}</option>
+  {/for}
+</select>
+{/let}
