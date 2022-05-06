@@ -16,7 +16,6 @@
 \{#form "create"}
  {#for field in fields}
  \{#crud_field name="{field.name}" label="{field.label}"}
-  {field.type}
   {#switch field.type}
    {#case DateTimeLocal}
     \{#crud_input name="{field.name}" type="datetime-local"/}

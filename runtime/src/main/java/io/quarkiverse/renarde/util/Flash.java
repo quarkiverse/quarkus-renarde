@@ -1,8 +1,11 @@
 package io.quarkiverse.renarde.util;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.enterprise.context.RequestScoped;
@@ -101,17 +104,29 @@ public class Flash {
         FormData formData = rrContext.getFormData();
         if (formData != null) {
             for (String key : formData) {
-                // FIXME: more than first value?
-                FormValue firstValue = formData.getFirst(key);
-                // skip files, since we can't set them in error forms anyway
-                if (!firstValue.isFileItem()) {
-                    futureValues.put(key, firstValue.getValue());
+                Deque<FormValue> values = formData.get(key);
+                if (values.size() != 1) {
+                    List<String> list = new ArrayList<>(values.size());
+                    for (FormValue val : values) {
+                        // skip files, since we can't set them in error forms anyway
+                        if (!val.isFileItem()) {
+                            list.add(val.getValue());
+                        }
+                        futureValues.put(key, list);
+                    }
+                } else {
+                    FormValue firstValue = formData.getFirst(key);
+                    // skip files, since we can't set them in error forms anyway
+                    if (!firstValue.isFileItem()) {
+                        futureValues.put(key, firstValue.getValue());
+                    }
                 }
             }
         }
     }
 
     public void flash(String key, Object value) {
+        // FIXME: toString the value? unless it's a List, which we allow
         futureValues.put(key, value);
     }
 

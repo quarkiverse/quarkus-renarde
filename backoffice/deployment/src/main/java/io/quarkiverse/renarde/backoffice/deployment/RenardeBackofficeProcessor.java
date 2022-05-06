@@ -15,6 +15,7 @@ import java.util.Optional;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.Entity;
 import javax.transaction.Transactional;
+import javax.validation.constraints.NotEmpty;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -30,6 +31,7 @@ import org.jboss.resteasy.reactive.RestPath;
 import io.quarkiverse.renarde.Controller;
 import io.quarkiverse.renarde.backoffice.BackUtil;
 import io.quarkiverse.renarde.backoffice.deployment.ModelField.Type;
+import io.quarkiverse.renarde.util.Validation;
 import io.quarkus.arc.Arc;
 import io.quarkus.arc.ArcContainer;
 import io.quarkus.arc.InstanceHandle;
@@ -41,6 +43,7 @@ import io.quarkus.gizmo.AssignableResultHandle;
 import io.quarkus.gizmo.BranchResult;
 import io.quarkus.gizmo.BytecodeCreator;
 import io.quarkus.gizmo.ClassCreator;
+import io.quarkus.gizmo.FieldDescriptor;
 import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
 import io.quarkus.gizmo.ResultHandle;
@@ -244,6 +247,10 @@ public class RenardeBackofficeProcessor {
     //                    @RestForm("done") String done,
     //                    @RestForm("doneDate") String doneDate,
     //                    @RestForm("owner") String owner) {
+    //   if(validationFailed(){
+    //     // edit(id);
+    //     seeOther("/_renarde/backoffice/edit/"+id);
+    //   }
     //   Todo todo = Todo.findById(id);
     //   notFoundIfNull(todo);
     //   todo.setTask(BackUtil.stringField(task));
@@ -262,6 +269,10 @@ public class RenardeBackofficeProcessor {
     //                    @RestForm("done") String done,
     //                    @RestForm("doneDate") String doneDate,
     //                    @RestForm("owner") String owner) {
+    //   if(validationFailed(){
+    //     // create();
+    //     seeOther("/_renarde/backoffice/create");
+    //   }
     //   Todo todo = new Todo();
     //   todo.setTask(BackUtil.stringField(task));
     //   todo.setDone(BackUtil.booleanField(done));
@@ -269,8 +280,8 @@ public class RenardeBackofficeProcessor {
     //   todo.setOwner(BackUtil.isSet(owner) ? User.findById(Long.valueOf(owner)) : null);
     //   todo.persist();
     //   flash("message", "Created: "+todo);
-    //   // edit(id);
-    //   seeOther("/_renarde/backoffice/edit/"+id);
+    //   // create();
+    //   seeOther("/_renarde/backoffice/create");
     // }
     private void editOrCreateAction(ClassCreator c, String entityClass, String simpleName, List<ModelField> fields, Mode mode) {
         Class[] editParams;
@@ -301,10 +312,39 @@ public class RenardeBackofficeProcessor {
             }
             for (int i = 0; i < fields.size(); i++) {
                 m.getParameterAnnotations(i + offset).addAnnotation(RestForm.class).addValue("value", fields.get(i).name);
+                // FIXME: this only works if we have method parameter names, but gizmo doesn't support it yet
+                // https://github.com/quarkusio/gizmo/issues/112
+                //                for (Class<? extends Annotation> validationAnnotation : fields.get(i).validation) {
+                //                    m.getParameterAnnotations(i + offset).addAnnotation(validationAnnotation);
+                //                }
             }
             m.addAnnotation(Path.class).addValue("value", mode == Mode.CREATE ? "create" : "edit/{id}");
             m.addAnnotation(POST.class);
             m.addAnnotation(Transactional.class);
+
+            String uriTarget = URI_PREFIX + "/" + simpleName + (mode == Mode.CREATE ? "/create" : "/edit/");
+
+            // first check validation
+
+            // FIXME: workaround for https://github.com/quarkusio/gizmo/issues/112
+            for (int i = 0; i < fields.size(); i++) {
+                ModelField field = fields.get(i);
+                for (Class<? extends Annotation> validationAnnotation : field.validation) {
+                    if (validationAnnotation == NotEmpty.class) {
+                        ResultHandle validation = m.readInstanceField(
+                                FieldDescriptor.of(Controller.class, "validation", Validation.class), m.getThis());
+                        m.invokeVirtualMethod(
+                                MethodDescriptor.ofMethod(Validation.class, "required", void.class, String.class, Object.class),
+                                validation, m.load(field.name), m.getMethodParam(i + offset));
+                    }
+                }
+            }
+
+            BranchResult validation = m.ifTrue(m.invokeVirtualMethod(
+                    MethodDescriptor.ofMethod(Controller.class, "validationFailed", boolean.class), m.getThis()));
+            try (BytecodeCreator tb = validation.trueBranch()) {
+                redirectToAction(tb, uriTarget, simpleName, mode);
+            }
 
             AssignableResultHandle variable;
             if (mode == Mode.EDIT) {
@@ -458,6 +498,7 @@ public class RenardeBackofficeProcessor {
             if (mode == Mode.CREATE) {
                 m.invokeVirtualMethod(MethodDescriptor.ofMethod(entityClass, "persist", void.class), variable);
             }
+            // flash message
             ResultHandle message = m.newInstance(MethodDescriptor.ofConstructor(StringBuilder.class, String.class),
                     m.load(mode == Mode.CREATE ? "Created: " : "Updated: "));
             message = m.invokeVirtualMethod(
@@ -468,18 +509,22 @@ public class RenardeBackofficeProcessor {
             m.invokeVirtualMethod(
                     MethodDescriptor.ofMethod(Controller.class, "flash", void.class, String.class, Object.class),
                     m.getThis(), m.load("message"), message);
-            String uriTarget = URI_PREFIX + "/" + simpleName + (mode == Mode.CREATE ? "/create" : "/edit/");
-            ResultHandle uri = m.newInstance(MethodDescriptor.ofConstructor(StringBuilder.class, String.class),
-                    m.load(uriTarget));
-            if (mode == Mode.EDIT) {
-                uri = m.invokeVirtualMethod(
-                        MethodDescriptor.ofMethod(StringBuilder.class, "append", StringBuilder.class, Object.class), uri,
-                        m.getMethodParam(0));
-            }
-            uri = m.invokeVirtualMethod(MethodDescriptor.ofMethod(StringBuilder.class, "toString", String.class), uri);
-            m.invokeVirtualMethod(MethodDescriptor.ofMethod(Controller.class, "seeOther", Response.class, String.class),
-                    m.getThis(), uri);
+            // final redirect
+            redirectToAction(m, uriTarget, simpleName, mode);
         }
+    }
+
+    private void redirectToAction(BytecodeCreator m, String uriTarget, String simpleName, Mode mode) {
+        ResultHandle uri = m.newInstance(MethodDescriptor.ofConstructor(StringBuilder.class, String.class),
+                m.load(uriTarget));
+        if (mode == Mode.EDIT) {
+            uri = m.invokeVirtualMethod(
+                    MethodDescriptor.ofMethod(StringBuilder.class, "append", StringBuilder.class, Object.class), uri,
+                    m.getMethodParam(0));
+        }
+        uri = m.invokeVirtualMethod(MethodDescriptor.ofMethod(StringBuilder.class, "toString", String.class), uri);
+        m.invokeVirtualMethod(MethodDescriptor.ofMethod(Controller.class, "seeOther", Response.class, String.class),
+                m.getThis(), uri);
     }
 
     // @GET

@@ -1,11 +1,18 @@
 package io.quarkiverse.renarde.backoffice.deployment;
 
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.persistence.Column;
 import javax.persistence.Enumerated;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
+import javax.validation.constraints.NotEmpty;
 
 import org.jboss.jandex.AnnotationInstance;
+import org.jboss.jandex.AnnotationValue;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.FieldInfo;
@@ -33,6 +40,7 @@ public class ModelField {
     private static final DotName DOTNAME_ONETOMANY = DotName.createSimple(OneToMany.class.getName());
     private static final DotName DOTNAME_ONETOONE = DotName.createSimple(OneToOne.class.getName());
     private static final DotName DOTNAME_ENUMERATED = DotName.createSimple(Enumerated.class.getName());
+    private static final DotName DOTNAME_COLUMN = DotName.createSimple(Column.class.getName());
 
     // For views
     public String name;
@@ -43,6 +51,7 @@ public class ModelField {
     // For processor
     public EntityField entityField;
     public EntityField inverseField;
+    public List<Class<? extends Annotation>> validation = new ArrayList<>();
 
     public ModelField(EntityField entityField, String entityClass, MetamodelInfo metamodelInfo, IndexView index) {
         this.name = entityField.name;
@@ -62,7 +71,8 @@ public class ModelField {
             this.type = Type.MultiRelation;
             this.relationClass = field.type().asParameterizedType().arguments().get(0).name().toString();
             EntityModel relationModel = metamodelInfo.getEntityModel(this.relationClass);
-            String inverseField = field.annotation(DOTNAME_ONETOMANY).value("mappedBy").asString();
+            AnnotationValue mappedBy = field.annotation(DOTNAME_ONETOMANY).value("mappedBy");
+            String inverseField = mappedBy.asString();
             // FIXME: inheritance
             this.inverseField = relationModel.fields.get(inverseField);
         } else if (oneToOne != null
@@ -77,12 +87,16 @@ public class ModelField {
         } else {
             // see if we can find what to do with it
             ClassInfo fieldClassInfo = index.getClassByName(field.type().name());
-//            System.err.println("Unknown field type: " + field.type() + " classinfo: " + fieldClassInfo);
+            //            System.err.println("Unknown field type: " + field.type() + " classinfo: " + fieldClassInfo);
             if (fieldClassInfo != null) {
                 if (fieldClassInfo.isEnum()) {
                     this.type = Type.Enum;
                 }
             }
+        }
+        AnnotationInstance column = field.annotation(DOTNAME_COLUMN);
+        if (column != null && column.value("nullable") != null && !column.value("nullable").asBoolean()) {
+            validation.add(NotEmpty.class);
         }
         this.entityField = entityField;
     }
