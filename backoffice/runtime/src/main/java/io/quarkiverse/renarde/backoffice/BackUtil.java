@@ -2,6 +2,7 @@ package io.quarkiverse.renarde.backoffice;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +50,7 @@ public class BackUtil {
         return Enum.valueOf(klass, value);
     }
 
-    public static Map<String, String> enumValues(Enum<?>[] values) {
+    public static Map<String, String> enumPossibleValues(Enum<?>[] values) {
         Map<String, String> ret = new TreeMap<>();
         for (Enum<?> value : values) {
             ret.put(value.name(), value.name());
@@ -57,10 +58,18 @@ public class BackUtil {
         return ret;
     }
 
-    public static Map<String, String> entityValues(List<PanacheEntity> list) {
+    public static Map<String, String> entityPossibleValues(List<PanacheEntity> list) {
         Map<String, String> ret = new TreeMap<>();
         for (PanacheEntity entity : list) {
             ret.put(String.valueOf(entity.id), entity.toString());
+        }
+        return ret;
+    }
+
+    public static List<String> entityCurrentValues(List<PanacheEntity> list) {
+        List<String> ret = new ArrayList<>(list.size());
+        for (PanacheEntity entity : list) {
+            ret.add(String.valueOf(entity.id));
         }
         return ret;
     }

@@ -16,19 +16,23 @@
 \{#form "create"}
  {#for field in fields}
  \{#crud_field name="{field.name}" label="{field.label}"}
-  {#if field.type == "datetime-local"}
-   \{#crud_input name="{field.name}" type="datetime-local"/}
-  {#else if field.type == "checkbox"}
-   \{#crud_input name="{field.name}" type="checkbox"/}
-  {#else if field.type == "relation"}
-   \{#crud_select name="{field.name}" values={field.name}Values nullable=true/}
-  {#else if field.type == "enum"}
-   \{#crud_select name="{field.name}" values={field.name}Values/}
-  {#else if field.type == "number"}
-   \{#crud_input name="{field.name}" type="number"/}
-  {#else}
-   \{#crud_input name="{field.name}"/}
-  {/if}
+  {field.type}
+  {#switch field.type}
+   {#case DateTimeLocal}
+    \{#crud_input name="{field.name}" type="datetime-local"/}
+   {#case Checkbox}
+    \{#crud_input name="{field.name}" type="checkbox"/}
+   {#case Relation}
+    \{#crud_select name="{field.name}" values={field.name}PossibleValues nullable=true/}
+   {#case MultiRelation}
+    \{#crud_select name="{field.name}" values={field.name}PossibleValues nullable=true multiple=true/}
+   {#case Enum}
+    \{#crud_select name="{field.name}" values={field.name}PossibleValues/}
+   {#case Number}
+    \{#crud_input name="{field.name}" type="number"/}
+   {#else}
+    \{#crud_input name="{field.name}"/}
+  {/switch}
  \{/crud_field}
  {/for}
  <button class="btn btn-primary">Create</button>
