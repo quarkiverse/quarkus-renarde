@@ -3,6 +3,7 @@ package io.quarkiverse.renarde.backoffice.deployment;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.annotation.Annotation;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
@@ -85,6 +86,11 @@ public class RenardeBackofficeProcessor {
                 .addLocator(new TemplateLocator() {
                     @Override
                     public Optional<TemplateLocation> locate(String id) {
+                        URL url = RenardeBackofficeProcessor.class.getClassLoader()
+                                .getResource("/templates/" + id);
+                        if (url == null) {
+                            return Optional.empty();
+                        }
                         return Optional.of(new TemplateLocation() {
 
                             @Override
