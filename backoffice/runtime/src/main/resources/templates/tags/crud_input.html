@@ -1,0 +1,17 @@
+{@java.lang.String name}
+{@java.lang.String type}
+{@java.lang.String id}
+{@java.lang.String placeholder}
+{@java.lang.String value}
+<input name="{name}" 
+ type="{type ?: 'text'}"
+ {#if placeholder??}placeholder="{placeholder}"{/if}
+ {#if id??}id="{id}"{/if}
+ class="{#if type?? == "checkbox"}form-check{#else}form-control{/if} {#ifError name}is-invalid{/ifError}"
+ {#if type?? == "checkbox"}
+  {#if inject:flash.get(name) == "on" || value??}checked{/if}
+ {#else}
+  value="{inject:flash.get(name) ?: value??}"
+ {/if}
+ />
+ 

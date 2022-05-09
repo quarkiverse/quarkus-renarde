@@ -1,0 +1,40 @@
+\{#include main.html }
+\{#title}Create {entity}\{/title}
+
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Home</a></li>
+    <li class="breadcrumb-item"><a href="../index">BackOffice</a></li>
+    <li class="breadcrumb-item"><a href="index">{entity}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Create {entity}</li>
+  </ol>
+</nav>
+
+<h2>
+ Create {entity}
+</h2>
+\{#form "create"}
+ {#for field in fields}
+ \{#crud_field name="{field.name}" label="{field.label}"}
+  {#switch field.type}
+   {#case DateTimeLocal}
+    \{#crud_input name="{field.name}" type="datetime-local"/}
+   {#case Checkbox}
+    \{#crud_input name="{field.name}" type="checkbox"/}
+   {#case Relation}
+    \{#crud_select name="{field.name}" values={field.name}PossibleValues nullable=true/}
+   {#case MultiRelation}
+    \{#crud_select name="{field.name}" values={field.name}PossibleValues nullable=true multiple=true/}
+   {#case Enum}
+    \{#crud_select name="{field.name}" values={field.name}PossibleValues/}
+   {#case Number}
+    \{#crud_input name="{field.name}" type="number"/}
+   {#else}
+    \{#crud_input name="{field.name}"/}
+  {/switch}
+ \{/crud_field}
+ {/for}
+ <button class="btn btn-primary">Create</button>
+\{/form}
+
+\{/include}

@@ -156,7 +156,6 @@ public class RenardeProcessor {
             defineUnlessPresent("mp.jwt.token.cookie", "QuarkusUser", config, runtimeConfigurationBuildItem);
         }
         // Apparently, no OIDC capability to check
-        boolean needsTokenCache = false;
         for (String provider : Arrays.asList("facebook", "apple", "github", "microsoft", "google", "twitter")) {
             if ((config.getOptionalValue("quarkus.oidc." + provider + ".provider", String.class).isPresent()
                     || config.getOptionalValue("quarkus.oidc." + provider + ".client-id", String.class).isPresent())
@@ -164,7 +163,6 @@ public class RenardeProcessor {
                             .isPresent()) {
                 String target = "oidc-success";
                 if (provider.equals("github") || provider.equals("twitter")) {
-                    needsTokenCache = true;
                     target = provider + "-success";
                 }
                 runtimeConfigurationBuildItem
@@ -172,20 +170,6 @@ public class RenardeProcessor {
                                 "quarkus.oidc." + provider + ".authentication.redirect-path",
                                 "/_renarde/security/" + target));
             }
-            // still required until we support it officially
-            if (provider.equals("apple")) {
-                defineUnlessPresent("quarkus.oidc.apple.authentication.extra-params.response_mode", "form_post", config,
-                        runtimeConfigurationBuildItem);
-            }
-            // required, not sure if needed unless using ngrok
-            if (provider.equals("facebook") || provider.equals("apple")) {
-                defineUnlessPresent("quarkus.oidc." + provider + ".authentication.force-redirect-https-scheme", "true", config,
-                        runtimeConfigurationBuildItem);
-            }
-
-        }
-        if (needsTokenCache) {
-            defineUnlessPresent("quarkus.oidc.token-cache.max-size", "128", config, runtimeConfigurationBuildItem);
         }
     }
 
