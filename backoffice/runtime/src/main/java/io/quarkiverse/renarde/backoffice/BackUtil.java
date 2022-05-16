@@ -31,8 +31,37 @@ public class BackUtil {
         return value != null && value.equals("on");
     }
 
+    public static byte byteField(String value) {
+        return isSet(value) ? Byte.valueOf(value) : 0;
+    }
+
+    public static short shortField(String value) {
+        return isSet(value) ? Short.valueOf(value) : 0;
+    }
+
+    public static int intField(String value) {
+        return isSet(value) ? Integer.valueOf(value) : 0;
+    }
+
     public static long longField(String value) {
         return isSet(value) ? Long.valueOf(value) : 0;
+    }
+
+    public static float floatField(String value) {
+        return isSet(value) ? Float.valueOf(value) : 0;
+    }
+
+    public static double doubleField(String value) {
+        return isSet(value) ? Double.valueOf(value) : 0;
+    }
+
+    public static char charField(String value) {
+        if (isSet(value)) {
+            if (value.length() != 1)
+                throw new RuntimeException("Invalid character: " + value);
+            return value.charAt(0);
+        }
+        return 0;
     }
 
     public static String stringField(String value) {

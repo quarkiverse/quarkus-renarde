@@ -3,15 +3,27 @@
 {@java.lang.String id}
 {@java.lang.String placeholder}
 {@java.lang.String value}
+{@long min}
+{@long max}
+{@double step}
 <input name="{name}" 
  type="{type ?: 'text'}"
- {#if placeholder??}placeholder="{placeholder}"{/if}
- {#if id??}id="{id}"{/if}
- class="{#if type?? == "checkbox"}form-check{#else}form-control{/if} {#ifError name}is-invalid{/ifError}"
+ {#if min??}
+  {#if type?? == "number"}min{#else}minlength{/if}="{min}"
+ {/if}
+ {#if max??}
+  {#if type?? == "number"}max{#else}maxlength{/if}="{max}"
+ {/if}
+ {#if step??}
+  step="{step}"
+ {/if}
  {#if type?? == "checkbox"}
   {#if inject:flash.get(name) == "on" || value??}checked{/if}
  {#else}
   value="{inject:flash.get(name) ?: value??}"
  {/if}
+ {#if id??}id="{id}"{/if}
+ {#if placeholder??}placeholder="{placeholder}"{/if}
+ class="{#if type?? == "checkbox"}form-check{#else}form-control{/if} {#ifError name}is-invalid{/ifError}"
  />
  

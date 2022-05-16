@@ -47,6 +47,8 @@ public class ModelField {
     public String label;
     public Type type = Type.Text;
     public String relationClass;
+    public long min, max;
+    public double step;
 
     // For processor
     public EntityField entityField;
@@ -59,13 +61,45 @@ public class ModelField {
         ClassInfo classInfo = index.getClassByName(DotName.createSimple(entityClass));
         FieldInfo field = classInfo.field(entityField.name);
         AnnotationInstance oneToOne = field.annotation(DOTNAME_ONETOONE);
-        if (entityField.descriptor.equals("J"))
+        if (entityField.descriptor.equals("B")) {
             this.type = Type.Number;
-        else if (entityField.descriptor.equals("Z"))
+            min = Byte.MIN_VALUE;
+            max = Byte.MAX_VALUE;
+            step = 1;
+        } else if (entityField.descriptor.equals("S")) {
+            this.type = Type.Number;
+            min = Short.MIN_VALUE;
+            max = Short.MAX_VALUE;
+            step = 1;
+        } else if (entityField.descriptor.equals("I")) {
+            this.type = Type.Number;
+            min = Integer.MIN_VALUE;
+            max = Integer.MAX_VALUE;
+            step = 1;
+        } else if (entityField.descriptor.equals("J")) {
+            this.type = Type.Number;
+            min = Long.MIN_VALUE;
+            max = Long.MAX_VALUE;
+            step = 1;
+        } else if (entityField.descriptor.equals("C")) {
+            this.type = Type.Text;
+            min = 1;
+            max = 1;
+        } else if (entityField.descriptor.equals("D")) {
+            this.type = Type.Number;
+            // this allows floats in number fields
+            step = 0.00001;
+        } else if (entityField.descriptor.equals("F")) {
+            this.type = Type.Number;
+            // this allows floats in number fields
+            step = 0.00001;
+        } else if (entityField.descriptor.equals("Z")) {
             this.type = Type.Checkbox;
-        else if (entityField.descriptor.equals("Ljava/util/Date;"))
+        } else if (entityField.descriptor.equals("Ljava/lang/String;")) {
+            this.type = Type.Text;
+        } else if (entityField.descriptor.equals("Ljava/util/Date;")) {
             this.type = Type.DateTimeLocal;
-        else if (field.hasAnnotation(DOTNAME_ENUMERATED)) {
+        } else if (field.hasAnnotation(DOTNAME_ENUMERATED)) {
             this.type = Type.Enum;
         } else if (field.hasAnnotation(DOTNAME_ONETOMANY)) {
             this.type = Type.MultiRelation;

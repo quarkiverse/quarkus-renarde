@@ -28,7 +28,9 @@
    {#case Enum}
     \{#crud_select name="{field.name}" values={field.name}PossibleValues/}
    {#case Number}
-    \{#crud_input name="{field.name}" type="number"/}
+    \{#crud_input name="{field.name}" type="number" {#if field.min}min="{field.min}"{/if} {#if field.max}max="{field.max}"{/if} step="{field.step}"/}
+   {#case Text}
+    \{#crud_input name="{field.name}" type="text" {#if field.min}min="{field.min}"{/if} {#if field.max}max="{field.max}"{/if}/}
    {#else}
     \{#crud_input name="{field.name}"/}
   {/switch}

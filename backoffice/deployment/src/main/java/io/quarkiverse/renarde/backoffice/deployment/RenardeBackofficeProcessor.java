@@ -366,17 +366,51 @@ public class RenardeBackofficeProcessor {
             for (int i = 0; i < fields.size(); i++) {
                 ModelField field = fields.get(i);
                 ResultHandle value = null;
-                if (field.entityField.descriptor.equals("Ljava/lang/String;")) {
-                    value = m.invokeStaticMethod(
-                            MethodDescriptor.ofMethod(BackUtil.class, "stringField", String.class, String.class),
-                            m.getMethodParam(i + offset));
+                if (field.type == Type.Text) {
+                    if (field.entityField.descriptor.equals("Ljava/lang/String;")) {
+                        value = m.invokeStaticMethod(
+                                MethodDescriptor.ofMethod(BackUtil.class, "stringField", String.class, String.class),
+                                m.getMethodParam(i + offset));
+                    } else if (field.entityField.descriptor.equals("C")) {
+                        value = m.invokeStaticMethod(
+                                MethodDescriptor.ofMethod(BackUtil.class, "charField", char.class, String.class),
+                                m.getMethodParam(i + offset));
+                    } else {
+                        throw new RuntimeException(
+                                "Unknown number field " + field + " descriptor: " + field.entityField.descriptor);
+                    }
                 } else if (field.entityField.descriptor.equals("Z")) {
                     value = m.invokeStaticMethod(
                             MethodDescriptor.ofMethod(BackUtil.class, "booleanField", boolean.class, String.class),
                             m.getMethodParam(i + offset));
-                } else if (field.entityField.descriptor.equals("J")) {
+                } else if (field.type == Type.Number) {
+                    Class<?> primitiveClass;
+                    switch (field.entityField.descriptor) {
+                        case "B":
+                            primitiveClass = byte.class;
+                            break;
+                        case "S":
+                            primitiveClass = short.class;
+                            break;
+                        case "I":
+                            primitiveClass = int.class;
+                            break;
+                        case "J":
+                            primitiveClass = long.class;
+                            break;
+                        case "F":
+                            primitiveClass = float.class;
+                            break;
+                        case "D":
+                            primitiveClass = double.class;
+                            break;
+                        default:
+                            throw new RuntimeException(
+                                    "Unknown number field " + field + " descriptor: " + field.entityField.descriptor);
+                    }
                     value = m.invokeStaticMethod(
-                            MethodDescriptor.ofMethod(BackUtil.class, "longField", long.class, String.class),
+                            MethodDescriptor.ofMethod(BackUtil.class, primitiveClass.getName() + "Field", primitiveClass,
+                                    String.class),
                             m.getMethodParam(i + offset));
                 } else if (field.entityField.descriptor.equals("Ljava/util/Date;")) {
                     value = m.invokeStaticMethod(
