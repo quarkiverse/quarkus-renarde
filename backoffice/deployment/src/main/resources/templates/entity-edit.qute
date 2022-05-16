@@ -22,7 +22,7 @@
   {#switch field.type}
    {#case DateTimeLocal}
     \{#crud_input name="{field.name}" type="datetime-local" value=entity.{field.name}.htmlNormalised??/}
-   {#case CheckBox}
+   {#case Checkbox}
     \{#crud_input name="{field.name}" type="checkbox" value=entity.{field.name}/}
    {#case Relation}
     \{#crud_select name="{field.name}" value=entity.{field.name}.id.toString() values={field.name}PossibleValues nullable=true/}
