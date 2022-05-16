@@ -166,9 +166,10 @@ public class RenardeBackofficeProcessor {
         // TODO: hand it off to RenardeProcessor to generate annotations and uri methods
         // TODO: generate templateinstance native build item or what?
         // TODO: authenticated
+        String controllerClass = PACKAGE_PREFIX + "." + simpleName + "Controller";
         try (ClassCreator c = ClassCreator.builder()
                 .classOutput(new GeneratedJaxRsResourceGizmoAdaptor(jaxrsOutput)).className(
-                        PACKAGE_PREFIX + "." + simpleName + "Controller")
+                        controllerClass)
                 .superClass(Controller.class).build()) {
             c.addAnnotation(Blocking.class.getName());
             c.addAnnotation(RequestScoped.class.getName());
@@ -195,18 +196,18 @@ public class RenardeBackofficeProcessor {
             }
 
             try (MethodCreator m = c.getMethodCreator("edit", TemplateInstance.class, Long.class)) {
-                editOrCreateView(m, entityClass, simpleName, fields, Mode.EDIT);
+                editOrCreateView(m, controllerClass, entityClass, simpleName, fields, Mode.EDIT);
             }
 
-            editOrCreateAction(c, entityClass, simpleName, fields, Mode.EDIT);
+            editOrCreateAction(c, controllerClass, entityClass, simpleName, fields, Mode.EDIT);
 
             try (MethodCreator m = c.getMethodCreator("create", TemplateInstance.class)) {
-                editOrCreateView(m, entityClass, simpleName, fields, Mode.CREATE);
+                editOrCreateView(m, controllerClass, entityClass, simpleName, fields, Mode.CREATE);
             }
 
-            editOrCreateAction(c, entityClass, simpleName, fields, Mode.CREATE);
+            editOrCreateAction(c, controllerClass, entityClass, simpleName, fields, Mode.CREATE);
 
-            deleteAction(c, entityClass, simpleName);
+            deleteAction(c, controllerClass, entityClass, simpleName);
         }
     }
 
@@ -221,14 +222,14 @@ public class RenardeBackofficeProcessor {
     //        //index();
     //        seeOther("/_renarde/backoffice/index");
     //    }
-    private void deleteAction(ClassCreator c, String entityClass, String simpleName) {
+    private void deleteAction(ClassCreator c, String controllerClass, String entityClass, String simpleName) {
         try (MethodCreator m = c.getMethodCreator("delete", void.class, Long.class)) {
             m.getParameterAnnotations(0).addAnnotation(RestPath.class).addValue("value", "id");
             m.addAnnotation(Path.class).addValue("value", "delete/{id}");
             m.addAnnotation(POST.class);
             m.addAnnotation(Transactional.class);
 
-            AssignableResultHandle variable = findEntityById(m, entityClass);
+            AssignableResultHandle variable = findEntityById(m, controllerClass, entityClass);
             m.invokeVirtualMethod(MethodDescriptor.ofMethod(entityClass, "delete", void.class), variable);
             ResultHandle message = m.newInstance(MethodDescriptor.ofConstructor(StringBuilder.class, String.class),
                     m.load("Deleted: "));
@@ -238,10 +239,11 @@ public class RenardeBackofficeProcessor {
             message = m.invokeVirtualMethod(MethodDescriptor.ofMethod(StringBuilder.class, "toString", String.class),
                     message);
             m.invokeVirtualMethod(
-                    MethodDescriptor.ofMethod(Controller.class, "flash", void.class, String.class, Object.class),
+                    MethodDescriptor.ofMethod(controllerClass, "flash", void.class, String.class, Object.class),
                     m.getThis(), m.load("message"), message);
-            m.invokeVirtualMethod(MethodDescriptor.ofMethod(Controller.class, "seeOther", Response.class, String.class),
+            m.invokeVirtualMethod(MethodDescriptor.ofMethod(controllerClass, "seeOther", Response.class, String.class),
                     m.getThis(), m.load(URI_PREFIX + "/" + simpleName + "/index"));
+            m.returnValue(null);
         }
     }
 
@@ -289,7 +291,8 @@ public class RenardeBackofficeProcessor {
     //   // create();
     //   seeOther("/_renarde/backoffice/create");
     // }
-    private void editOrCreateAction(ClassCreator c, String entityClass, String simpleName, List<ModelField> fields, Mode mode) {
+    private void editOrCreateAction(ClassCreator c, String controllerClass, String entityClass, String simpleName,
+            List<ModelField> fields, Mode mode) {
         Class[] editParams;
         int offset = 0;
         StringBuilder signature = new StringBuilder("(");
@@ -347,18 +350,18 @@ public class RenardeBackofficeProcessor {
             }
 
             BranchResult validation = m.ifTrue(m.invokeVirtualMethod(
-                    MethodDescriptor.ofMethod(Controller.class, "validationFailed", boolean.class), m.getThis()));
+                    MethodDescriptor.ofMethod(controllerClass, "validationFailed", boolean.class), m.getThis()));
             try (BytecodeCreator tb = validation.trueBranch()) {
-                redirectToAction(tb, uriTarget, simpleName, mode);
+                redirectToAction(tb, controllerClass, uriTarget, simpleName, mode);
             }
 
             AssignableResultHandle variable;
             if (mode == Mode.EDIT) {
-                variable = findEntityById(m, entityClass);
+                variable = findEntityById(m, controllerClass, entityClass);
             } else {
                 String entityTypeDescriptor = "L" + entityClass.replace('.', '/') + ";";
                 variable = m.createVariable(entityTypeDescriptor);
-                m.assign(variable, m.newInstance(MethodDescriptor.ofConstructor(entityTypeDescriptor)));
+                m.assign(variable, m.newInstance(MethodDescriptor.ofConstructor(entityClass)));
             }
             for (int i = 0; i < fields.size(); i++) {
                 ModelField field = fields.get(i);
@@ -382,7 +385,7 @@ public class RenardeBackofficeProcessor {
                 } else if (field.type == ModelField.Type.Enum) {
                     value = m.invokeStaticMethod(
                             MethodDescriptor.ofMethod(BackUtil.class, "enumField", Enum.class, Class.class, String.class),
-                            m.loadClass(field.entityField.descriptor),
+                            m.loadClass(field.getClassName()),
                             m.getMethodParam(i + offset));
                     value = m.checkCast(value, field.entityField.descriptor);
                 } else if (field.type == ModelField.Type.MultiRelation) {
@@ -513,14 +516,15 @@ public class RenardeBackofficeProcessor {
             message = m.invokeVirtualMethod(MethodDescriptor.ofMethod(StringBuilder.class, "toString", String.class),
                     message);
             m.invokeVirtualMethod(
-                    MethodDescriptor.ofMethod(Controller.class, "flash", void.class, String.class, Object.class),
+                    MethodDescriptor.ofMethod(controllerClass, "flash", void.class, String.class, Object.class),
                     m.getThis(), m.load("message"), message);
             // final redirect
-            redirectToAction(m, uriTarget, simpleName, mode);
+            redirectToAction(m, controllerClass, uriTarget, simpleName, mode);
+            m.returnValue(null);
         }
     }
 
-    private void redirectToAction(BytecodeCreator m, String uriTarget, String simpleName, Mode mode) {
+    private void redirectToAction(BytecodeCreator m, String controllerClass, String uriTarget, String simpleName, Mode mode) {
         ResultHandle uri = m.newInstance(MethodDescriptor.ofConstructor(StringBuilder.class, String.class),
                 m.load(uriTarget));
         if (mode == Mode.EDIT) {
@@ -529,7 +533,7 @@ public class RenardeBackofficeProcessor {
                     m.getMethodParam(0));
         }
         uri = m.invokeVirtualMethod(MethodDescriptor.ofMethod(StringBuilder.class, "toString", String.class), uri);
-        m.invokeVirtualMethod(MethodDescriptor.ofMethod(Controller.class, "seeOther", Response.class, String.class),
+        m.invokeVirtualMethod(MethodDescriptor.ofMethod(controllerClass, "seeOther", Response.class, String.class),
                 m.getThis(), uri);
     }
 
@@ -548,7 +552,8 @@ public class RenardeBackofficeProcessor {
     // public TemplateInstance create() {
     //   return Templates.create(BackUtil.entityValues(User.listAll()));
     // }
-    private void editOrCreateView(MethodCreator m, String entityClass, String simpleName, List<ModelField> fields, Mode mode) {
+    private void editOrCreateView(MethodCreator m, String controllerClass, String entityClass, String simpleName,
+            List<ModelField> fields, Mode mode) {
         if (mode == Mode.EDIT) {
             m.getParameterAnnotations(0).addAnnotation(RestPath.class).addValue("value", "id");
             m.addAnnotation(Path.class).addValue("value", "edit/{id}");
@@ -562,7 +567,7 @@ public class RenardeBackofficeProcessor {
                 URI_PREFIX + "/" + simpleName + "/" + (mode == Mode.CREATE ? "create" : "edit"));
         AssignableResultHandle entityVariable = null;
         if (mode == Mode.EDIT) {
-            entityVariable = findEntityById(m, entityClass);
+            entityVariable = findEntityById(m, controllerClass, entityClass);
 
             instance = m.invokeInterfaceMethod(
                     MethodDescriptor.ofMethod(TemplateInstance.class, "data", TemplateInstance.class, String.class,
@@ -580,7 +585,7 @@ public class RenardeBackofficeProcessor {
             } else if (field.type == ModelField.Type.Enum) {
                 ResultHandle list = m
                         .invokeStaticMethod(
-                                MethodDescriptor.ofMethod(field.entityField.descriptor, "values",
+                                MethodDescriptor.ofMethod(field.getClassName(), "values",
                                         "[" + field.entityField.descriptor));
                 data = m.invokeStaticMethod(
                         MethodDescriptor.ofMethod(BackUtil.class, "enumPossibleValues", Map.class, Enum[].class), list);
@@ -608,7 +613,7 @@ public class RenardeBackofficeProcessor {
         m.returnValue(instance);
     }
 
-    private AssignableResultHandle findEntityById(MethodCreator m, String entityClass) {
+    private AssignableResultHandle findEntityById(MethodCreator m, String controllerClass, String entityClass) {
         ResultHandle entity = m.invokeStaticMethod(
                 MethodDescriptor.ofMethod(entityClass, "findById", PanacheEntityBase.class, Object.class),
                 m.getMethodParam(0));
@@ -616,7 +621,7 @@ public class RenardeBackofficeProcessor {
         AssignableResultHandle variable = m.createVariable(entityTypeDescriptor);
         m.assign(variable, m.checkCast(entity, entityTypeDescriptor));
 
-        m.invokeVirtualMethod(MethodDescriptor.ofMethod(Controller.class, "notFoundIfNull", void.class, Object.class),
+        m.invokeVirtualMethod(MethodDescriptor.ofMethod(controllerClass, "notFoundIfNull", void.class, Object.class),
                 m.getThis(), variable);
         return variable;
     }

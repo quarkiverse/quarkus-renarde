@@ -100,4 +100,8 @@ public class ModelField {
         }
         this.entityField = entityField;
     }
+
+    public String getClassName() {
+        return entityField.descriptor.substring(1, entityField.descriptor.length() - 1).replace('/', '.');
+    }
 }
