@@ -14,8 +14,21 @@
       <artifactId>quarkus-resteasy-reactive</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-hibernate-orm-panache</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-jdbc-h2</artifactId>
+    </dependency>
+    <dependency>
       <groupId>io.quarkiverse.renarde</groupId>
       <artifactId>quarkus-renarde</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkiverse.renarde</groupId>
+      <artifactId>quarkus-renarde-backoffice</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
