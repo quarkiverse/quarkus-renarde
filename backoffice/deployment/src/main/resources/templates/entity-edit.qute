@@ -18,10 +18,14 @@
 </h2>
 \{#form entity.id.toString()}
  {#for field in fields}
- \{#crud_field name="{field.name}" label="{field.label}"}
+ \{#crud_field name="{field.name}" label="{field.label}" help="{field.help}"}
   {#switch field.type}
    {#case DateTimeLocal}
     \{#crud_input name="{field.name}" type="datetime-local" value=entity.{field.name}.htmlNormalised??/}
+   {#case Date}
+    \{#crud_input name="{field.name}" type="date" value=entity.{field.name}.htmlNormalised??/}
+   {#case Time}
+    \{#crud_input name="{field.name}" type="time" value=entity.{field.name}.htmlNormalised??/}
    {#case Checkbox}
     \{#crud_input name="{field.name}" type="checkbox" value=entity.{field.name}/}
    {#case Relation}
@@ -29,7 +33,7 @@
    {#case MultiRelation}
     \{#crud_select name="{field.name}" value={field.name}CurrentValues values={field.name}PossibleValues nullable=true multiple=true/}
    {#case Enum}
-    \{#crud_select name="{field.name}" value=entity.{field.name}.name() values={field.name}PossibleValues/}
+    \{#crud_select name="{field.name}" value=entity.{field.name}.name()?? values={field.name}PossibleValues nullable=true/}
    {#case Number}
     \{#crud_input name="{field.name}" value=entity.{field.name} type="number" {#if field.min}min="{field.min}"{/if} {#if field.max}max="{field.max}"{/if} step="{field.step}"/}
    {#case Text}

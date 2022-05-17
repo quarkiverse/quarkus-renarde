@@ -5,9 +5,12 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.Period;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 import io.quarkus.arc.Arc;
@@ -15,6 +18,16 @@ import io.quarkus.qute.TemplateExtension;
 
 @TemplateExtension
 public class JavaExtensions {
+
+    public static final String HTML_NORMALISED_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS";
+    public static final String HTML_NORMALISED_WITHOUT_SECONDS_FORMAT = "yyyy-MM-dd'T'HH:mm";
+    public static final DateTimeFormatter HTML_NORMALISED = DateTimeFormatter
+            .ofPattern(HTML_NORMALISED_FORMAT);
+    public static final DateTimeFormatter HTML_NORMALISED_WITHOUT_SECONDS = DateTimeFormatter
+            .ofPattern(HTML_NORMALISED_WITHOUT_SECONDS_FORMAT);
+    public static final DateTimeFormatter HTML_DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    public static final DateTimeFormatter HTML_TIME = DateTimeFormatter.ofPattern("HH:mm:ss");
+    public static final DateTimeFormatter HTML_TIME_WITHOUT_SECONDS = DateTimeFormatter.ofPattern("HH:mm");
 
     public static String prepend(String string, Object value) {
         return value + string;
@@ -25,7 +38,19 @@ public class JavaExtensions {
     }
 
     public static String htmlNormalised(Date date) {
-        return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(date);
+        return new SimpleDateFormat(HTML_NORMALISED_FORMAT).format(date);
+    }
+
+    public static String htmlNormalised(LocalDateTime date) {
+        return date.format(HTML_NORMALISED);
+    }
+
+    public static String htmlNormalised(LocalDate date) {
+        return date.format(HTML_DATE);
+    }
+
+    public static String htmlNormalised(LocalTime date) {
+        return date.format(HTML_TIME);
     }
 
     public static String format(Date date) {

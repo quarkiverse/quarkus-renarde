@@ -15,10 +15,14 @@
 </h2>
 \{#form "create"}
  {#for field in fields}
- \{#crud_field name="{field.name}" label="{field.label}"}
+ \{#crud_field name="{field.name}" label="{field.label}" help="{field.help}"}
   {#switch field.type}
    {#case DateTimeLocal}
     \{#crud_input name="{field.name}" type="datetime-local"/}
+   {#case Date}
+    \{#crud_input name="{field.name}" type="date"/}
+   {#case Time}
+    \{#crud_input name="{field.name}" type="time"/}
    {#case Checkbox}
     \{#crud_input name="{field.name}" type="checkbox"/}
    {#case Relation}
@@ -26,7 +30,7 @@
    {#case MultiRelation}
     \{#crud_select name="{field.name}" values={field.name}PossibleValues nullable=true multiple=true/}
    {#case Enum}
-    \{#crud_select name="{field.name}" values={field.name}PossibleValues/}
+    \{#crud_select name="{field.name}" values={field.name}PossibleValues nullable=true/}
    {#case Number}
     \{#crud_input name="{field.name}" type="number" {#if field.min}min="{field.min}"{/if} {#if field.max}max="{field.max}"{/if} step="{field.step}"/}
    {#case Text}

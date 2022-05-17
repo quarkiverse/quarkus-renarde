@@ -1,3 +1,44 @@
-Something
-
-{#insert /}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>{#insert title /}</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" media="screen" href="/webjars/bootstrap/css/bootstrap.min.css">
+        <link rel="stylesheet" media="screen" href="/webjars/bootstrap-icons/font/bootstrap-icons.css">
+        <link rel="stylesheet" media="screen" href="/stylesheets/main.css">
+        {#insert moreStyles /}
+        <link rel="shortcut icon" type="image/png" href="/webjars/bootstrap-icons/icons/check2-square.svg">
+        <script src="/webjars/bootstrap/js/bootstrap.min.js" type="text/javascript" charset="UTF-8"></script>
+        <script src="/javascripts/main.js" type="text/javascript" charset="UTF-8"></script>
+        {#insert moreScripts /}
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+          <div class="container-fluid">
+            <a class="navbar-brand" href="/">Integration test</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+              <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              </ul>
+            </div>
+          </div>
+        </nav>
+        <main class="container">
+            {#if flash:message}
+                <div class="alert alert-{flash:messageType ?: 'success'}">
+                    {flash:message}
+                </div>
+            {/if}
+            {#insert /}
+        </main>
+        <div class="container-fluid fixed-bottom">
+		    <footer>
+		    	<hr />
+		    	&copy; FroMage 2013-2022 <i class="bi-heart-fill"></i>
+		    </footer>
+	    </div>
+    </body>
+</html>

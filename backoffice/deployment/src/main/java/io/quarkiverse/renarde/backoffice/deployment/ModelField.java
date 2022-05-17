@@ -30,6 +30,8 @@ public class ModelField {
         Number,
         Checkbox,
         DateTimeLocal,
+        Date,
+        Time,
         Enum,
         Relation,
         MultiRelation,
@@ -49,6 +51,7 @@ public class ModelField {
     public String relationClass;
     public long min, max;
     public double step;
+    public String help;
 
     // For processor
     public EntityField entityField;
@@ -97,8 +100,13 @@ public class ModelField {
             this.type = Type.Checkbox;
         } else if (entityField.descriptor.equals("Ljava/lang/String;")) {
             this.type = Type.Text;
-        } else if (entityField.descriptor.equals("Ljava/util/Date;")) {
+        } else if (entityField.descriptor.equals("Ljava/util/Date;")
+                || entityField.descriptor.equals("Ljava/time/LocalDateTime;")) {
             this.type = Type.DateTimeLocal;
+        } else if (entityField.descriptor.equals("Ljava/time/LocalDate;")) {
+            this.type = Type.Date;
+        } else if (entityField.descriptor.equals("Ljava/time/LocalTime;")) {
+            this.type = Type.Time;
         } else if (field.hasAnnotation(DOTNAME_ENUMERATED)) {
             this.type = Type.Enum;
         } else if (field.hasAnnotation(DOTNAME_ONETOMANY)) {
@@ -131,6 +139,7 @@ public class ModelField {
         AnnotationInstance column = field.annotation(DOTNAME_COLUMN);
         if (column != null && column.value("nullable") != null && !column.value("nullable").asBoolean()) {
             validation.add(NotEmpty.class);
+            help = "This field is required";
         }
         this.entityField = entityField;
     }

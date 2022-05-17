@@ -1,7 +1,11 @@
 package model;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Date;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Enumerated;
 
@@ -21,4 +25,9 @@ public class ExampleEntity extends PanacheEntity {
     @Enumerated
     public ExampleEnum enumeration;
     public Date date;
+    public LocalDate localDate;
+    // seems like a reserved word
+    @Column(name = "somethingLocalTime")
+    public LocalTime localTime;
+    public LocalDateTime localDateTime;
 }

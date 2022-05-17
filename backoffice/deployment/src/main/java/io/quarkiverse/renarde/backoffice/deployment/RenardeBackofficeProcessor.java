@@ -5,6 +5,9 @@ import java.io.Reader;
 import java.lang.annotation.Annotation;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -377,7 +380,7 @@ public class RenardeBackofficeProcessor {
                                 m.getMethodParam(i + offset));
                     } else {
                         throw new RuntimeException(
-                                "Unknown number field " + field + " descriptor: " + field.entityField.descriptor);
+                                "Unknown text field " + field + " descriptor: " + field.entityField.descriptor);
                     }
                 } else if (field.entityField.descriptor.equals("Z")) {
                     value = m.invokeStaticMethod(
@@ -415,6 +418,18 @@ public class RenardeBackofficeProcessor {
                 } else if (field.entityField.descriptor.equals("Ljava/util/Date;")) {
                     value = m.invokeStaticMethod(
                             MethodDescriptor.ofMethod(BackUtil.class, "dateField", Date.class, String.class),
+                            m.getMethodParam(i + offset));
+                } else if (field.entityField.descriptor.equals("Ljava/time/LocalDateTime;")) {
+                    value = m.invokeStaticMethod(
+                            MethodDescriptor.ofMethod(BackUtil.class, "localDateTimeField", LocalDateTime.class, String.class),
+                            m.getMethodParam(i + offset));
+                } else if (field.entityField.descriptor.equals("Ljava/time/LocalDate;")) {
+                    value = m.invokeStaticMethod(
+                            MethodDescriptor.ofMethod(BackUtil.class, "localDateField", LocalDate.class, String.class),
+                            m.getMethodParam(i + offset));
+                } else if (field.entityField.descriptor.equals("Ljava/time/LocalTime;")) {
+                    value = m.invokeStaticMethod(
+                            MethodDescriptor.ofMethod(BackUtil.class, "localTimeField", LocalTime.class, String.class),
                             m.getMethodParam(i + offset));
                 } else if (field.type == ModelField.Type.Enum) {
                     value = m.invokeStaticMethod(

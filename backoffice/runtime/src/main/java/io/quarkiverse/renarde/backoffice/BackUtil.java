@@ -2,12 +2,17 @@ package io.quarkiverse.renarde.backoffice;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import io.quarkiverse.renarde.util.JavaExtensions;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 
 public class BackUtil {
@@ -17,13 +22,41 @@ public class BackUtil {
             return null;
         // seconds part is optional
         try {
-            return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").parse(value);
+            return new SimpleDateFormat(JavaExtensions.HTML_NORMALISED_FORMAT).parse(value);
         } catch (ParseException e) {
             try {
-                return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm").parse(value);
+                return new SimpleDateFormat(JavaExtensions.HTML_NORMALISED_WITHOUT_SECONDS_FORMAT).parse(value);
             } catch (ParseException e1) {
                 throw new RuntimeException(e1);
             }
+        }
+    }
+
+    public static LocalDateTime localDateTimeField(String value) {
+        if (!isSet(value))
+            return null;
+        // seconds part is optional
+        try {
+            return LocalDateTime.parse(value, JavaExtensions.HTML_NORMALISED);
+        } catch (DateTimeParseException e) {
+            return LocalDateTime.parse(value, JavaExtensions.HTML_NORMALISED_WITHOUT_SECONDS);
+        }
+    }
+
+    public static LocalDate localDateField(String value) {
+        if (!isSet(value))
+            return null;
+        return LocalDate.parse(value, JavaExtensions.HTML_DATE);
+    }
+
+    public static LocalTime localTimeField(String value) {
+        if (!isSet(value))
+            return null;
+        // seconds part is optional
+        try {
+            return LocalTime.parse(value, JavaExtensions.HTML_TIME);
+        } catch (DateTimeParseException e) {
+            return LocalTime.parse(value, JavaExtensions.HTML_TIME_WITHOUT_SECONDS);
         }
     }
 
