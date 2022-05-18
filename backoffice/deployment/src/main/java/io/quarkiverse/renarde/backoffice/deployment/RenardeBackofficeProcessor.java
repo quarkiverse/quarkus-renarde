@@ -534,7 +534,7 @@ public class RenardeBackofficeProcessor {
                                 MethodDescriptor.ofMethod(Long.class, "valueOf", Long.class, String.class),
                                 tb.getMethodParam(i + offset));
                         value = tb.invokeStaticMethod(
-                                MethodDescriptor.ofMethod(field.entityField.descriptor, "findById", PanacheEntityBase.class,
+                                MethodDescriptor.ofMethod(field.getClassName(), "findById", PanacheEntityBase.class,
                                         Object.class),
                                 value);
                         value = tb.checkCast(value, field.entityField.descriptor);

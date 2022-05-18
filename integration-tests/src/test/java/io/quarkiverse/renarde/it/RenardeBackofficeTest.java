@@ -7,7 +7,9 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
@@ -21,6 +23,8 @@ import io.quarkus.hibernate.orm.panache.Panache;
 import io.quarkus.test.junit.QuarkusTest;
 import model.ExampleEntity;
 import model.ExampleEnum;
+import model.OneToOneNotOwningEntity;
+import model.OneToOneOwningEntity;
 
 @QuarkusTest
 public class RenardeBackofficeTest {
@@ -29,6 +33,14 @@ public class RenardeBackofficeTest {
     @BeforeEach
     public void before() {
         ExampleEntity.deleteAll();
+        OneToOneOwningEntity.deleteAll();
+        OneToOneNotOwningEntity.deleteAll();
+        
+        new OneToOneOwningEntity().persist();
+        new OneToOneOwningEntity().persist();
+
+        new OneToOneNotOwningEntity().persist();
+        new OneToOneNotOwningEntity().persist();
     }
 
     @Test
@@ -52,6 +64,7 @@ public class RenardeBackofficeTest {
     @Test
     public void testBackofficeExampleEntityCreate() {
         Assertions.assertEquals(0, ExampleEntity.count());
+        List<Long> oneToOneIds = OneToOneNotOwningEntity.<OneToOneNotOwningEntity>streamAll().map(entity -> entity.id).collect(Collectors.toList());
 
         given()
                 .when().get("/_renarde/backoffice/ExampleEntity/create")
@@ -83,7 +96,14 @@ public class RenardeBackofficeTest {
                 .body(Matchers.matchesRegex(
                         Pattern.compile(".*<input name=\"localDateTime\"\\s+type=\"datetime-local\".*", Pattern.DOTALL)))
                 .body(Matchers.matchesRegex(Pattern.compile(".*<input name=\"localDate\"\\s+type=\"date\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<input name=\"localTime\"\\s+type=\"time\".*", Pattern.DOTALL)));
+                .body(Matchers.matchesRegex(Pattern.compile(".*<input name=\"localTime\"\\s+type=\"time\".*", Pattern.DOTALL)))
+
+                .body(Matchers.matchesRegex(Pattern.compile(".*<select.*name=\"oneToOneOwning\".*", Pattern.DOTALL)))
+                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\""+oneToOneIds.get(0)+"\">OneToOneNotOwningEntity&lt;"+oneToOneIds.get(0)+"&gt;<.*", Pattern.DOTALL)))
+                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\""+oneToOneIds.get(1)+"\">OneToOneNotOwningEntity&lt;"+oneToOneIds.get(1)+"&gt;<.*", Pattern.DOTALL)))
+
+                .body(Matchers
+                        .not(Matchers.matchesRegex(Pattern.compile(".*<select.*name=\"oneToOneNotOwning\".*", Pattern.DOTALL))));
 
         LocalDateTime localDateTime = LocalDateTime.of(1997, 12, 23, 14, 25, 45);
         Instant instant = localDateTime.atZone(ZoneId.systemDefault()).toInstant();
@@ -105,6 +125,7 @@ public class RenardeBackofficeTest {
                 .formParam("localDateTime", JavaExtensions.htmlNormalised(localDateTime))
                 .formParam("localDate", JavaExtensions.htmlNormalised(localDateTime.toLocalDate()))
                 .formParam("localTime", JavaExtensions.htmlNormalised(localDateTime.toLocalTime()))
+                .formParam("oneToOneOwning", oneToOneIds.get(0))
                 .redirects().follow(false)
                 .post("/_renarde/backoffice/ExampleEntity/create")
                 .then()
@@ -128,6 +149,9 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(localDateTime.toLocalTime(), entity.localTime);
         Assertions.assertEquals("aString", entity.string);
         Assertions.assertEquals(ExampleEnum.B, entity.enumeration);
+        Assertions.assertNotNull(entity.oneToOneOwning);
+        Assertions.assertEquals(oneToOneIds.get(0), entity.oneToOneOwning.id);
+        Assertions.assertNull(entity.oneToOneNotOwning);
     }
 
     @Test
@@ -166,6 +190,7 @@ public class RenardeBackofficeTest {
         LocalDateTime localDateTime = LocalDateTime.of(1997, 12, 23, 14, 25, 45);
         Instant instant = localDateTime.atZone(ZoneId.systemDefault()).toInstant();
         Date date = Date.from(instant);
+        List<OneToOneNotOwningEntity> oneToOnes = OneToOneNotOwningEntity.listAll();
 
         ExampleEntity entity = new ExampleEntity();
         entity.primitiveBoolean = true;
@@ -182,6 +207,7 @@ public class RenardeBackofficeTest {
         entity.localDate = localDateTime.toLocalDate();
         entity.localTime = localDateTime.toLocalTime();
         entity.enumeration = ExampleEnum.B;
+        entity.oneToOneOwning = oneToOnes.get(0);
         ExampleEntity damnit = entity;
         transact(() -> damnit.persist());
 
@@ -236,7 +262,15 @@ public class RenardeBackofficeTest {
                 .body(Matchers.matchesRegex(Pattern.compile(".*<input name=\"localDate\"\\s+type=\"date\"[^/]+value=\""
                         + JavaExtensions.htmlNormalised(localDateTime.toLocalDate()) + "\".*", Pattern.DOTALL)))
                 .body(Matchers.matchesRegex(Pattern.compile(".*<input name=\"localTime\"\\s+type=\"time\"[^/]+value=\""
-                        + JavaExtensions.htmlNormalised(localDateTime.toLocalTime()) + "\".*", Pattern.DOTALL)));
+                        + JavaExtensions.htmlNormalised(localDateTime.toLocalTime()) + "\".*", Pattern.DOTALL)))
+
+                .body(Matchers.matchesRegex(Pattern.compile(".*<select.*name=\"oneToOneOwning\".*", Pattern.DOTALL)))
+                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\""+oneToOnes.get(0).id+"\">OneToOneNotOwningEntity&lt;"+oneToOnes.get(0).id+"&gt;<.*", Pattern.DOTALL)))
+                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\""+oneToOnes.get(1).id+"\">OneToOneNotOwningEntity&lt;"+oneToOnes.get(1).id+"&gt;<.*", Pattern.DOTALL)))
+
+                .body(Matchers
+                        .not(Matchers.matchesRegex(Pattern.compile(".*<select.*name=\"oneToOneNotOwning\".*", Pattern.DOTALL))));
+
 
         LocalDateTime otherLocalDateTime = LocalDateTime.of(1996, 11, 22, 13, 24, 44);
         Instant otherInstant = otherLocalDateTime.atZone(ZoneId.systemDefault()).toInstant();
@@ -259,6 +293,7 @@ public class RenardeBackofficeTest {
                 .formParam("localDateTime", JavaExtensions.htmlNormalised(otherLocalDateTime))
                 .formParam("localDate", JavaExtensions.htmlNormalised(otherLocalDateTime.toLocalDate()))
                 .formParam("localTime", JavaExtensions.htmlNormalised(otherLocalDateTime.toLocalTime()))
+                .formParam("oneToOneOwning", oneToOnes.get(1).id)
                 .redirects().follow(false)
                 .post("/_renarde/backoffice/ExampleEntity/edit/" + entity.id)
                 .then()
@@ -283,6 +318,8 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(otherLocalDateTime.toLocalTime(), entity.localTime);
         Assertions.assertEquals("otherString", entity.string);
         Assertions.assertEquals(ExampleEnum.A, entity.enumeration);
+        Assertions.assertEquals(oneToOnes.get(1).id, entity.oneToOneOwning.id);
+        Assertions.assertNull(entity.oneToOneNotOwning);
     }
 
     @Test
