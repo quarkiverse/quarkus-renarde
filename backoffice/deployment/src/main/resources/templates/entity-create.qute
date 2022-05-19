@@ -29,6 +29,8 @@
     \{#crud_select name="{field.name}" values={field.name}PossibleValues nullable=true/}
    {#case MultiRelation}
     \{#crud_select name="{field.name}" values={field.name}PossibleValues nullable=true multiple=true/}
+   {#case MultiMultiRelation}
+    \{#crud_select name="{field.name}" values={field.name}PossibleValues nullable=true multiple=true/}
    {#case Enum}
     \{#crud_select name="{field.name}" values={field.name}PossibleValues nullable=true/}
    {#case Number}

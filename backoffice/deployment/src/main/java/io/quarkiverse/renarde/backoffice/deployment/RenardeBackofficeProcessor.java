@@ -308,7 +308,8 @@ public class RenardeBackofficeProcessor {
             editParams = new Class[fields.size()];
         }
         for (int i = 0; i < fields.size(); i++) {
-            if (fields.get(i).type == ModelField.Type.MultiRelation) {
+            if (fields.get(i).type == ModelField.Type.MultiRelation
+                    || fields.get(i).type == ModelField.Type.MultiMultiRelation) {
                 editParams[i + offset] = List.class;
                 signature.append("Ljava/util/List<Ljava/lang/String;>;");
             } else {
@@ -358,13 +359,13 @@ public class RenardeBackofficeProcessor {
                 redirectToAction(tb, controllerClass, uriTarget, simpleName, mode);
             }
 
-            AssignableResultHandle variable;
+            AssignableResultHandle entityVariable;
             if (mode == Mode.EDIT) {
-                variable = findEntityById(m, controllerClass, entityClass);
+                entityVariable = findEntityById(m, controllerClass, entityClass);
             } else {
                 String entityTypeDescriptor = "L" + entityClass.replace('.', '/') + ";";
-                variable = m.createVariable(entityTypeDescriptor);
-                m.assign(variable, m.newInstance(MethodDescriptor.ofConstructor(entityClass)));
+                entityVariable = m.createVariable(entityTypeDescriptor);
+                m.assign(entityVariable, m.newInstance(MethodDescriptor.ofConstructor(entityClass)));
             }
             for (int i = 0; i < fields.size(); i++) {
                 ModelField field = fields.get(i);
@@ -437,19 +438,21 @@ public class RenardeBackofficeProcessor {
                             m.loadClass(field.getClassName()),
                             m.getMethodParam(i + offset));
                     value = m.checkCast(value, field.entityField.descriptor);
-                } else if (field.type == ModelField.Type.MultiRelation) {
+                } else if (field.type == ModelField.Type.MultiRelation
+                        || field.type == ModelField.Type.MultiMultiRelation) {
                     // This one does not set the value, and does not go via the setter below, it calls the setter itself
                     AssignableResultHandle iterator = m.createVariable(Iterator.class);
                     if (mode == Mode.EDIT) {
                         // // clear previous list
                         // Iterator it = entity.relation.iterator();
                         // while (it.hasNext()) {
-                        //     ((RelationType)it.next()).owningField = null;
+                        //     @OneToMany: ((RelationType)it.next()).owningField = null;
+                        //     @ManyToMany: ((RelationType)it.next()).owningField.remove(entity);
                         // }
                         ResultHandle relation = m.invokeVirtualMethod(
                                 MethodDescriptor.ofMethod(entityClass, field.entityField.getGetterName(),
                                         field.entityField.descriptor),
-                                variable);
+                                entityVariable);
                         m.assign(iterator, m.invokeInterfaceMethod(
                                 MethodDescriptor.ofMethod(Iterable.class, "iterator", Iterator.class), relation));
                         try (BytecodeCreator loop = m
@@ -461,23 +464,33 @@ public class RenardeBackofficeProcessor {
                                             iterator),
                                     field.relationClass);
                             EntityField inverseField = field.inverseField;
-                            loop.invokeVirtualMethod(
-                                    MethodDescriptor.ofMethod(field.relationClass, inverseField.getSetterName(), void.class,
-                                            inverseField.descriptor),
-                                    next, loop.loadNull());
+                            if (field.type == ModelField.Type.MultiMultiRelation) {
+                                ResultHandle inverseRelation = loop.invokeVirtualMethod(
+                                        MethodDescriptor.ofMethod(field.relationClass, inverseField.getGetterName(),
+                                                inverseField.descriptor),
+                                        next);
+                                loop.invokeInterfaceMethod(
+                                        MethodDescriptor.ofMethod(List.class, "remove", boolean.class, Object.class),
+                                        inverseRelation, entityVariable);
+                            } else {
+                                loop.invokeVirtualMethod(
+                                        MethodDescriptor.ofMethod(field.relationClass, inverseField.getSetterName(), void.class,
+                                                inverseField.descriptor),
+                                        next, loop.loadNull());
+                            }
                         }
                         // entity.relation.clear();
                         relation = m.invokeVirtualMethod(
                                 MethodDescriptor.ofMethod(entityClass, field.entityField.getGetterName(),
                                         field.entityField.descriptor),
-                                variable);
+                                entityVariable);
                         m.invokeInterfaceMethod(MethodDescriptor.ofMethod(List.class, "clear", void.class), relation);
                     } else {
                         // create the empty list and assign it
                         m.invokeVirtualMethod(
                                 MethodDescriptor.ofMethod(entityClass, field.entityField.getSetterName(), void.class,
                                         field.entityField.descriptor),
-                                variable,
+                                entityVariable,
                                 m.newInstance(MethodDescriptor.ofConstructor(ArrayList.class)));
 
                     }
@@ -485,7 +498,8 @@ public class RenardeBackofficeProcessor {
                     // Iterator it = value.iterator();
                     // while (it.hasNext()) {
                     //     RelationType relation = RelationType.findById(Long.valueOf((String)it.next()));
-                    //     relation.owningField = entity;
+                    //     @OneToMany: relation.owningField = entity;
+                    //     @ManyToMany: relation.owningField.add(entity);
                     //     entity.relation.add(relation);
                     // }
                     m.assign(iterator,
@@ -510,15 +524,24 @@ public class RenardeBackofficeProcessor {
                         otherEntity = loop.checkCast(otherEntity, field.relationClass);
                         loop.assign(otherEntityVar, otherEntity);
 
-                        loop.invokeVirtualMethod(
-                                MethodDescriptor.ofMethod(field.relationClass, inverseField.getSetterName(), void.class,
-                                        inverseField.descriptor),
-                                otherEntityVar, variable);
-
+                        if (field.type == ModelField.Type.MultiMultiRelation) {
+                            ResultHandle inverseRelation = loop.invokeVirtualMethod(
+                                    MethodDescriptor.ofMethod(field.relationClass, inverseField.getGetterName(),
+                                            inverseField.descriptor),
+                                    otherEntityVar);
+                            loop.invokeInterfaceMethod(
+                                    MethodDescriptor.ofMethod(List.class, "add", boolean.class, Object.class),
+                                    inverseRelation, entityVariable);
+                        } else {
+                            loop.invokeVirtualMethod(
+                                    MethodDescriptor.ofMethod(field.relationClass, inverseField.getSetterName(), void.class,
+                                            inverseField.descriptor),
+                                    otherEntityVar, entityVariable);
+                        }
                         ResultHandle relation = loop.invokeVirtualMethod(
                                 MethodDescriptor.ofMethod(entityClass, field.entityField.getGetterName(),
                                         field.entityField.descriptor),
-                                variable);
+                                entityVariable);
                         loop.invokeInterfaceMethod(MethodDescriptor.ofMethod(List.class, "add", boolean.class, Object.class),
                                 relation, otherEntityVar);
                     }
@@ -551,17 +574,17 @@ public class RenardeBackofficeProcessor {
                 // FIXME: temporary
                 if (value != null)
                     m.invokeVirtualMethod(MethodDescriptor.ofMethod(entityClass, field.entityField.getSetterName(), void.class,
-                            field.entityField.descriptor), variable, value);
+                            field.entityField.descriptor), entityVariable, value);
             }
             if (mode == Mode.CREATE) {
-                m.invokeVirtualMethod(MethodDescriptor.ofMethod(entityClass, "persist", void.class), variable);
+                m.invokeVirtualMethod(MethodDescriptor.ofMethod(entityClass, "persist", void.class), entityVariable);
             }
             // flash message
             ResultHandle message = m.newInstance(MethodDescriptor.ofConstructor(StringBuilder.class, String.class),
                     m.load(mode == Mode.CREATE ? "Created: " : "Updated: "));
             message = m.invokeVirtualMethod(
                     MethodDescriptor.ofMethod(StringBuilder.class, "append", StringBuilder.class, Object.class), message,
-                    variable);
+                    entityVariable);
             message = m.invokeVirtualMethod(MethodDescriptor.ofMethod(StringBuilder.class, "toString", String.class),
                     message);
             m.invokeVirtualMethod(
@@ -626,7 +649,9 @@ public class RenardeBackofficeProcessor {
 
         for (ModelField field : fields) {
             ResultHandle data = null;
-            if (field.type == ModelField.Type.Relation || field.type == ModelField.Type.MultiRelation) {
+            if (field.type == ModelField.Type.Relation
+                    || field.type == ModelField.Type.MultiRelation
+                    || field.type == ModelField.Type.MultiMultiRelation) {
                 ResultHandle list = m
                         .invokeStaticMethod(MethodDescriptor.ofMethod(field.relationClass, "listAll", List.class));
                 data = m.invokeStaticMethod(
@@ -645,7 +670,8 @@ public class RenardeBackofficeProcessor {
                                 Object.class),
                         instance, m.load(field.name + "PossibleValues"), data);
             }
-            if (mode == Mode.EDIT && field.type == ModelField.Type.MultiRelation) {
+            if (mode == Mode.EDIT
+                    && (field.type == ModelField.Type.MultiRelation || field.type == ModelField.Type.MultiMultiRelation)) {
                 // instance.data("relationCurrentValues", BackUtil.entityCurrentValues(entity.getRelation()))
                 ResultHandle relation = m.invokeVirtualMethod(
                         MethodDescriptor.ofMethod(entityClass, field.entityField.getGetterName(),

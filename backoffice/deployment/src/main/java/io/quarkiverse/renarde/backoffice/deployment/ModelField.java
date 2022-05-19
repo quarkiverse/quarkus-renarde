@@ -6,6 +6,7 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Enumerated;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -35,9 +36,11 @@ public class ModelField {
         Enum,
         Relation,
         MultiRelation,
-        Ignore;
+        Ignore,
+        MultiMultiRelation;
     }
 
+    private static final DotName DOTNAME_MANYTOMANY = DotName.createSimple(ManyToMany.class.getName());
     private static final DotName DOTNAME_MANYTOONE = DotName.createSimple(ManyToOne.class.getName());
     private static final DotName DOTNAME_ONETOMANY = DotName.createSimple(OneToMany.class.getName());
     private static final DotName DOTNAME_ONETOONE = DotName.createSimple(OneToOne.class.getName());
@@ -117,6 +120,34 @@ public class ModelField {
             String inverseField = mappedBy.asString();
             // FIXME: inheritance
             this.inverseField = relationModel.fields.get(inverseField);
+        } else if (field.hasAnnotation(DOTNAME_MANYTOMANY)) {
+            this.type = Type.MultiMultiRelation;
+            this.relationClass = field.type().asParameterizedType().arguments().get(0).name().toString();
+            EntityModel relationModel = metamodelInfo.getEntityModel(this.relationClass);
+            AnnotationValue mappedBy = field.annotation(DOTNAME_MANYTOMANY).value("mappedBy");
+            if (mappedBy != null) {
+                // non-owning
+                String inverseField = mappedBy.asString();
+                // FIXME: inheritance
+                this.inverseField = relationModel.fields.get(inverseField);
+            } else {
+                ClassInfo relationClassInfo = index.getClassByName(DotName.createSimple(relationClass));
+                for (FieldInfo relationField : relationClassInfo.fields()) {
+                    AnnotationInstance manyToMany = relationField.annotation(DOTNAME_MANYTOMANY);
+                    if (manyToMany != null) {
+                        AnnotationValue value = manyToMany.value("mappedBy");
+                        if (value != null && value.asString().equals(field.name())) {
+                            // we found it
+                            this.inverseField = relationModel.fields.get(relationField.name());
+                            break;
+                        }
+                    }
+                }
+                if (this.inverseField == null) {
+                    throw new RuntimeException(
+                            "Failed to find owning side of @ManyToMany from " + field + " in relation type " + relationClass);
+                }
+            }
         } else if (oneToOne != null
                 && oneToOne.value("mappedBy") != null) {
             // actually we may want to support this in the future too?

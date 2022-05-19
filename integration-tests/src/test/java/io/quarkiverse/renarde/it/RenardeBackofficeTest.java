@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -25,6 +26,8 @@ import io.quarkus.hibernate.orm.panache.Panache;
 import io.quarkus.test.junit.QuarkusTest;
 import model.ExampleEntity;
 import model.ExampleEnum;
+import model.ManyToManyNotOwningEntity;
+import model.ManyToManyOwningEntity;
 import model.ManyToOneEntity;
 import model.OneToManyEntity;
 import model.OneToOneNotOwningEntity;
@@ -41,6 +44,8 @@ public class RenardeBackofficeTest {
         OneToOneOwningEntity.deleteAll();
         OneToOneNotOwningEntity.deleteAll();
         OneToManyEntity.deleteAll();
+        ManyToManyOwningEntity.deleteAll();
+        ManyToManyNotOwningEntity.deleteAll();
 
         new OneToOneOwningEntity().persist();
         new OneToOneOwningEntity().persist();
@@ -53,6 +58,12 @@ public class RenardeBackofficeTest {
 
         new OneToManyEntity().persist();
         new OneToManyEntity().persist();
+
+        new ManyToManyOwningEntity().persist();
+        new ManyToManyOwningEntity().persist();
+
+        new ManyToManyNotOwningEntity().persist();
+        new ManyToManyNotOwningEntity().persist();
     }
 
     @Test
@@ -81,6 +92,10 @@ public class RenardeBackofficeTest {
         List<Long> manyToOneIds = ManyToOneEntity.<ManyToOneEntity> streamAll().map(entity -> entity.id)
                 .collect(Collectors.toList());
         List<Long> oneToManyIds = OneToManyEntity.<OneToManyEntity> streamAll().map(entity -> entity.id)
+                .collect(Collectors.toList());
+        List<Long> manyToManyOwningIds = ManyToManyOwningEntity.<ManyToManyOwningEntity> streamAll().map(entity -> entity.id)
+                .collect(Collectors.toList());
+        List<Long> manyToManyNotOwningIds = ManyToManyNotOwningEntity.<ManyToManyNotOwningEntity> streamAll().map(entity -> entity.id)
                 .collect(Collectors.toList());
 
         given()
@@ -133,7 +148,19 @@ public class RenardeBackofficeTest {
         .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + oneToManyIds.get(1)
                 + "\">OneToManyEntity&lt;" + oneToManyIds.get(1) + "&gt;<.*", Pattern.DOTALL)))
 
-                .body(Matchers
+        .body(Matchers.matchesRegex(Pattern.compile(".*<select multiple[^>]+name=\"manyToManyOwning\".*", Pattern.DOTALL)))
+        .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + manyToManyNotOwningIds.get(0)
+        + "\">ManyToManyNotOwningEntity&lt;" + manyToManyNotOwningIds.get(0) + "&gt;<.*", Pattern.DOTALL)))
+.body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + manyToManyNotOwningIds.get(1)
+        + "\">ManyToManyNotOwningEntity&lt;" + manyToManyNotOwningIds.get(1) + "&gt;<.*", Pattern.DOTALL)))
+
+.body(Matchers.matchesRegex(Pattern.compile(".*<select multiple[^>]+name=\"manyToManyNotOwning\".*", Pattern.DOTALL)))
+.body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + manyToManyOwningIds.get(0)
++ "\">ManyToManyOwningEntity&lt;" + manyToManyOwningIds.get(0) + "&gt;<.*", Pattern.DOTALL)))
+.body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + manyToManyOwningIds.get(1)
++ "\">ManyToManyOwningEntity&lt;" + manyToManyOwningIds.get(1) + "&gt;<.*", Pattern.DOTALL)))
+
+.body(Matchers
                         .not(Matchers
                                 .matchesRegex(Pattern.compile(".*<select.*name=\"oneToOneNotOwning\".*", Pattern.DOTALL))));
 
@@ -161,6 +188,10 @@ public class RenardeBackofficeTest {
                 .formParam("oneToMany", manyToOneIds.get(0))
                 .formParam("oneToMany", manyToOneIds.get(1))
                 .formParam("manyToOne", oneToManyIds.get(0))
+                .formParam("manyToManyOwning", manyToManyNotOwningIds.get(0))
+                .formParam("manyToManyOwning", manyToManyNotOwningIds.get(1))
+                .formParam("manyToManyNotOwning", manyToManyOwningIds.get(0))
+                .formParam("manyToManyNotOwning", manyToManyOwningIds.get(1))
                 .redirects().follow(false)
                 .post("/_renarde/backoffice/ExampleEntity/create")
                 .then()
@@ -191,6 +222,12 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(2, entity.oneToMany.size());
         Assertions.assertTrue(manyToOneIds.contains(entity.oneToMany.get(0).id));
         Assertions.assertTrue(manyToOneIds.contains(entity.oneToMany.get(1).id));
+        Assertions.assertEquals(2, entity.manyToManyOwning.size());
+        Assertions.assertTrue(manyToManyNotOwningIds.contains(entity.manyToManyOwning.get(0).id));
+        Assertions.assertTrue(manyToManyNotOwningIds.contains(entity.manyToManyOwning.get(1).id));
+        Assertions.assertEquals(2, entity.manyToManyNotOwning.size());
+        Assertions.assertTrue(manyToManyOwningIds.contains(entity.manyToManyNotOwning.get(0).id));
+        Assertions.assertTrue(manyToManyOwningIds.contains(entity.manyToManyNotOwning.get(1).id));
     }
 
     @Test
@@ -232,6 +269,8 @@ public class RenardeBackofficeTest {
         List<OneToOneNotOwningEntity> oneToOnes = OneToOneNotOwningEntity.listAll();
         List<OneToManyEntity> oneToManys = OneToManyEntity.listAll();
         List<ManyToOneEntity> manyToOnes = ManyToOneEntity.listAll();
+        List<ManyToManyOwningEntity> manyToManyOwning = ManyToManyOwningEntity.listAll();
+        List<ManyToManyNotOwningEntity> manyToManyNotOwning = ManyToManyNotOwningEntity.listAll();
 
         ExampleEntity entity = new ExampleEntity();
         entity.primitiveBoolean = true;
@@ -250,13 +289,23 @@ public class RenardeBackofficeTest {
         entity.enumeration = ExampleEnum.B;
         entity.oneToOneOwning = oneToOnes.get(0);
         entity.manyToOne = oneToManys.get(0);
+        entity.manyToManyOwning = new ArrayList<>();
+        entity.manyToManyOwning.add(manyToManyNotOwning.get(0));
+        entity.manyToManyOwning.add(manyToManyNotOwning.get(1));
+        entity.manyToManyNotOwning = new ArrayList<>();
+        entity.manyToManyNotOwning.add(manyToManyOwning.get(0));
+        entity.manyToManyNotOwning.add(manyToManyOwning.get(1));
         // oneToMany is not owning
         ExampleEntity damnit = entity;
         transact(() -> {
             List<ManyToOneEntity> manyToOnes2 = ManyToOneEntity.listAll();
+            List<ManyToManyOwningEntity> manyToManyOwning2 = ManyToManyOwningEntity.listAll();
             // these are owning
             manyToOnes2.get(0).manyToOne = damnit;
             manyToOnes2.get(1).manyToOne = damnit;
+            // not owning
+            manyToManyOwning2.get(0).manyToMany.add(damnit);
+            manyToManyOwning2.get(1).manyToMany.add(damnit);
             damnit.persist();
         });
         
@@ -331,6 +380,18 @@ public class RenardeBackofficeTest {
                 .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + oneToManys.get(1).id
                         + "\">OneToManyEntity&lt;" + oneToManys.get(1).id + "&gt;<.*", Pattern.DOTALL)))
 
+                .body(Matchers.matchesRegex(Pattern.compile(".*<select multiple[^>]+name=\"manyToManyOwning\".*", Pattern.DOTALL)))
+                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\"" + manyToManyNotOwning.get(0).id
+                + "\">ManyToManyNotOwningEntity&lt;" + manyToManyNotOwning.get(0).id + "&gt;<.*", Pattern.DOTALL)))
+        .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\"" + manyToManyNotOwning.get(1).id
+                + "\">ManyToManyNotOwningEntity&lt;" + manyToManyNotOwning.get(1).id + "&gt;<.*", Pattern.DOTALL)))
+
+        .body(Matchers.matchesRegex(Pattern.compile(".*<select multiple[^>]+name=\"manyToManyNotOwning\".*", Pattern.DOTALL)))
+        .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\"" + manyToManyOwning.get(0).id
+        + "\">ManyToManyOwningEntity&lt;" + manyToManyOwning.get(0).id + "&gt;<.*", Pattern.DOTALL)))
+        .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\"" + manyToManyOwning.get(1).id
+        + "\">ManyToManyOwningEntity&lt;" + manyToManyOwning.get(1).id + "&gt;<.*", Pattern.DOTALL)))
+
                 .body(Matchers
                         .not(Matchers
                                 .matchesRegex(Pattern.compile(".*<select.*name=\"oneToOneNotOwning\".*", Pattern.DOTALL))));
@@ -359,6 +420,8 @@ public class RenardeBackofficeTest {
                 .formParam("oneToOneOwning", oneToOnes.get(1).id)
                 .formParam("manyToOne", oneToManys.get(1).id)
                 .formParam("oneToMany", manyToOnes.get(0).id)
+                .formParam("manyToManyOwning", manyToManyNotOwning.get(0).id)
+                .formParam("manyToManyNotOwning", manyToManyOwning.get(0).id)
                 .redirects().follow(false)
                 .post("/_renarde/backoffice/ExampleEntity/edit/" + entity.id)
                 .then()
@@ -388,6 +451,10 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(1, entity.oneToMany.size());
         Assertions.assertEquals(manyToOnes.get(0).id, entity.oneToMany.get(0).id);
         Assertions.assertNull(entity.oneToOneNotOwning);
+        Assertions.assertEquals(1, entity.manyToManyNotOwning.size());
+        Assertions.assertEquals(manyToManyOwning.get(0).id, entity.manyToManyNotOwning.get(0).id);
+        Assertions.assertEquals(1, entity.manyToManyOwning.size());
+        Assertions.assertEquals(manyToManyNotOwning.get(0).id, entity.manyToManyOwning.get(0).id);
     }
 
     @Test
