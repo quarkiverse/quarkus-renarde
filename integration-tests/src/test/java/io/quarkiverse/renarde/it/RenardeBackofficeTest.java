@@ -7,8 +7,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -52,7 +50,7 @@ public class RenardeBackofficeTest {
 
         new OneToOneNotOwningEntity().persist();
         new OneToOneNotOwningEntity().persist();
-        
+
         new ManyToOneEntity().persist();
         new ManyToOneEntity().persist();
 
@@ -95,7 +93,8 @@ public class RenardeBackofficeTest {
                 .collect(Collectors.toList());
         List<Long> manyToManyOwningIds = ManyToManyOwningEntity.<ManyToManyOwningEntity> streamAll().map(entity -> entity.id)
                 .collect(Collectors.toList());
-        List<Long> manyToManyNotOwningIds = ManyToManyNotOwningEntity.<ManyToManyNotOwningEntity> streamAll().map(entity -> entity.id)
+        List<Long> manyToManyNotOwningIds = ManyToManyNotOwningEntity.<ManyToManyNotOwningEntity> streamAll()
+                .map(entity -> entity.id)
                 .collect(Collectors.toList());
 
         given()
@@ -132,35 +131,37 @@ public class RenardeBackofficeTest {
 
                 .body(Matchers.matchesRegex(Pattern.compile(".*<select.*name=\"oneToOneOwning\".*", Pattern.DOTALL)))
                 .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + oneToOneIds.get(0)
-                + "\">OneToOneNotOwningEntity&lt;" + oneToOneIds.get(0) + "&gt;<.*", Pattern.DOTALL)))
-        .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + oneToOneIds.get(1)
-                + "\">OneToOneNotOwningEntity&lt;" + oneToOneIds.get(1) + "&gt;<.*", Pattern.DOTALL)))
+                        + "\">OneToOneNotOwningEntity&lt;" + oneToOneIds.get(0) + "&gt;<.*", Pattern.DOTALL)))
+                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + oneToOneIds.get(1)
+                        + "\">OneToOneNotOwningEntity&lt;" + oneToOneIds.get(1) + "&gt;<.*", Pattern.DOTALL)))
 
                 .body(Matchers.matchesRegex(Pattern.compile(".*<select multiple[^>]+name=\"oneToMany\".*", Pattern.DOTALL)))
                 .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + manyToOneIds.get(0)
-                + "\">ManyToOneEntity&lt;" + manyToOneIds.get(0) + "&gt;<.*", Pattern.DOTALL)))
-        .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + manyToOneIds.get(1)
-                + "\">ManyToOneEntity&lt;" + manyToOneIds.get(1) + "&gt;<.*", Pattern.DOTALL)))
+                        + "\">ManyToOneEntity&lt;" + manyToOneIds.get(0) + "&gt;<.*", Pattern.DOTALL)))
+                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + manyToOneIds.get(1)
+                        + "\">ManyToOneEntity&lt;" + manyToOneIds.get(1) + "&gt;<.*", Pattern.DOTALL)))
 
                 .body(Matchers.matchesRegex(Pattern.compile(".*<select.*name=\"manyToOne\".*", Pattern.DOTALL)))
                 .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + oneToManyIds.get(0)
-                + "\">OneToManyEntity&lt;" + oneToManyIds.get(0) + "&gt;<.*", Pattern.DOTALL)))
-        .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + oneToManyIds.get(1)
-                + "\">OneToManyEntity&lt;" + oneToManyIds.get(1) + "&gt;<.*", Pattern.DOTALL)))
+                        + "\">OneToManyEntity&lt;" + oneToManyIds.get(0) + "&gt;<.*", Pattern.DOTALL)))
+                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + oneToManyIds.get(1)
+                        + "\">OneToManyEntity&lt;" + oneToManyIds.get(1) + "&gt;<.*", Pattern.DOTALL)))
 
-        .body(Matchers.matchesRegex(Pattern.compile(".*<select multiple[^>]+name=\"manyToManyOwning\".*", Pattern.DOTALL)))
-        .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + manyToManyNotOwningIds.get(0)
-        + "\">ManyToManyNotOwningEntity&lt;" + manyToManyNotOwningIds.get(0) + "&gt;<.*", Pattern.DOTALL)))
-.body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + manyToManyNotOwningIds.get(1)
-        + "\">ManyToManyNotOwningEntity&lt;" + manyToManyNotOwningIds.get(1) + "&gt;<.*", Pattern.DOTALL)))
+                .body(Matchers
+                        .matchesRegex(Pattern.compile(".*<select multiple[^>]+name=\"manyToManyOwning\".*", Pattern.DOTALL)))
+                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + manyToManyNotOwningIds.get(0)
+                        + "\">ManyToManyNotOwningEntity&lt;" + manyToManyNotOwningIds.get(0) + "&gt;<.*", Pattern.DOTALL)))
+                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + manyToManyNotOwningIds.get(1)
+                        + "\">ManyToManyNotOwningEntity&lt;" + manyToManyNotOwningIds.get(1) + "&gt;<.*", Pattern.DOTALL)))
 
-.body(Matchers.matchesRegex(Pattern.compile(".*<select multiple[^>]+name=\"manyToManyNotOwning\".*", Pattern.DOTALL)))
-.body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + manyToManyOwningIds.get(0)
-+ "\">ManyToManyOwningEntity&lt;" + manyToManyOwningIds.get(0) + "&gt;<.*", Pattern.DOTALL)))
-.body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + manyToManyOwningIds.get(1)
-+ "\">ManyToManyOwningEntity&lt;" + manyToManyOwningIds.get(1) + "&gt;<.*", Pattern.DOTALL)))
+                .body(Matchers
+                        .matchesRegex(Pattern.compile(".*<select multiple[^>]+name=\"manyToManyNotOwning\".*", Pattern.DOTALL)))
+                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + manyToManyOwningIds.get(0)
+                        + "\">ManyToManyOwningEntity&lt;" + manyToManyOwningIds.get(0) + "&gt;<.*", Pattern.DOTALL)))
+                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + manyToManyOwningIds.get(1)
+                        + "\">ManyToManyOwningEntity&lt;" + manyToManyOwningIds.get(1) + "&gt;<.*", Pattern.DOTALL)))
 
-.body(Matchers
+                .body(Matchers
                         .not(Matchers
                                 .matchesRegex(Pattern.compile(".*<select.*name=\"oneToOneNotOwning\".*", Pattern.DOTALL))));
 
@@ -308,7 +309,7 @@ public class RenardeBackofficeTest {
             manyToManyOwning2.get(1).manyToMany.add(damnit);
             damnit.persist();
         });
-        
+
         Assertions.assertEquals(1, ExampleEntity.count());
         entity = ExampleEntity.findAll().firstResult();
 
@@ -370,9 +371,9 @@ public class RenardeBackofficeTest {
 
                 .body(Matchers.matchesRegex(Pattern.compile(".*<select multiple[^>]+name=\"oneToMany\".*", Pattern.DOTALL)))
                 .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\"" + manyToOnes.get(0).id
-                + "\">ManyToOneEntity&lt;" + manyToOnes.get(0).id + "&gt;<.*", Pattern.DOTALL)))
-        .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\"" + manyToOnes.get(1).id
-                + "\">ManyToOneEntity&lt;" + manyToOnes.get(1).id + "&gt;<.*", Pattern.DOTALL)))
+                        + "\">ManyToOneEntity&lt;" + manyToOnes.get(0).id + "&gt;<.*", Pattern.DOTALL)))
+                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\"" + manyToOnes.get(1).id
+                        + "\">ManyToOneEntity&lt;" + manyToOnes.get(1).id + "&gt;<.*", Pattern.DOTALL)))
 
                 .body(Matchers.matchesRegex(Pattern.compile(".*<select.*name=\"manyToOne\".*", Pattern.DOTALL)))
                 .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\"" + oneToManys.get(0).id
@@ -380,17 +381,19 @@ public class RenardeBackofficeTest {
                 .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + oneToManys.get(1).id
                         + "\">OneToManyEntity&lt;" + oneToManys.get(1).id + "&gt;<.*", Pattern.DOTALL)))
 
-                .body(Matchers.matchesRegex(Pattern.compile(".*<select multiple[^>]+name=\"manyToManyOwning\".*", Pattern.DOTALL)))
+                .body(Matchers
+                        .matchesRegex(Pattern.compile(".*<select multiple[^>]+name=\"manyToManyOwning\".*", Pattern.DOTALL)))
                 .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\"" + manyToManyNotOwning.get(0).id
-                + "\">ManyToManyNotOwningEntity&lt;" + manyToManyNotOwning.get(0).id + "&gt;<.*", Pattern.DOTALL)))
-        .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\"" + manyToManyNotOwning.get(1).id
-                + "\">ManyToManyNotOwningEntity&lt;" + manyToManyNotOwning.get(1).id + "&gt;<.*", Pattern.DOTALL)))
+                        + "\">ManyToManyNotOwningEntity&lt;" + manyToManyNotOwning.get(0).id + "&gt;<.*", Pattern.DOTALL)))
+                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\"" + manyToManyNotOwning.get(1).id
+                        + "\">ManyToManyNotOwningEntity&lt;" + manyToManyNotOwning.get(1).id + "&gt;<.*", Pattern.DOTALL)))
 
-        .body(Matchers.matchesRegex(Pattern.compile(".*<select multiple[^>]+name=\"manyToManyNotOwning\".*", Pattern.DOTALL)))
-        .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\"" + manyToManyOwning.get(0).id
-        + "\">ManyToManyOwningEntity&lt;" + manyToManyOwning.get(0).id + "&gt;<.*", Pattern.DOTALL)))
-        .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\"" + manyToManyOwning.get(1).id
-        + "\">ManyToManyOwningEntity&lt;" + manyToManyOwning.get(1).id + "&gt;<.*", Pattern.DOTALL)))
+                .body(Matchers
+                        .matchesRegex(Pattern.compile(".*<select multiple[^>]+name=\"manyToManyNotOwning\".*", Pattern.DOTALL)))
+                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\"" + manyToManyOwning.get(0).id
+                        + "\">ManyToManyOwningEntity&lt;" + manyToManyOwning.get(0).id + "&gt;<.*", Pattern.DOTALL)))
+                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\"" + manyToManyOwning.get(1).id
+                        + "\">ManyToManyOwningEntity&lt;" + manyToManyOwning.get(1).id + "&gt;<.*", Pattern.DOTALL)))
 
                 .body(Matchers
                         .not(Matchers

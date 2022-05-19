@@ -53,13 +53,13 @@ public class ExampleEntity extends PanacheEntity {
     // owning
     @ManyToOne
     public OneToManyEntity manyToOne;
-    
+
     @ManyToMany
     public List<ManyToManyNotOwningEntity> manyToManyOwning;
 
     @ManyToMany(mappedBy = "manyToMany")
     public List<ManyToManyOwningEntity> manyToManyNotOwning;
-    
+
     private void foo(List<String> ids) {
         ExampleEntity entity = this;
         // if new
@@ -68,13 +68,13 @@ public class ExampleEntity extends PanacheEntity {
         // clear previous list
         Iterator it = entity.manyToManyOwning.iterator();
         while (it.hasNext()) {
-            ((ManyToManyNotOwningEntity)it.next()).manyToMany.remove(entity);
+            ((ManyToManyNotOwningEntity) it.next()).manyToMany.remove(entity);
         }
         entity.manyToManyOwning.clear();
         // now add
         it = ids.iterator();
         while (it.hasNext()) {
-            ManyToManyNotOwningEntity relation = ManyToManyNotOwningEntity.findById(Long.valueOf((String)it.next()));
+            ManyToManyNotOwningEntity relation = ManyToManyNotOwningEntity.findById(Long.valueOf((String) it.next()));
             relation.manyToMany.add(entity);
             entity.manyToManyOwning.add(relation);
         }
