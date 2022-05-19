@@ -4,10 +4,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Date;
+import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Enumerated;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
@@ -39,4 +42,12 @@ public class ExampleEntity extends PanacheEntity {
     // owning
     @OneToOne
     public OneToOneNotOwningEntity oneToOneOwning;
+
+    // not owning
+    @OneToMany(mappedBy = "manyToOne")
+    public List<ManyToOneEntity> oneToMany;
+
+    // owning
+    @ManyToOne
+    public OneToManyEntity manyToOne;
 }

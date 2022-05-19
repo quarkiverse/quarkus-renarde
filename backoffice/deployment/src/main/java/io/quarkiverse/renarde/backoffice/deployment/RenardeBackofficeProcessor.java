@@ -515,11 +515,11 @@ public class RenardeBackofficeProcessor {
                                         inverseField.descriptor),
                                 otherEntityVar, variable);
 
-                        ResultHandle relation = m.invokeVirtualMethod(
+                        ResultHandle relation = loop.invokeVirtualMethod(
                                 MethodDescriptor.ofMethod(entityClass, field.entityField.getGetterName(),
                                         field.entityField.descriptor),
                                 variable);
-                        m.invokeInterfaceMethod(MethodDescriptor.ofMethod(List.class, "add", boolean.class, Object.class),
+                        loop.invokeInterfaceMethod(MethodDescriptor.ofMethod(List.class, "add", boolean.class, Object.class),
                                 relation, otherEntityVar);
                     }
                 } else if (field.type == ModelField.Type.Ignore) {
