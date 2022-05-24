@@ -345,7 +345,7 @@ public class RenardeBackofficeProcessor {
                 for (Class<? extends Annotation> validationAnnotation : field.validation) {
                     if (validationAnnotation == NotEmpty.class) {
                         ResultHandle validation = m.readInstanceField(
-                                FieldDescriptor.of(Controller.class, "validation", Validation.class), m.getThis());
+                                FieldDescriptor.of(controllerClass, "validation", Validation.class), m.getThis());
                         m.invokeVirtualMethod(
                                 MethodDescriptor.ofMethod(Validation.class, "required", void.class, String.class, Object.class),
                                 validation, m.load(field.name), m.getMethodParam(i + offset));
