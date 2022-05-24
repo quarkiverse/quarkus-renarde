@@ -1,0 +1,15 @@
+{@java.lang.String name}
+{@java.lang.String id}
+{@java.lang.String placeholder}
+{@java.lang.String value}
+{@long rows}
+<textarea name="{name}" 
+ {#if rows??}
+  rows="{rows}"
+ {/if}
+ value="{inject:flash.get(name) ?: value??}"
+ {#if id??}id="{id}"{/if}
+ {#if placeholder??}placeholder="{placeholder}"{/if}
+ class="form-control {#ifError name}is-invalid{/ifError}"
+ />
+ 

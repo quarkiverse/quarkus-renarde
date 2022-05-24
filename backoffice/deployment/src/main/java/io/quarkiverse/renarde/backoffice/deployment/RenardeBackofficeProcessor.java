@@ -370,7 +370,7 @@ public class RenardeBackofficeProcessor {
             for (int i = 0; i < fields.size(); i++) {
                 ModelField field = fields.get(i);
                 ResultHandle value = null;
-                if (field.type == Type.Text) {
+                if (field.type == Type.Text || field.type == Type.LargeText) {
                     if (field.entityField.descriptor.equals("Ljava/lang/String;")) {
                         value = m.invokeStaticMethod(
                                 MethodDescriptor.ofMethod(BackUtil.class, "stringField", String.class, String.class),

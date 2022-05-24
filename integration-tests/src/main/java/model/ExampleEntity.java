@@ -3,14 +3,13 @@ package model;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Enumerated;
+import javax.persistence.Lob;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -60,23 +59,9 @@ public class ExampleEntity extends PanacheEntity {
     @ManyToMany(mappedBy = "manyToMany")
     public List<ManyToManyOwningEntity> manyToManyNotOwning;
 
-    private void foo(List<String> ids) {
-        ExampleEntity entity = this;
-        // if new
-        entity.manyToManyOwning = new ArrayList<>();
-        // if edit
-        // clear previous list
-        Iterator it = entity.manyToManyOwning.iterator();
-        while (it.hasNext()) {
-            ((ManyToManyNotOwningEntity) it.next()).manyToMany.remove(entity);
-        }
-        entity.manyToManyOwning.clear();
-        // now add
-        it = ids.iterator();
-        while (it.hasNext()) {
-            ManyToManyNotOwningEntity relation = ManyToManyNotOwningEntity.findById(Long.valueOf((String) it.next()));
-            relation.manyToMany.add(entity);
-            entity.manyToManyOwning.add(relation);
-        }
-    }
+    @Lob
+    public String lobString;
+
+    @Column(nullable = false)
+    public String requiredString;
 }

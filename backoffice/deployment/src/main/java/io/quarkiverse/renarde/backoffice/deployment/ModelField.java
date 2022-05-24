@@ -6,6 +6,7 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Enumerated;
+import javax.persistence.Lob;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -27,6 +28,7 @@ import io.quarkus.panache.common.deployment.MetamodelInfo;
 public class ModelField {
 
     public static enum Type {
+        LargeText,
         Text,
         Number,
         Checkbox,
@@ -46,6 +48,7 @@ public class ModelField {
     private static final DotName DOTNAME_ONETOONE = DotName.createSimple(OneToOne.class.getName());
     private static final DotName DOTNAME_ENUMERATED = DotName.createSimple(Enumerated.class.getName());
     private static final DotName DOTNAME_COLUMN = DotName.createSimple(Column.class.getName());
+    private static final DotName DOTNAME_LOB = DotName.createSimple(Lob.class.getName());
 
     // For views
     public String name;
@@ -102,7 +105,11 @@ public class ModelField {
         } else if (entityField.descriptor.equals("Z")) {
             this.type = Type.Checkbox;
         } else if (entityField.descriptor.equals("Ljava/lang/String;")) {
-            this.type = Type.Text;
+            if (field.hasAnnotation(DOTNAME_LOB)) {
+                this.type = Type.LargeText;
+            } else {
+                this.type = Type.Text;
+            }
         } else if (entityField.descriptor.equals("Ljava/util/Date;")
                 || entityField.descriptor.equals("Ljava/time/LocalDateTime;")) {
             this.type = Type.DateTimeLocal;

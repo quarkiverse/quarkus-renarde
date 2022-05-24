@@ -180,6 +180,8 @@ public class RenardeBackofficeTest {
                 .formParam("primitiveDouble", "6")
                 .formParam("primitiveChar", "a")
                 .formParam("string", "aString")
+                .formParam("requiredString", "aString")
+                .formParam("lobString", "aString")
                 .formParam("enumeration", "B")
                 .formParam("date", JavaExtensions.htmlNormalised(date))
                 .formParam("localDateTime", JavaExtensions.htmlNormalised(localDateTime))
@@ -215,6 +217,8 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(localDateTime.toLocalDate(), entity.localDate);
         Assertions.assertEquals(localDateTime.toLocalTime(), entity.localTime);
         Assertions.assertEquals("aString", entity.string);
+        Assertions.assertEquals("aString", entity.lobString);
+        Assertions.assertEquals("aString", entity.requiredString);
         Assertions.assertEquals(ExampleEnum.B, entity.enumeration);
         Assertions.assertNotNull(entity.oneToOneOwning);
         Assertions.assertEquals(oneToOneIds.get(0), entity.oneToOneOwning.id);
@@ -244,6 +248,7 @@ public class RenardeBackofficeTest {
                 .formParam("date", new SimpleDateFormat(JavaExtensions.HTML_NORMALISED_WITHOUT_SECONDS_FORMAT).format(date))
                 .formParam("localDateTime", localDateTime.format(JavaExtensions.HTML_NORMALISED_WITHOUT_SECONDS))
                 .formParam("localTime", localDateTime.format(JavaExtensions.HTML_TIME_WITHOUT_SECONDS))
+                .formParam("requiredString", "aString")
                 .redirects().follow(false)
                 .log().ifValidationFails()
                 .post("/_renarde/backoffice/ExampleEntity/create")
@@ -283,6 +288,8 @@ public class RenardeBackofficeTest {
         entity.primitiveDouble = 6;
         entity.primitiveChar = 'a';
         entity.string = "aString";
+        entity.lobString = "aString";
+        entity.requiredString = "aString";
         entity.date = date;
         entity.localDateTime = localDateTime;
         entity.localDate = localDateTime.toLocalDate();
@@ -415,6 +422,8 @@ public class RenardeBackofficeTest {
                 .formParam("primitiveDouble", "16")
                 .formParam("primitiveChar", "b")
                 .formParam("string", "otherString")
+                .formParam("requiredString", "otherString")
+                .formParam("lobString", "otherString")
                 .formParam("enumeration", "A")
                 .formParam("date", JavaExtensions.htmlNormalised(otherDate))
                 .formParam("localDateTime", JavaExtensions.htmlNormalised(otherLocalDateTime))
@@ -448,6 +457,8 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(otherLocalDateTime.toLocalDate(), entity.localDate);
         Assertions.assertEquals(otherLocalDateTime.toLocalTime(), entity.localTime);
         Assertions.assertEquals("otherString", entity.string);
+        Assertions.assertEquals("otherString", entity.requiredString);
+        Assertions.assertEquals("otherString", entity.lobString);
         Assertions.assertEquals(ExampleEnum.A, entity.enumeration);
         Assertions.assertEquals(oneToOnes.get(1).id, entity.oneToOneOwning.id);
         Assertions.assertEquals(oneToManys.get(1).id, entity.manyToOne.id);
@@ -465,6 +476,7 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(0, ExampleEntity.count());
 
         ExampleEntity entity = new ExampleEntity();
+        entity.requiredString = "aString";
         transact(() -> entity.persist());
 
         Assertions.assertEquals(1, ExampleEntity.count());
