@@ -1,5 +1,14 @@
 \{#include main.html }
 \{#title}{entity} \{entity.toString()}\{/title}
+\{#moreStyles}
+<style>
+.backoffice-action {
+ display: inline;
+ float: right;
+}
+</style>
+\{/moreStyles}
+
 
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
@@ -12,7 +21,7 @@
 
 <h2>
  Edit {entity} \{entity.id}
- \{#form entity.id.toString().prepend("../delete/")}
+ \{#form entity.id.toString().prepend("../delete/") class="backoffice-action"}
   <button class="btn btn-danger"><i class="bi bi-trash"></i>Delete</button>
  \{/form}
 </h2>
@@ -47,7 +56,8 @@
   {/switch}
  \{/crud_field}
  {/for}
- <button class="btn btn-primary">Save</button>
+ <button class="btn btn-primary" name="action" value="Save">Save</button>
+ <button class="btn btn-primary" name="action" value="SaveAndContinueEditing">Save and continue editing</button>
 \{/form}
 
 \{/include}

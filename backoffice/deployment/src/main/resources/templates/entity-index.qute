@@ -1,5 +1,13 @@
 \{#include main.html }
 \{#title}{entity}\{/title}
+\{#moreStyles}
+<style>
+.backoffice-action {
+ display: inline;
+ float: right;
+}
+</style>
+\{/moreStyles}
 
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
@@ -9,12 +17,13 @@
   </ol>
 </nav>
 
-<a href="create" class="btn btn-success"><i class="bi bi-plus"></i>Create</a>
-
 <table class="table">
   <thead>
     <tr>
-      <th scope="col">{entity}</th>
+      <th scope="col">
+        {entity}
+        <a href="create" class="btn btn-success backoffice-action"><i class="bi bi-plus"></i>Create</a>
+      </th>
     </tr>
   </thead>
   <tbody>

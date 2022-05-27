@@ -44,7 +44,9 @@
   {/switch}
  \{/crud_field}
  {/for}
- <button class="btn btn-primary">Create</button>
+ <button class="btn btn-primary" name="action" value="Create">Create</button>
+ <button class="btn btn-primary" name="action" value="CreateAndContinueEditing">Create and continue editing</button>
+ <button class="btn btn-primary" name="action" value="CreateAndCreateAnother">Create and create another</button>
 \{/form}
 
 \{/include}

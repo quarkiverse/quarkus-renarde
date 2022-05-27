@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
+import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -203,6 +204,7 @@ public class RenardeBackofficeTest {
                 .formParam("manyToManyOwning", manyToManyNotOwningIds.get(1))
                 .formParam("manyToManyNotOwning", manyToManyOwningIds.get(0))
                 .formParam("manyToManyNotOwning", manyToManyOwningIds.get(1))
+                .formParam("action", "CreateAndCreateAnother")
                 .redirects().follow(false)
                 .post("/_renarde/backoffice/ExampleEntity/create")
                 .then()
@@ -257,6 +259,7 @@ public class RenardeBackofficeTest {
                 .formParam("localDateTime", localDateTime.format(JavaExtensions.HTML_NORMALISED_WITHOUT_SECONDS))
                 .formParam("localTime", localDateTime.format(JavaExtensions.HTML_TIME_WITHOUT_SECONDS))
                 .formParam("requiredString", "aString")
+                .formParam("action", "CreateAndCreateAnother")
                 .redirects().follow(false)
                 .log().ifValidationFails()
                 .post("/_renarde/backoffice/ExampleEntity/create")
@@ -271,6 +274,35 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(date, entity.date);
         Assertions.assertEquals(localDateTime, entity.localDateTime);
         Assertions.assertEquals(localDateTime.toLocalTime(), entity.localTime);
+    }
+
+    @Test
+    public void testBackofficeExampleEntityLinks() {
+        Assertions.assertEquals(0, ExampleEntity.count());
+
+        testBackOfficeLink("create", "CreateAndCreateAnother", Matchers.endsWith("/_renarde/backoffice/ExampleEntity/create"));
+        testBackOfficeLink("create", "CreateAndContinueEditing",
+                Matchers.containsString("/_renarde/backoffice/ExampleEntity/edit/"));
+        testBackOfficeLink("create", "Create", Matchers.endsWith("/_renarde/backoffice/ExampleEntity/index"));
+
+        ExampleEntity entity = ExampleEntity.<ExampleEntity> listAll().get(0);
+        testBackOfficeLink("edit/" + entity.id, "Save", Matchers.endsWith("/_renarde/backoffice/ExampleEntity/index"));
+        testBackOfficeLink("edit/" + entity.id, "SaveAndContinueEditing",
+                Matchers.containsString("/_renarde/backoffice/ExampleEntity/edit/"));
+    }
+
+    private void testBackOfficeLink(String uri, String action, Matcher<String> matcher) {
+        given()
+                .when()
+                .formParam("requiredString", "aString")
+                .formParam("action", action)
+                .redirects().follow(false)
+                .log().ifValidationFails()
+                .post("/_renarde/backoffice/ExampleEntity/" + uri)
+                .then()
+                .log().ifValidationFails()
+                .statusCode(303)
+                .header("Location", matcher);
     }
 
     @Test
@@ -440,6 +472,7 @@ public class RenardeBackofficeTest {
                 .formParam("oneToMany", manyToOnes.get(0).id)
                 .formParam("manyToManyOwning", manyToManyNotOwning.get(0).id)
                 .formParam("manyToManyNotOwning", manyToManyOwning.get(0).id)
+                .formParam("action", "SaveAndContinueEditing")
                 .redirects().follow(false)
                 .post("/_renarde/backoffice/ExampleEntity/edit/" + entity.id)
                 .then()

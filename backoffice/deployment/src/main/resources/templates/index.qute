@@ -1,5 +1,13 @@
 \{#include main.html }
 \{#title}All entities\{/title}
+\{#moreStyles}
+<style>
+.backoffice-action {
+ display: inline;
+ float: right;
+}
+</style>
+\{/moreStyles}
 
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
@@ -17,7 +25,10 @@
   <tbody>
     {#for entity in entities}
     <tr>
-      <td><a href="{entity}/index">{entity}</a></td>
+      <td>
+        <a href="{entity}/index">{entity}</a>
+        <a href="{entity}/create" class="btn btn-success backoffice-action"><i class="bi bi-plus"></i>Create</a>
+      </td>
     </tr>
     {/for}
   </tbody>
