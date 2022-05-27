@@ -3,13 +3,16 @@
 {@java.lang.String placeholder}
 {@java.lang.String value}
 {@long rows}
+{@long cols}
 <textarea name="{name}" 
  {#if rows??}
   rows="{rows}"
  {/if}
- value="{inject:flash.get(name) ?: value??}"
+ {#if cols??}
+  cols="{cols}"
+ {/if}
  {#if id??}id="{id}"{/if}
  {#if placeholder??}placeholder="{placeholder}"{/if}
  class="form-control {#ifError name}is-invalid{/ifError}"
- />
+ >{inject:flash.get(name) ?: value??}</textarea>
  

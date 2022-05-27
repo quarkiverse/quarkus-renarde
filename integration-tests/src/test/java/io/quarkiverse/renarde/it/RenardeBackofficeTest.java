@@ -121,6 +121,10 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(1,
                 document.select("input[name='primitiveChar'][type='text'][minlength=1][maxlength=1]").size());
         Assertions.assertEquals(1, document.select("input[name='string']").size());
+        Assertions.assertEquals(1, document.select("input[name='requiredString']").size());
+        Assertions.assertEquals("This field is required",
+                document.select("input[name='requiredString'] ~ small.form-text").text());
+        Assertions.assertEquals(1, document.select("textarea[name='lobString']").size());
 
         Elements enumeration = document.select("select[name='enumeration']");
         Assertions.assertEquals(1, enumeration.size());
@@ -350,6 +354,10 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(1,
                 document.select("input[name='primitiveChar'][type='text'][minlength=1][maxlength=1][value='a']").size());
         Assertions.assertEquals(1, document.select("input[name='string'][value='aString']").size());
+        Assertions.assertEquals(1, document.select("input[name='requiredString'][value='aString']").size());
+        Assertions.assertEquals("This field is required",
+                document.select("input[name='requiredString'] ~ small.form-text").text());
+        Assertions.assertEquals("aString", document.select("textarea[name='lobString']").text());
 
         Elements enumeration = document.select("select[name='enumeration']");
         Assertions.assertEquals(1, enumeration.size());
