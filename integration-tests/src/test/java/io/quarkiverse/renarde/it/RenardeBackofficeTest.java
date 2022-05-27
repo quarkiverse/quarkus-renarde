@@ -9,12 +9,14 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
 import org.hamcrest.Matchers;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -97,73 +99,75 @@ public class RenardeBackofficeTest {
                 .map(entity -> entity.id)
                 .collect(Collectors.toList());
 
-        given()
+        String html = given()
                 .when().get("/_renarde/backoffice/ExampleEntity/create")
                 .then()
                 .statusCode(200)
-                .body(Matchers.matchesRegex(
-                        Pattern.compile(".*<input name=\"primitiveBoolean\"\\s+type=\"checkbox\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<input name=\"primitiveByte\"\\s+type=\"number\"[^/]+min=\""
-                        + Byte.MIN_VALUE + "\"\\s+max=\"" + Byte.MAX_VALUE + "\"\\s+step=\"1.0\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<input name=\"primitiveShort\"\\s+type=\"number\"[^/]+min=\""
-                        + Short.MIN_VALUE + "\"\\s+max=\"" + Short.MAX_VALUE + "\"\\s+step=\"1.0\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<input name=\"primitiveInt\"\\s+type=\"number\"[^/]+min=\""
-                        + Integer.MIN_VALUE + "\"\\s+max=\"" + Integer.MAX_VALUE + "\"\\s+step=\"1.0\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<input name=\"primitiveLong\"\\s+type=\"number\"[^/]+min=\""
-                        + Long.MIN_VALUE + "\"\\s+max=\"" + Long.MAX_VALUE + "\"\\s+step=\"1.0\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern
-                        .compile(".*<input name=\"primitiveFloat\"\\s+type=\"number\"\\s+step=\"1.0E-5\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern
-                        .compile(".*<input name=\"primitiveDouble\"\\s+type=\"number\"\\s+step=\"1.0E-5\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(
-                        ".*<input name=\"primitiveChar\"\\s+type=\"text\"[^/]+minlength=\"1\"\\s+maxlength=\"1\".*",
-                        Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<input name=\"string\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<select.*name=\"enumeration\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"A\">A<.*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"B\">B<.*", Pattern.DOTALL)))
-                .body(Matchers
-                        .matchesRegex(Pattern.compile(".*<input name=\"date\"\\s+type=\"datetime-local\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(
-                        Pattern.compile(".*<input name=\"localDateTime\"\\s+type=\"datetime-local\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<input name=\"localDate\"\\s+type=\"date\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<input name=\"localTime\"\\s+type=\"time\".*", Pattern.DOTALL)))
+                .extract().body().asString();
+        Document document = Jsoup.parse(html);
+        Assertions.assertEquals(1, document.select("input[name='primitiveBoolean'][type='checkbox']").size());
+        Assertions.assertEquals(1, document.select(
+                "input[name='primitiveByte'][type='number'][min=" + Byte.MIN_VALUE + "][max=" + Byte.MAX_VALUE + "][step=1.0]")
+                .size());
+        Assertions.assertEquals(1, document.select("input[name='primitiveShort'][type='number'][min=" + Short.MIN_VALUE
+                + "][max=" + Short.MAX_VALUE + "][step=1.0]").size());
+        Assertions.assertEquals(1, document.select("input[name='primitiveInt'][type='number'][min=" + Integer.MIN_VALUE
+                + "][max=" + Integer.MAX_VALUE + "][step=1.0]").size());
+        Assertions.assertEquals(1, document.select(
+                "input[name='primitiveLong'][type='number'][min=" + Long.MIN_VALUE + "][max=" + Long.MAX_VALUE + "][step=1.0]")
+                .size());
+        Assertions.assertEquals(1, document.select("input[name='primitiveFloat'][type='number'][step=1.0E-5]").size());
+        Assertions.assertEquals(1, document.select("input[name='primitiveDouble'][type='number'][step=1.0E-5]").size());
+        Assertions.assertEquals(1,
+                document.select("input[name='primitiveChar'][type='text'][minlength=1][maxlength=1]").size());
+        Assertions.assertEquals(1, document.select("input[name='string']").size());
 
-                .body(Matchers.matchesRegex(Pattern.compile(".*<select.*name=\"oneToOneOwning\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + oneToOneIds.get(0)
-                        + "\">OneToOneNotOwningEntity&lt;" + oneToOneIds.get(0) + "&gt;<.*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + oneToOneIds.get(1)
-                        + "\">OneToOneNotOwningEntity&lt;" + oneToOneIds.get(1) + "&gt;<.*", Pattern.DOTALL)))
+        Elements enumeration = document.select("select[name='enumeration']");
+        Assertions.assertEquals(1, enumeration.size());
+        Assertions.assertEquals("A", enumeration.select("option[value='A']").text());
+        Assertions.assertEquals("B", enumeration.select("option[value='B']").text());
 
-                .body(Matchers.matchesRegex(Pattern.compile(".*<select multiple[^>]+name=\"oneToMany\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + manyToOneIds.get(0)
-                        + "\">ManyToOneEntity&lt;" + manyToOneIds.get(0) + "&gt;<.*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + manyToOneIds.get(1)
-                        + "\">ManyToOneEntity&lt;" + manyToOneIds.get(1) + "&gt;<.*", Pattern.DOTALL)))
+        Assertions.assertEquals(1, document.select("input[name='date'][type='datetime-local']").size());
+        Assertions.assertEquals(1, document.select("input[name='localDateTime'][type='datetime-local']").size());
+        Assertions.assertEquals(1, document.select("input[name='localDate'][type='date']").size());
+        Assertions.assertEquals(1, document.select("input[name='localTime'][type='time']").size());
 
-                .body(Matchers.matchesRegex(Pattern.compile(".*<select.*name=\"manyToOne\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + oneToManyIds.get(0)
-                        + "\">OneToManyEntity&lt;" + oneToManyIds.get(0) + "&gt;<.*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + oneToManyIds.get(1)
-                        + "\">OneToManyEntity&lt;" + oneToManyIds.get(1) + "&gt;<.*", Pattern.DOTALL)))
+        Elements oneToOneOwning = document.select("select[name='oneToOneOwning']");
+        Assertions.assertEquals(1, oneToOneOwning.size());
+        Assertions.assertEquals("OneToOneNotOwningEntity<" + oneToOneIds.get(0) + ">",
+                oneToOneOwning.select("option[value='" + oneToOneIds.get(0) + "']").text());
+        Assertions.assertEquals("OneToOneNotOwningEntity<" + oneToOneIds.get(1) + ">",
+                oneToOneOwning.select("option[value='" + oneToOneIds.get(1) + "']").text());
 
-                .body(Matchers
-                        .matchesRegex(Pattern.compile(".*<select multiple[^>]+name=\"manyToManyOwning\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + manyToManyNotOwningIds.get(0)
-                        + "\">ManyToManyNotOwningEntity&lt;" + manyToManyNotOwningIds.get(0) + "&gt;<.*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + manyToManyNotOwningIds.get(1)
-                        + "\">ManyToManyNotOwningEntity&lt;" + manyToManyNotOwningIds.get(1) + "&gt;<.*", Pattern.DOTALL)))
+        Elements oneToMany = document.select("select[name='oneToMany'][multiple]");
+        Assertions.assertEquals(1, oneToMany.size());
+        Assertions.assertEquals("ManyToOneEntity<" + manyToOneIds.get(0) + ">",
+                oneToMany.select("option[value='" + manyToOneIds.get(0) + "']").text());
+        Assertions.assertEquals("ManyToOneEntity<" + manyToOneIds.get(1) + ">",
+                oneToMany.select("option[value='" + manyToOneIds.get(1) + "']").text());
 
-                .body(Matchers
-                        .matchesRegex(Pattern.compile(".*<select multiple[^>]+name=\"manyToManyNotOwning\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + manyToManyOwningIds.get(0)
-                        + "\">ManyToManyOwningEntity&lt;" + manyToManyOwningIds.get(0) + "&gt;<.*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + manyToManyOwningIds.get(1)
-                        + "\">ManyToManyOwningEntity&lt;" + manyToManyOwningIds.get(1) + "&gt;<.*", Pattern.DOTALL)))
+        Elements manyToOne = document.select("select[name='manyToOne']");
+        Assertions.assertEquals(1, manyToOne.size());
+        Assertions.assertEquals("OneToManyEntity<" + oneToManyIds.get(0) + ">",
+                manyToOne.select("option[value='" + oneToManyIds.get(0) + "']").text());
+        Assertions.assertEquals("OneToManyEntity<" + oneToManyIds.get(1) + ">",
+                manyToOne.select("option[value='" + oneToManyIds.get(1) + "']").text());
 
-                .body(Matchers
-                        .not(Matchers
-                                .matchesRegex(Pattern.compile(".*<select.*name=\"oneToOneNotOwning\".*", Pattern.DOTALL))));
+        Elements manyToManyOwning = document.select("select[name='manyToManyOwning'][multiple]");
+        Assertions.assertEquals(1, manyToManyOwning.size());
+        Assertions.assertEquals("ManyToManyNotOwningEntity<" + manyToManyNotOwningIds.get(0) + ">",
+                manyToManyOwning.select("option[value='" + manyToManyNotOwningIds.get(0) + "']").text());
+        Assertions.assertEquals("ManyToManyNotOwningEntity<" + manyToManyNotOwningIds.get(1) + ">",
+                manyToManyOwning.select("option[value='" + manyToManyNotOwningIds.get(1) + "']").text());
+
+        Elements manyToManyNotOwning = document.select("select[name='manyToManyNotOwning'][multiple]");
+        Assertions.assertEquals(1, manyToManyNotOwning.size());
+        Assertions.assertEquals("ManyToManyOwningEntity<" + manyToManyOwningIds.get(0) + ">",
+                manyToManyNotOwning.select("option[value='" + manyToManyOwningIds.get(0) + "']").text());
+        Assertions.assertEquals("ManyToManyOwningEntity<" + manyToManyOwningIds.get(1) + ">",
+                manyToManyNotOwning.select("option[value='" + manyToManyOwningIds.get(1) + "']").text());
+
+        Assertions.assertEquals(0, document.select("select[name='oneToOneNotOwning']").size());
 
         LocalDateTime localDateTime = LocalDateTime.of(1997, 12, 23, 14, 25, 45);
         Instant instant = localDateTime.atZone(ZoneId.systemDefault()).toInstant();
@@ -320,91 +324,85 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(1, ExampleEntity.count());
         entity = ExampleEntity.findAll().firstResult();
 
-        given()
+        String html = given()
                 .when().get("/_renarde/backoffice/ExampleEntity/edit/" + entity.id)
                 .then()
                 .statusCode(200)
-                .body(Matchers.matchesRegex(Pattern
-                        .compile(".*<input name=\"primitiveBoolean\"\\s+type=\"checkbox\"[^/]+checked.*", Pattern.DOTALL)))
-                .body(Matchers
-                        .matchesRegex(Pattern.compile(
-                                ".*<input name=\"primitiveByte\"\\s+type=\"number\"[^/]+min=\"" + Byte.MIN_VALUE
-                                        + "\"\\s+max=\"" + Byte.MAX_VALUE + "\"\\s+step=\"1.0\"\\s+value=\"1\".*",
-                                Pattern.DOTALL)))
-                .body(Matchers
-                        .matchesRegex(Pattern.compile(
-                                ".*<input name=\"primitiveShort\"\\s+type=\"number\"[^/]+min=\"" + Short.MIN_VALUE
-                                        + "\"\\s+max=\"" + Short.MAX_VALUE + "\"\\s+step=\"1.0\"\\s+value=\"2\".*",
-                                Pattern.DOTALL)))
-                .body(Matchers
-                        .matchesRegex(Pattern.compile(
-                                ".*<input name=\"primitiveInt\"\\s+type=\"number\"[^/]+min=\"" + Integer.MIN_VALUE
-                                        + "\"\\s+max=\"" + Integer.MAX_VALUE + "\"\\s+step=\"1.0\"\\s+value=\"3\".*",
-                                Pattern.DOTALL)))
-                .body(Matchers
-                        .matchesRegex(Pattern.compile(
-                                ".*<input name=\"primitiveLong\"\\s+type=\"number\"[^/]+min=\"" + Long.MIN_VALUE
-                                        + "\"\\s+max=\"" + Long.MAX_VALUE + "\"\\s+step=\"1.0\"\\s+value=\"4\".*",
-                                Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(
-                        ".*<input name=\"primitiveFloat\"\\s+type=\"number\"\\s+step=\"1.0E-5\"\\s+value=\"5.0\".*",
-                        Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(
-                        ".*<input name=\"primitiveDouble\"\\s+type=\"number\"\\s+step=\"1.0E-5\"\\s+value=\"6.0\".*",
-                        Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(
-                        ".*<input name=\"primitiveChar\"\\s+type=\"text\"[^/]+minlength=\"1\"\\s+maxlength=\"1\"\\s+value=\"a\".*",
-                        Pattern.DOTALL)))
-                .body(Matchers
-                        .matchesRegex(Pattern.compile(".*<input name=\"string\"[^/]+value=\"aString\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<select.*name=\"enumeration\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"A\">A<.*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\"B\">B<.*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<input name=\"date\"\\s+type=\"datetime-local\"[^/]+value=\""
-                        + JavaExtensions.htmlNormalised(date) + "\".*", Pattern.DOTALL)))
-                .body(Matchers
-                        .matchesRegex(Pattern.compile(".*<input name=\"localDateTime\"\\s+type=\"datetime-local\"[^/]+value=\""
-                                + JavaExtensions.htmlNormalised(localDateTime) + "\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<input name=\"localDate\"\\s+type=\"date\"[^/]+value=\""
-                        + JavaExtensions.htmlNormalised(localDateTime.toLocalDate()) + "\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<input name=\"localTime\"\\s+type=\"time\"[^/]+value=\""
-                        + JavaExtensions.htmlNormalised(localDateTime.toLocalTime()) + "\".*", Pattern.DOTALL)))
+                .extract().body().asString();
+        Document document = Jsoup.parse(html);
+        Assertions.assertEquals(1, document.select("input[name='primitiveBoolean'][type='checkbox'][checked]").size());
+        Assertions.assertEquals(1, document.select(
+                "input[name='primitiveByte'][type='number'][min=" + Byte.MIN_VALUE + "][max=" + Byte.MAX_VALUE
+                        + "][step=1.0][value=1]")
+                .size());
+        Assertions.assertEquals(1, document.select("input[name='primitiveShort'][type='number'][min=" + Short.MIN_VALUE
+                + "][max=" + Short.MAX_VALUE + "][step=1.0][value=2]").size());
+        Assertions.assertEquals(1, document.select("input[name='primitiveInt'][type='number'][min=" + Integer.MIN_VALUE
+                + "][max=" + Integer.MAX_VALUE + "][step=1.0][value=3]").size());
+        Assertions.assertEquals(1, document.select(
+                "input[name='primitiveLong'][type='number'][min=" + Long.MIN_VALUE + "][max=" + Long.MAX_VALUE
+                        + "][step=1.0][value=4]")
+                .size());
+        Assertions.assertEquals(1,
+                document.select("input[name='primitiveFloat'][type='number'][step=1.0E-5][value=5.0]").size());
+        Assertions.assertEquals(1,
+                document.select("input[name='primitiveDouble'][type='number'][step=1.0E-5][value=6.0]").size());
+        Assertions.assertEquals(1,
+                document.select("input[name='primitiveChar'][type='text'][minlength=1][maxlength=1][value='a']").size());
+        Assertions.assertEquals(1, document.select("input[name='string'][value='aString']").size());
 
-                .body(Matchers.matchesRegex(Pattern.compile(".*<select.*name=\"oneToOneOwning\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\"" + oneToOnes.get(0).id
-                        + "\">OneToOneNotOwningEntity&lt;" + oneToOnes.get(0).id + "&gt;<.*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + oneToOnes.get(1).id
-                        + "\">OneToOneNotOwningEntity&lt;" + oneToOnes.get(1).id + "&gt;<.*", Pattern.DOTALL)))
+        Elements enumeration = document.select("select[name='enumeration']");
+        Assertions.assertEquals(1, enumeration.size());
+        Assertions.assertEquals("A", enumeration.select("option[value='A']").text());
+        Assertions.assertEquals("B", enumeration.select("option[value='B'][selected]").text());
 
-                .body(Matchers.matchesRegex(Pattern.compile(".*<select multiple[^>]+name=\"oneToMany\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\"" + manyToOnes.get(0).id
-                        + "\">ManyToOneEntity&lt;" + manyToOnes.get(0).id + "&gt;<.*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\"" + manyToOnes.get(1).id
-                        + "\">ManyToOneEntity&lt;" + manyToOnes.get(1).id + "&gt;<.*", Pattern.DOTALL)))
+        Assertions.assertEquals(1,
+                document.select(
+                        "input[name='date'][type='datetime-local'][value='" + JavaExtensions.htmlNormalised(date) + "']")
+                        .size());
+        Assertions.assertEquals(1, document.select("input[name='localDateTime'][type='datetime-local'][value='"
+                + JavaExtensions.htmlNormalised(localDateTime) + "']").size());
+        Assertions.assertEquals(1, document.select("input[name='localDate'][type='date'][value='"
+                + JavaExtensions.htmlNormalised(localDateTime.toLocalDate()) + "']").size());
+        Assertions.assertEquals(1, document.select("input[name='localTime'][type='time'][value='"
+                + JavaExtensions.htmlNormalised(localDateTime.toLocalTime()) + "']").size());
 
-                .body(Matchers.matchesRegex(Pattern.compile(".*<select.*name=\"manyToOne\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\"" + oneToManys.get(0).id
-                        + "\">OneToManyEntity&lt;" + oneToManys.get(0).id + "&gt;<.*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+value=\"" + oneToManys.get(1).id
-                        + "\">OneToManyEntity&lt;" + oneToManys.get(1).id + "&gt;<.*", Pattern.DOTALL)))
+        Elements oneToOneOwning = document.select("select[name='oneToOneOwning']");
+        Assertions.assertEquals(1, oneToOneOwning.size());
+        Assertions.assertEquals("OneToOneNotOwningEntity<" + oneToOnes.get(0).id + ">",
+                oneToOneOwning.select("option[value='" + oneToOnes.get(0).id + "'][selected]").text());
+        Assertions.assertEquals("OneToOneNotOwningEntity<" + oneToOnes.get(1).id + ">",
+                oneToOneOwning.select("option[value='" + oneToOnes.get(1).id + "']").text());
 
-                .body(Matchers
-                        .matchesRegex(Pattern.compile(".*<select multiple[^>]+name=\"manyToManyOwning\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\"" + manyToManyNotOwning.get(0).id
-                        + "\">ManyToManyNotOwningEntity&lt;" + manyToManyNotOwning.get(0).id + "&gt;<.*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\"" + manyToManyNotOwning.get(1).id
-                        + "\">ManyToManyNotOwningEntity&lt;" + manyToManyNotOwning.get(1).id + "&gt;<.*", Pattern.DOTALL)))
+        Elements oneToMany = document.select("select[name='oneToMany'][multiple]");
+        Assertions.assertEquals(1, oneToMany.size());
+        Assertions.assertEquals("ManyToOneEntity<" + manyToOnes.get(0).id + ">",
+                oneToMany.select("option[value='" + manyToOnes.get(0).id + "'][selected]").text());
+        Assertions.assertEquals("ManyToOneEntity<" + manyToOnes.get(1).id + ">",
+                oneToMany.select("option[value='" + manyToOnes.get(1).id + "'][selected]").text());
 
-                .body(Matchers
-                        .matchesRegex(Pattern.compile(".*<select multiple[^>]+name=\"manyToManyNotOwning\".*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\"" + manyToManyOwning.get(0).id
-                        + "\">ManyToManyOwningEntity&lt;" + manyToManyOwning.get(0).id + "&gt;<.*", Pattern.DOTALL)))
-                .body(Matchers.matchesRegex(Pattern.compile(".*<option\\s+selected\\s+value=\"" + manyToManyOwning.get(1).id
-                        + "\">ManyToManyOwningEntity&lt;" + manyToManyOwning.get(1).id + "&gt;<.*", Pattern.DOTALL)))
+        Elements manyToOne = document.select("select[name='manyToOne']");
+        Assertions.assertEquals(1, manyToOne.size());
+        Assertions.assertEquals("OneToManyEntity<" + oneToManys.get(0).id + ">",
+                manyToOne.select("option[value='" + oneToManys.get(0).id + "'][selected]").text());
+        Assertions.assertEquals("OneToManyEntity<" + oneToManys.get(1).id + ">",
+                manyToOne.select("option[value='" + oneToManys.get(1).id + "']").text());
 
-                .body(Matchers
-                        .not(Matchers
-                                .matchesRegex(Pattern.compile(".*<select.*name=\"oneToOneNotOwning\".*", Pattern.DOTALL))));
+        Elements manyToManyOwningSel = document.select("select[name='manyToManyOwning'][multiple]");
+        Assertions.assertEquals(1, manyToManyOwningSel.size());
+        Assertions.assertEquals("ManyToManyNotOwningEntity<" + manyToManyNotOwning.get(0).id + ">",
+                manyToManyOwningSel.select("option[value='" + manyToManyNotOwning.get(0).id + "'][selected]").text());
+        Assertions.assertEquals("ManyToManyNotOwningEntity<" + manyToManyNotOwning.get(1).id + ">",
+                manyToManyOwningSel.select("option[value='" + manyToManyNotOwning.get(1).id + "'][selected]").text());
+
+        Elements manyToManyNotOwningSel = document.select("select[name='manyToManyNotOwning'][multiple]");
+        Assertions.assertEquals(1, manyToManyNotOwningSel.size());
+        Assertions.assertEquals("ManyToManyOwningEntity<" + manyToManyOwning.get(0).id + ">",
+                manyToManyNotOwningSel.select("option[value='" + manyToManyOwning.get(0).id + "'][selected]").text());
+        Assertions.assertEquals("ManyToManyOwningEntity<" + manyToManyOwning.get(1).id + ">",
+                manyToManyNotOwningSel.select("option[value='" + manyToManyOwning.get(1).id + "'][selected]").text());
+
+        Assertions.assertEquals(0, document.select("select[name='oneToOneNotOwning']").size());
 
         LocalDateTime otherLocalDateTime = LocalDateTime.of(1996, 11, 22, 13, 24, 44);
         Instant otherInstant = otherLocalDateTime.atZone(ZoneId.systemDefault()).toInstant();
