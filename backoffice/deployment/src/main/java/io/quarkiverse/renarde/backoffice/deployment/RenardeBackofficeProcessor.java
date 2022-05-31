@@ -380,7 +380,8 @@ public class RenardeBackofficeProcessor {
             BranchResult validation = m.ifTrue(m.invokeVirtualMethod(
                     MethodDescriptor.ofMethod(controllerClass, "validationFailed", boolean.class), m.getThis()));
             try (BytecodeCreator tb = validation.trueBranch()) {
-                redirectToAction(tb, controllerClass, uriTarget, simpleName, () -> tb.getMethodParam(0));
+                redirectToAction(tb, controllerClass, uriTarget, simpleName,
+                        mode == Mode.CREATE ? null : () -> tb.getMethodParam(0));
             }
 
             AssignableResultHandle entityVariable;
