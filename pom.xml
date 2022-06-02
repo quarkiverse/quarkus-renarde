@@ -8,7 +8,7 @@
   </parent>
   <groupId>io.quarkiverse.renarde</groupId>
   <artifactId>quarkus-renarde-parent</artifactId>
-  <version>1.0.2</version>
+  <version>1.0.3-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Quarkus - Renarde - Parent</name>
   <modules>
@@ -71,8 +71,4 @@
       </modules>
     </profile>
   </profiles>
-
-  <scm>
-    <tag>1.0.2</tag>
-  </scm>
 </project>
