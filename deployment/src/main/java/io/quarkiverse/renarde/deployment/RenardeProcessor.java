@@ -81,6 +81,7 @@ import io.quarkus.deployment.builditem.LaunchModeBuildItem;
 import io.quarkus.deployment.builditem.RunTimeConfigurationDefaultBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
 import io.quarkus.deployment.logging.LogCleanupFilterBuildItem;
+import io.quarkus.deployment.pkg.builditem.CurateOutcomeBuildItem;
 import io.quarkus.deployment.util.AsmUtil;
 import io.quarkus.gizmo.BytecodeCreator;
 import io.quarkus.gizmo.ClassCreator;
@@ -183,12 +184,15 @@ public class RenardeProcessor {
 
     @BuildStep
     void setupJWT(LaunchModeBuildItem launchMode, Capabilities capabilities,
-            BuildProducer<RunTimeConfigurationDefaultBuildItem> runtimeConfigurationBuildItem)
+            BuildProducer<RunTimeConfigurationDefaultBuildItem> runtimeConfigurationBuildItem,
+            CurateOutcomeBuildItem curateOutcomeBuildItem)
             throws IOException, NoSuchAlgorithmException {
         if (launchMode.getLaunchMode().isDevOrTest()
                 && capabilities.isPresent(Capability.JWT)) {
             // make sure we have minimal config
             final Config config = ConfigProvider.getConfig();
+
+            File buildDir = curateOutcomeBuildItem.getApplicationModel().getAppArtifact().getWorkspaceModule().getBuildDir();
 
             // PRIVATE
             Optional<String> decryptKeyLocationOpt = config.getOptionalValue("mp.jwt.decrypt.key.location", String.class);
@@ -201,8 +205,10 @@ public class RenardeProcessor {
                     && !verifyKeyLocationOpt.isPresent()
                     && !encryptKeyLocationOpt.isPresent()) {
                 // FIXME: folder
-                File privateKey = new File("target/classes/dev.privateKey.pem");
-                File publicKey = new File("target/classes/dev.publicKey.pem");
+                File classesFolder = new File(buildDir, "classes");
+                classesFolder.mkdirs();
+                File privateKey = new File(classesFolder, "dev.privateKey.pem");
+                File publicKey = new File(classesFolder, "dev.publicKey.pem");
                 if (!privateKey.exists() && !publicKey.exists()) {
                     KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
                     kpg.initialize(2048);
