@@ -16,10 +16,20 @@
 */
 package rest;
 
-import javax.ws.rs.Path;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.core.MediaType;
+
+import org.jboss.resteasy.reactive.MultipartForm;
+import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestPath;
 import org.jboss.resteasy.reactive.RestQuery;
+import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import io.quarkiverse.renarde.Controller;
 import io.quarkiverse.renarde.router.Router;
@@ -33,6 +43,22 @@ public class Application extends Controller {
         public static native TemplateInstance index();
 
         public static native TemplateInstance routingTags();
+    }
+
+    public static class DamnMultiPart {
+        @RestForm
+        File file;
+        @RestForm
+        public FileUpload fileUpload;
+    }
+
+    // FIXME: https://github.com/quarkusio/quarkus/issues/22205
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @POST
+    public String form(@RestForm String param,
+            @MultipartForm DamnMultiPart damnit) throws IOException {
+        return "param: " + param + ", file: " + Files.readString(damnit.file.toPath()) + ", fileUpload: "
+                + damnit.fileUpload.fileName();
     }
 
     public String hello() {

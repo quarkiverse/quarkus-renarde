@@ -3,6 +3,8 @@ package io.quarkiverse.renarde.it;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.is;
 
+import javax.ws.rs.core.MediaType;
+
 import org.junit.jupiter.api.Test;
 
 import io.quarkus.test.junit.QuarkusTest;
@@ -87,5 +89,20 @@ public class RenardeResourceTest {
                         + "\nhttp://localhost:8081/Application/params/first/42?q=search"
                         + "\n/Application/primitiveParams?b=true&c=a&bite=2&s=3&i=4&l=5&f=6.0&d=7.0"
                         + "\nhttp://localhost:8081/Application/primitiveParams?b=true&c=a&bite=2&s=3&i=4&l=5&f=6.0&d=7.0"));
+    }
+
+    @Test
+    public void testPost() {
+        // FIXME: needs more work
+        given()
+                .when()
+                .multiPart("param", "myParam")
+                .multiPart("file", "file.txt", "file contents".getBytes(), MediaType.TEXT_PLAIN)
+                .multiPart("fileUpload", "fileUpload.txt", "upload file contents".getBytes(), MediaType.TEXT_PLAIN)
+                .log().all()
+                .post("/Application/form")
+                .then()
+                .statusCode(200)
+                .body(is("param: myParam, file: file contents, fileUpload: fileUpload.txt"));
     }
 }
