@@ -5,12 +5,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.net.URI;
+import java.nio.file.Path;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -68,6 +70,8 @@ import io.quarkus.arc.deployment.ExcludedTypeBuildItem;
 import io.quarkus.arc.deployment.GeneratedBeanBuildItem;
 import io.quarkus.arc.deployment.GeneratedBeanGizmoAdaptor;
 import io.quarkus.arc.deployment.UnremovableBeanBuildItem;
+import io.quarkus.bootstrap.workspace.ArtifactSources;
+import io.quarkus.bootstrap.workspace.SourceDir;
 import io.quarkus.deployment.Capabilities;
 import io.quarkus.deployment.Capability;
 import io.quarkus.deployment.annotations.BuildProducer;
@@ -192,8 +196,6 @@ public class RenardeProcessor {
             // make sure we have minimal config
             final Config config = ConfigProvider.getConfig();
 
-            File buildDir = curateOutcomeBuildItem.getApplicationModel().getAppArtifact().getWorkspaceModule().getBuildDir();
-
             // PRIVATE
             Optional<String> decryptKeyLocationOpt = config.getOptionalValue("mp.jwt.decrypt.key.location", String.class);
             Optional<String> signKeyLocationOpt = config.getOptionalValue("smallrye.jwt.sign.key.location", String.class);
@@ -205,10 +207,31 @@ public class RenardeProcessor {
                     && !verifyKeyLocationOpt.isPresent()
                     && !encryptKeyLocationOpt.isPresent()) {
                 // FIXME: folder
-                File classesFolder = new File(buildDir, "classes");
-                classesFolder.mkdirs();
-                File privateKey = new File(classesFolder, "dev.privateKey.pem");
-                File publicKey = new File(classesFolder, "dev.publicKey.pem");
+
+                File buildDir = null;
+                ArtifactSources src = curateOutcomeBuildItem.getApplicationModel().getAppArtifact().getSources();
+                if (src != null) { // shouldn't be null in dev mode
+                    Collection<SourceDir> srcDirs = src.getResourceDirs();
+                    if (srcDirs.isEmpty()) {
+                        // in the module has no resources dir?
+                        srcDirs = src.getSourceDirs();
+                    }
+                    if (!srcDirs.isEmpty()) {
+                        // pick the first resources output dir
+                        Path resourcesOutputDir = srcDirs.iterator().next().getOutputDir();
+                        buildDir = resourcesOutputDir.toFile();
+                    }
+                }
+                if (buildDir == null) {
+                    // the module doesn't have any sources nor resources, stick to the build dir
+                    buildDir = new File(
+                            curateOutcomeBuildItem.getApplicationModel().getAppArtifact().getWorkspaceModule().getBuildDir(),
+                            "classes");
+                }
+
+                buildDir.mkdirs();
+                File privateKey = new File(buildDir, "dev.privateKey.pem");
+                File publicKey = new File(buildDir, "dev.publicKey.pem");
                 if (!privateKey.exists() && !publicKey.exists()) {
                     KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
                     kpg.initialize(2048);
