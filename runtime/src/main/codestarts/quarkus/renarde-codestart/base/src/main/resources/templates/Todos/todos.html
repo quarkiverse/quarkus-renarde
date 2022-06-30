@@ -1,0 +1,37 @@
+{#include main.html}
+{#title}Todos{/title}
+{! Add some CSS !}
+{#moreStyles}
+<style>
+  .todo {
+    margin: 1em;
+  }
+  .error {
+  	color: red;
+  	border-color: red;
+  }
+</style>
+{/moreStyles}
+
+  {! Iterate over our todo items !}
+  {#for todo in todos}
+    <div class="todo">
+      {! This invokes the JavaExtensions.capitalise(String) extension method !}
+      {todo.task.capitalise}
+      {#if todo.completed}
+        (done {todo.completed.since})
+      {/if}
+    </div>
+  {/for} 
+
+  {! A form action calling Todos.add() !}
+  {#form uri:Todos.add()}
+    {! We add some information if there's a validation error !}
+    <input name="task" placeholder="Enter new task" {#ifError 'task'}class="error"{/}/>
+    {#ifError 'task'}
+      <div class="error">
+      	Error: {#error 'task'/}
+      </div>
+    {/ifError}
+  {/form}
+{/include}

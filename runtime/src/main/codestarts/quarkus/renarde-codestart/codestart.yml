@@ -1,0 +1,9 @@
+name: renarde-codestart
+ref: renarde
+type: code
+tags: extension-codestart
+metadata:
+  title: Renarde
+  description: This is a small Renarde webapp
+  path: /renarde
+  related-guide-section: https://quarkiverse.github.io/quarkiverse-docs/quarkus-renarde/dev/index.html
