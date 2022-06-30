@@ -50,7 +50,7 @@ public class RenardeResourceTest {
                 .when().get("/Application/index")
                 .then()
                 .statusCode(200)
-                .contentType(is("text/html"))
+                .contentType(is("text/html;charset=UTF-8"))
                 .body(is("This is my index"));
     }
 
