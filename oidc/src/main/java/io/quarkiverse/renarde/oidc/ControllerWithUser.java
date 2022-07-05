@@ -6,7 +6,7 @@ import io.quarkiverse.renarde.Controller;
 
 /**
  * A controller subtype with a current user.
- * 
+ *
  * @param <U> your implementation of {@link RenardeUser}
  */
 public abstract class ControllerWithUser<U extends RenardeUser> extends Controller {
@@ -16,7 +16,7 @@ public abstract class ControllerWithUser<U extends RenardeUser> extends Controll
     @SuppressWarnings("unchecked")
     /**
      * Obtains the currently logged in user, if any.
-     * 
+     *
      * @return the currently logged in user, or null.
      */
     protected U getUser() {

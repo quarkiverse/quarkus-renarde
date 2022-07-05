@@ -121,7 +121,7 @@ public class MockMicrosoftOidcTestResource extends MockOidcTestResource<MockMicr
      * GET
      * https://login.microsoftonline.com/common/oauth2/v2.0/authorize?response_type=code&client_id=SECRET&scope=openid+openid+
      * email+profile&redirect_uri=http://localhost:8080/Login/oidcLoginSuccess&state=STATE
-     * 
+     *
      * returns a 302 to
      * GET http://localhost:8080/Login/oidcLoginSuccess?code=CODE&state=STATE
      */
@@ -148,7 +148,7 @@ public class MockMicrosoftOidcTestResource extends MockOidcTestResource<MockMicr
      * OIDC calls POST /token
      * grant_type=authorization_code&code=CODE&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2FLogin%2FoidcLoginSuccess
      * returns:
-     * 
+     *
      * {
      * "token_type":"Bearer",
      * "scope":"openid email profile",
@@ -157,7 +157,7 @@ public class MockMicrosoftOidcTestResource extends MockOidcTestResource<MockMicr
      * "access_token":TOKEN,
      * "id_token":JWT
      * }
-     * 
+     *
      * ID token:
      * {
      * "ver": "2.0",

@@ -123,7 +123,7 @@ public class MockAppleOidcTestResource extends MockOidcTestResource<MockAppleOid
      * GET
      * https://appleid.apple.com/auth/authorize?response_type=code&client_id=CLIENT&scope=openid+openid+email+name&redirect_uri=
      * https://ab7d-81-185-173-5.ngrok.io/Login/oidcLoginSuccess&state=STATE&response_mode=form_post
-     * 
+     *
      * causes a POST but from the client, so let's return that to the client and make-pretend in the test
      * state: STATE
      * code: CODE
@@ -151,14 +151,14 @@ public class MockAppleOidcTestResource extends MockOidcTestResource<MockAppleOid
     /*
      * OIDC calls POST /auth/token
      * POST /auth/token
-     * 
+     *
      * grant_type=authorization_code
      * &code=CODE
      * &redirect_uri=https%3A%2F%2Fab7d-81-185-173-5.ngrok.io%2FLogin%2FoidcLoginSuccess
      * &client_id=CLIENT
      * &client_secret=GENERATED_JWT
-     * 
-     * 
+     *
+     *
      * {
      * "access_token":"TOKEN",
      * "token_type":"Bearer",
@@ -166,7 +166,7 @@ public class MockAppleOidcTestResource extends MockOidcTestResource<MockAppleOid
      * "refresh_token":"TOKEN2",
      * "id_token":"JWT"
      * }
-     * 
+     *
      * {
      * "iss": "https://appleid.apple.com",
      * "aud": "CLIENT",

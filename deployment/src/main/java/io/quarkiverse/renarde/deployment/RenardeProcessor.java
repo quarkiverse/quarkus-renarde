@@ -310,12 +310,12 @@ public class RenardeProcessor {
         /*
          * @RequestScoped
          * public class MySecurity {
-         * 
+         *
          * @Inject
          * RenardeSecurity security;
-         * 
+         *
          * @Named("user")
-         * 
+         *
          * @Produces
          * public User getUser() {
          * return (User) security.getUser();
@@ -566,7 +566,7 @@ public class RenardeProcessor {
         if (controllers.contains(method.declaringClass().name())) {
             /*
              * @Path("foo") class Class { @Path("bar") method(); } -> no change
-             * 
+             *
              * @Path("foo") class Class { method(); } -> @Path("foo") class Class { @Path("method") method(); }
              * class Class { @Path("/bar") method(); } -> @Path("") class Class { @Path("/bar") method(); }
              * class Class { @Path("bar") method(); } -> @Path("") class Class { @Path("Class/bar") method(); }

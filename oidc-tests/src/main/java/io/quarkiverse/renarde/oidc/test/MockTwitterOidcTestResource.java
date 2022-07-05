@@ -70,12 +70,12 @@ public class MockTwitterOidcTestResource extends MockOidcTestResource<MockTwitte
     /*
      * OIDC calls POST https://api.twitter.com/2/oauth2/token
      * Authorization: Basic AUTH
-     * 
+     *
      * grant_type=authorization_code
      * code=CODE
      * redirect_uri=http://localhost:8080/_renarde/security/oidc-success
      * code_verifier=VERIFIER
-     * 
+     *
      * returns:
      * {
      * "token_type":"bearer",
