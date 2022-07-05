@@ -102,7 +102,7 @@ public class MockFacebookOidcTestResource extends MockOidcTestResource<MockFaceb
      * GET
      * https://facebook.com/dialog/oauth/?response_type=code&client_id=CLIENT&scope=openid+email+public_profile&redirect_uri=
      * http://localhost:8080/Login/facebookLoginSuccess&state=STATE
-     * 
+     *
      * returns a 302 to
      * GET http://localhost:8080/Login/facebookLoginSuccess?code=CODE&state=STATE
      */
@@ -135,7 +135,7 @@ public class MockFacebookOidcTestResource extends MockOidcTestResource<MockFaceb
      * grant_type=authorization_code
      * &code=CODE
      * &redirect_uri=http%3A%2F%2Flocalhost%3A8080%2FLogin%2FfacebookLoginSuccess
-     * 
+     *
      * returns:
      * {
      * "access_token":TOKEN,
@@ -143,7 +143,7 @@ public class MockFacebookOidcTestResource extends MockOidcTestResource<MockFaceb
      * "token_type":"bearer",
      * "expires_in":5172337
      * }
-     * 
+     *
      * {
      * "iss": "https://www.facebook.com",
      * "aud": "XXX",
