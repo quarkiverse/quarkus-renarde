@@ -495,7 +495,7 @@ public class RenardeProcessor {
             Map<DotName, AnnotationInstance>[] parameterAnnotations = getParameterAnnotations(method);
 
             // look for undeclared path params
-            for (int paramIndex = 0, asmParamIndex = 1; paramIndex < method.parameters().size(); ++paramIndex) {
+            for (int paramIndex = 0, asmParamIndex = 1; paramIndex < method.parametersCount(); ++paramIndex) {
                 String paramName = method.parameterName(paramIndex);
                 AnnotationInstance pathParam = parameterAnnotations[paramIndex].get(ResteasyReactiveDotNames.PATH_PARAM);
                 if (pathParam != null) {
@@ -528,13 +528,13 @@ public class RenardeProcessor {
                         name = paramName;
                     parts.add(new ControllerVisitor.QueryParamUriPart(name, paramIndex, asmParamIndex));
                 }
-                asmParamIndex += AsmUtil.getParameterSize(method.parameters().get(paramIndex));
+                asmParamIndex += AsmUtil.getParameterSize(method.parameterType(paramIndex));
             }
 
             String descriptor = AsmUtil.getDescriptor(method, v -> v);
             String key = method.name() + "/" + descriptor;
             methods.put(key, new ControllerMethod(method.name(), descriptor, parts,
-                    method.parameters()));
+                    method.parameterTypes()));
         }
         return new ControllerVisitor.ControllerClass(controllerInfo.name().toString(), controllerInfo.superName().toString(),
                 Modifier.isAbstract(controllerInfo.flags()), methods);
@@ -604,7 +604,7 @@ public class RenardeProcessor {
             Map<DotName, AnnotationInstance>[] parameterAnnotations = getParameterAnnotations(method);
 
             // look for undeclared path params
-            for (int paramPos = 0; paramPos < method.parameters().size(); ++paramPos) {
+            for (int paramPos = 0; paramPos < method.parametersCount(); ++paramPos) {
                 if ((parameterAnnotations[paramPos].get(ResteasyReactiveDotNames.PATH_PARAM) != null
                         || parameterAnnotations[paramPos].get(ResteasyReactiveDotNames.REST_PATH_PARAM) != null)
                         && !pathParameters.contains(method.parameterName(paramPos))) {
@@ -636,8 +636,8 @@ public class RenardeProcessor {
 
     private Map<DotName, AnnotationInstance>[] getParameterAnnotations(MethodInfo method) {
         // collect param annotations
-        Map<DotName, AnnotationInstance>[] parameterAnnotations = new Map[method.parameters().size()];
-        for (int paramPos = 0; paramPos < method.parameters().size(); ++paramPos) {
+        Map<DotName, AnnotationInstance>[] parameterAnnotations = new Map[method.parametersCount()];
+        for (int paramPos = 0; paramPos < method.parametersCount(); ++paramPos) {
             parameterAnnotations[paramPos] = new HashMap<>();
         }
         for (AnnotationInstance i : method.annotations()) {
