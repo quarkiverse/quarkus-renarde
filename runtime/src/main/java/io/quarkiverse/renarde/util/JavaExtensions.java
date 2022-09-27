@@ -133,6 +133,30 @@ public class JavaExtensions {
         return val.substring(0, 1).toUpperCase() + val.substring(1);
     }
 
+    public static String binarySize(int value) {
+        return binarySize((long) value);
+    }
+
+    public static String binarySize(long value) {
+        // https://en.wikipedia.org/wiki/Byte#Units_based_on_powers_of_10
+        if (value < 1000)
+            return value + "B";
+        double rounded = (double) value / 1000;
+        if (rounded < 1000)
+            return String.format("%.2fkB", rounded);
+        rounded /= 1000;
+        if (rounded < 1000)
+            return String.format("%.2fMB", rounded);
+        rounded /= 1000;
+        if (rounded < 1000)
+            return String.format("%.2fGB", rounded);
+        rounded /= 1000;
+        if (rounded < 1000)
+            return String.format("%.2fTB", rounded);
+        rounded /= 1000;
+        return String.format("%.2fPB", rounded);
+    }
+
     @TemplateExtension(namespace = "flash", matchName = "*")
     static Object flash(String value) {
         return Arc.container().instance(Flash.class).get().get(value);

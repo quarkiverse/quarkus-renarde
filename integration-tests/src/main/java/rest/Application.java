@@ -44,12 +44,10 @@ public class Application extends Controller {
 
     @POST
     public String form(@RestForm String param,
-    		@RestForm
-    		File file,
-    		@RestForm
-    		FileUpload fileUpload) throws IOException {
-    	return "param: " + param + ", file: " + Files.readString(file.toPath()) + ", fileUpload: "
-    			+ fileUpload.fileName();
+            @RestForm File file,
+            @RestForm FileUpload fileUpload) throws IOException {
+        return "param: " + param + ", file: " + Files.readString(file.toPath()) + ", fileUpload: "
+                + fileUpload.fileName();
     }
 
     public String hello() {

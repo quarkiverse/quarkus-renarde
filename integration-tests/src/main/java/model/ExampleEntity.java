@@ -1,5 +1,6 @@
 package model;
 
+import java.sql.Blob;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -36,6 +37,11 @@ public class ExampleEntity extends PanacheEntity {
     @Column(name = "somethingLocalTime")
     public LocalTime localTime;
     public LocalDateTime localDateTime;
+
+    @Lob
+    public byte[] arrayBlob;
+    @Lob
+    public Blob sqlBlob;
 
     // not owning
     @OneToOne(mappedBy = "exampleEntity")

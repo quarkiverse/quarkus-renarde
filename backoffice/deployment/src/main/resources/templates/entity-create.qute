@@ -13,7 +13,7 @@
 <h2>
  Create {entity}
 </h2>
-\{#form "create"}
+\{#form "create" enctype="multipart/form-data"}
  {#for field in fields}
  \{#crud_field name="{field.name}" label="{field.label}" help="{field.help}"}
   {#switch field.type}
@@ -39,6 +39,8 @@
     \{#crud_input name="{field.name}" type="text" {#if field.min}min="{field.min}"{/if} {#if field.max}max="{field.max}"{/if}/}
    {#case LargeText}
     \{#crud_textarea name="{field.name}"/}
+   {#case Binary}
+    \{#crud_input name="{field.name}" type="file"/}
    {#else}
     \{#crud_input name="{field.name}"/}
   {/switch}

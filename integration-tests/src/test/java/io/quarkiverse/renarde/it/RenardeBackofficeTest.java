@@ -2,6 +2,7 @@ package io.quarkiverse.renarde.it;
 
 import static io.restassured.RestAssured.given;
 
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -12,9 +13,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
+import javax.ws.rs.core.MediaType;
 
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
+import org.hibernate.engine.jdbc.BlobProxy;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -25,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import io.quarkiverse.renarde.util.JavaExtensions;
 import io.quarkus.hibernate.orm.panache.Panache;
 import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.http.ContentType;
 import model.ExampleEntity;
 import model.ExampleEnum;
 import model.ManyToManyNotOwningEntity;
@@ -36,6 +40,12 @@ import model.OneToOneOwningEntity;
 
 @QuarkusTest
 public class RenardeBackofficeTest {
+
+    final static String LOREM_1500b = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce sed diam dolor. Etiam pulvinar consequat odio in aliquam. Vivamus gravida lectus id porta aliquam. Vestibulum facilisis auctor placerat. Praesent semper lobortis lectus quis mollis. Nulla tincidunt laoreet metus, ultricies pretium augue sodales a. Mauris vitae viverra nulla. Aliquam auctor erat vel velit porta, et ultricies massa egestas. Proin turpis mauris, tristique ac orci et, tincidunt euismod urna. Cras at enim vel eros euismod suscipit. Etiam id tempor ligula, sit amet iaculis lacus.\n"
+            + "\n"
+            + "Nam ac ultricies felis, a semper ligula. Sed nibh eros, vulputate vitae augue ut, bibendum lacinia justo. Duis sed magna at metus lobortis euismod. Cras lacus risus, dignissim non finibus ac, semper varius augue. Aenean porttitor nunc metus, nec molestie sapien volutpat eu. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Interdum et malesuada fames ac ante ipsum primis in faucibus.\n"
+            + "\n"
+            + "Vivamus risus turpis, eleifend eget massa quis, varius cursus lectus. Vivamus feugiat nisi vel odio pharetra, in convallis risus cursus. Curabitur suscipit magna quam. Duis vel metus ex. Praesent viverra risus nec metus hendrerit semper. Donec pellentesque ante ac nulla tincidunt iaculis. Nunc at arcu eu ante suscipit pretium non et diam. Ut euismod risus a neque dignissim, fringilla feugiat dolor bibendum. Nam at eros dapibus, rutrum lectus id, facilisis odio. Curabitur tristique ex sapien, quis maximus lorem tempor quis. Donec ante nibh nam.";
 
     @Transactional
     @BeforeEach
@@ -86,7 +96,7 @@ public class RenardeBackofficeTest {
     }
 
     @Test
-    public void testBackofficeExampleEntityCreate() {
+    public void testBackofficeExampleEntityCreate() throws SQLException {
         Assertions.assertEquals(0, ExampleEntity.count());
         List<Long> oneToOneIds = OneToOneNotOwningEntity.<OneToOneNotOwningEntity> streamAll().map(entity -> entity.id)
                 .collect(Collectors.toList());
@@ -174,37 +184,42 @@ public class RenardeBackofficeTest {
 
         Assertions.assertEquals(0, document.select("select[name='oneToOneNotOwning']").size());
 
+        Assertions.assertEquals(1, document.select("input[name='arrayBlob'][type='file']").size());
+        Assertions.assertEquals(1, document.select("input[name='sqlBlob'][type='file']").size());
+
         LocalDateTime localDateTime = LocalDateTime.of(1997, 12, 23, 14, 25, 45);
         Instant instant = localDateTime.atZone(ZoneId.systemDefault()).toInstant();
         Date date = Date.from(instant);
 
         given()
                 .when()
-                .formParam("primitiveBoolean", "on")
-                .formParam("primitiveByte", "1")
-                .formParam("primitiveShort", "2")
-                .formParam("primitiveInt", "3")
-                .formParam("primitiveLong", "4")
-                .formParam("primitiveFloat", "5")
-                .formParam("primitiveDouble", "6")
-                .formParam("primitiveChar", "a")
-                .formParam("string", "aString")
-                .formParam("requiredString", "aString")
-                .formParam("lobString", "aString")
-                .formParam("enumeration", "B")
-                .formParam("date", JavaExtensions.htmlNormalised(date))
-                .formParam("localDateTime", JavaExtensions.htmlNormalised(localDateTime))
-                .formParam("localDate", JavaExtensions.htmlNormalised(localDateTime.toLocalDate()))
-                .formParam("localTime", JavaExtensions.htmlNormalised(localDateTime.toLocalTime()))
-                .formParam("oneToOneOwning", oneToOneIds.get(0))
-                .formParam("oneToMany", manyToOneIds.get(0))
-                .formParam("oneToMany", manyToOneIds.get(1))
-                .formParam("manyToOne", oneToManyIds.get(0))
-                .formParam("manyToManyOwning", manyToManyNotOwningIds.get(0))
-                .formParam("manyToManyOwning", manyToManyNotOwningIds.get(1))
-                .formParam("manyToManyNotOwning", manyToManyOwningIds.get(0))
-                .formParam("manyToManyNotOwning", manyToManyOwningIds.get(1))
-                .formParam("action", "CreateAndCreateAnother")
+                .multiPart("primitiveBoolean", "on")
+                .multiPart("primitiveByte", "1")
+                .multiPart("primitiveShort", "2")
+                .multiPart("primitiveInt", "3")
+                .multiPart("primitiveLong", "4")
+                .multiPart("primitiveFloat", "5")
+                .multiPart("primitiveDouble", "6")
+                .multiPart("primitiveChar", "a")
+                .multiPart("string", "aString")
+                .multiPart("requiredString", "aString")
+                .multiPart("lobString", "aString")
+                .multiPart("enumeration", "B")
+                .multiPart("date", JavaExtensions.htmlNormalised(date))
+                .multiPart("localDateTime", JavaExtensions.htmlNormalised(localDateTime))
+                .multiPart("localDate", JavaExtensions.htmlNormalised(localDateTime.toLocalDate()))
+                .multiPart("localTime", JavaExtensions.htmlNormalised(localDateTime.toLocalTime()))
+                .multiPart("oneToOneOwning", oneToOneIds.get(0))
+                .multiPart("oneToMany", manyToOneIds.get(0))
+                .multiPart("oneToMany", manyToOneIds.get(1))
+                .multiPart("manyToOne", oneToManyIds.get(0))
+                .multiPart("manyToManyOwning", manyToManyNotOwningIds.get(0))
+                .multiPart("manyToManyOwning", manyToManyNotOwningIds.get(1))
+                .multiPart("manyToManyNotOwning", manyToManyOwningIds.get(0))
+                .multiPart("manyToManyNotOwning", manyToManyOwningIds.get(1))
+                .multiPart("arrayBlob", "array.txt", "array contents".getBytes(), MediaType.TEXT_PLAIN)
+                .multiPart("sqlBlob", "sql.txt", LOREM_1500b.getBytes(), MediaType.TEXT_PLAIN)
+                .multiPart("action", "CreateAndCreateAnother")
                 .redirects().follow(false)
                 .post("/_renarde/backoffice/ExampleEntity/create")
                 .then()
@@ -243,6 +258,10 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(2, entity.manyToManyNotOwning.size());
         Assertions.assertTrue(manyToManyOwningIds.contains(entity.manyToManyNotOwning.get(0).id));
         Assertions.assertTrue(manyToManyOwningIds.contains(entity.manyToManyNotOwning.get(1).id));
+        Assertions.assertNotNull(entity.sqlBlob);
+        Assertions.assertArrayEquals(entity.sqlBlob.getBytes(0, (int) entity.sqlBlob.length()), LOREM_1500b.getBytes());
+        Assertions.assertNotNull(entity.arrayBlob);
+        Assertions.assertArrayEquals(entity.arrayBlob, "array contents".getBytes());
     }
 
     @Test
@@ -255,11 +274,11 @@ public class RenardeBackofficeTest {
 
         given()
                 .when()
-                .formParam("date", new SimpleDateFormat(JavaExtensions.HTML_NORMALISED_WITHOUT_SECONDS_FORMAT).format(date))
-                .formParam("localDateTime", localDateTime.format(JavaExtensions.HTML_NORMALISED_WITHOUT_SECONDS))
-                .formParam("localTime", localDateTime.format(JavaExtensions.HTML_TIME_WITHOUT_SECONDS))
-                .formParam("requiredString", "aString")
-                .formParam("action", "CreateAndCreateAnother")
+                .multiPart("date", new SimpleDateFormat(JavaExtensions.HTML_NORMALISED_WITHOUT_SECONDS_FORMAT).format(date))
+                .multiPart("localDateTime", localDateTime.format(JavaExtensions.HTML_NORMALISED_WITHOUT_SECONDS))
+                .multiPart("localTime", localDateTime.format(JavaExtensions.HTML_TIME_WITHOUT_SECONDS))
+                .multiPart("requiredString", "aString")
+                .multiPart("action", "CreateAndCreateAnother")
                 .redirects().follow(false)
                 .log().ifValidationFails()
                 .post("/_renarde/backoffice/ExampleEntity/create")
@@ -294,8 +313,9 @@ public class RenardeBackofficeTest {
     private void testBackOfficeLink(String uri, String action, Matcher<String> matcher) {
         given()
                 .when()
-                .formParam("requiredString", "aString")
-                .formParam("action", action)
+                .contentType(ContentType.MULTIPART)
+                .multiPart("requiredString", "aString")
+                .multiPart("action", action)
                 .redirects().follow(false)
                 .log().ifValidationFails()
                 .post("/_renarde/backoffice/ExampleEntity/" + uri)
@@ -306,7 +326,7 @@ public class RenardeBackofficeTest {
     }
 
     @Test
-    public void testBackofficeExampleEntityUpdate() {
+    public void testBackofficeExampleEntityUpdate() throws SQLException {
         Assertions.assertEquals(0, ExampleEntity.count());
 
         LocalDateTime localDateTime = LocalDateTime.of(1997, 12, 23, 14, 25, 45);
@@ -343,6 +363,8 @@ public class RenardeBackofficeTest {
         entity.manyToManyNotOwning = new ArrayList<>();
         entity.manyToManyNotOwning.add(manyToManyOwning.get(0));
         entity.manyToManyNotOwning.add(manyToManyOwning.get(1));
+        entity.arrayBlob = "not touched".getBytes();
+        entity.sqlBlob = BlobProxy.generateProxy("to update".getBytes());
         // oneToMany is not owning
         ExampleEntity damnit = entity;
         transact(() -> {
@@ -444,6 +466,15 @@ public class RenardeBackofficeTest {
 
         Assertions.assertEquals(0, document.select("select[name='oneToOneNotOwning']").size());
 
+        Assertions.assertEquals(1, document.select("input[name='arrayBlob'][type='file']").size());
+        Assertions.assertEquals(1, document.select("input[name='arrayBlob$unset'][type='checkbox']").size());
+        Assertions.assertEquals(1, document.select("a[href='../" + entity.id + "/arrayBlob']").size());
+        Assertions.assertEquals("Current file (11B)", document.select("a[href='../" + entity.id + "/arrayBlob']").text());
+        Assertions.assertEquals(1, document.select("input[name='sqlBlob'][type='file']").size());
+        Assertions.assertEquals(1, document.select("input[name='sqlBlob$unset'][type='checkbox']").size());
+        Assertions.assertEquals(1, document.select("a[href='../" + entity.id + "/sqlBlob']").size());
+        Assertions.assertEquals("Current file (9B)", document.select("a[href='../" + entity.id + "/sqlBlob']").text());
+
         LocalDateTime otherLocalDateTime = LocalDateTime.of(1996, 11, 22, 13, 24, 44);
         Instant otherInstant = otherLocalDateTime.atZone(ZoneId.systemDefault()).toInstant();
         Date otherDate = Date.from(otherInstant);
@@ -451,28 +482,30 @@ public class RenardeBackofficeTest {
         given()
                 .when()
                 // no default value for unchecked
-                //        .formParam("primitiveBoolean", "")
-                .formParam("primitiveByte", "11")
-                .formParam("primitiveShort", "12")
-                .formParam("primitiveInt", "13")
-                .formParam("primitiveLong", "14")
-                .formParam("primitiveFloat", "15")
-                .formParam("primitiveDouble", "16")
-                .formParam("primitiveChar", "b")
-                .formParam("string", "otherString")
-                .formParam("requiredString", "otherString")
-                .formParam("lobString", "otherString")
-                .formParam("enumeration", "A")
-                .formParam("date", JavaExtensions.htmlNormalised(otherDate))
-                .formParam("localDateTime", JavaExtensions.htmlNormalised(otherLocalDateTime))
-                .formParam("localDate", JavaExtensions.htmlNormalised(otherLocalDateTime.toLocalDate()))
-                .formParam("localTime", JavaExtensions.htmlNormalised(otherLocalDateTime.toLocalTime()))
-                .formParam("oneToOneOwning", oneToOnes.get(1).id)
-                .formParam("manyToOne", oneToManys.get(1).id)
-                .formParam("oneToMany", manyToOnes.get(0).id)
-                .formParam("manyToManyOwning", manyToManyNotOwning.get(0).id)
-                .formParam("manyToManyNotOwning", manyToManyOwning.get(0).id)
-                .formParam("action", "SaveAndContinueEditing")
+                //        .multiPart("primitiveBoolean", "")
+                .multiPart("primitiveByte", "11")
+                .multiPart("primitiveShort", "12")
+                .multiPart("primitiveInt", "13")
+                .multiPart("primitiveLong", "14")
+                .multiPart("primitiveFloat", "15")
+                .multiPart("primitiveDouble", "16")
+                .multiPart("primitiveChar", "b")
+                .multiPart("string", "otherString")
+                .multiPart("requiredString", "otherString")
+                .multiPart("lobString", "otherString")
+                .multiPart("enumeration", "A")
+                .multiPart("date", JavaExtensions.htmlNormalised(otherDate))
+                .multiPart("localDateTime", JavaExtensions.htmlNormalised(otherLocalDateTime))
+                .multiPart("localDate", JavaExtensions.htmlNormalised(otherLocalDateTime.toLocalDate()))
+                .multiPart("localTime", JavaExtensions.htmlNormalised(otherLocalDateTime.toLocalTime()))
+                .multiPart("oneToOneOwning", oneToOnes.get(1).id)
+                .multiPart("manyToOne", oneToManys.get(1).id)
+                .multiPart("oneToMany", manyToOnes.get(0).id)
+                .multiPart("manyToManyOwning", manyToManyNotOwning.get(0).id)
+                .multiPart("manyToManyNotOwning", manyToManyOwning.get(0).id)
+                // do not send arrayBlob to make sure it's not updated
+                .multiPart("sqlBlob", "sql.txt", LOREM_1500b.getBytes(), MediaType.TEXT_PLAIN)
+                .multiPart("action", "SaveAndContinueEditing")
                 .redirects().follow(false)
                 .post("/_renarde/backoffice/ExampleEntity/edit/" + entity.id)
                 .then()
@@ -508,6 +541,32 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(manyToManyOwning.get(0).id, entity.manyToManyNotOwning.get(0).id);
         Assertions.assertEquals(1, entity.manyToManyOwning.size());
         Assertions.assertEquals(manyToManyNotOwning.get(0).id, entity.manyToManyOwning.get(0).id);
+        // not touched
+        Assertions.assertNotNull(entity.arrayBlob);
+        Assertions.assertArrayEquals(entity.arrayBlob, "not touched".getBytes());
+        // updated
+        Assertions.assertNotNull(entity.sqlBlob);
+        Assertions.assertArrayEquals(entity.sqlBlob.getBytes(0, (int) entity.sqlBlob.length()), LOREM_1500b.getBytes());
+
+        // last round to test unsetting binary fields
+        given()
+                .when()
+                .multiPart("requiredString", "otherString")
+                .multiPart("arrayBlob$unset", "on")
+                .multiPart("sqlBlob$unset", "on")
+                .multiPart("action", "SaveAndContinueEditing")
+                .redirects().follow(false)
+                .post("/_renarde/backoffice/ExampleEntity/edit/" + entity.id)
+                .then()
+                .statusCode(303)
+                .header("Location", Matchers.endsWith("/_renarde/backoffice/ExampleEntity/edit/" + entity.id));
+
+        Assertions.assertEquals(1, ExampleEntity.count());
+        Panache.getEntityManager().clear();
+        entity = ExampleEntity.findAll().firstResult();
+        Assertions.assertNotNull(entity);
+        Assertions.assertNull(entity.arrayBlob);
+        Assertions.assertNull(entity.sqlBlob);
     }
 
     @Test
@@ -537,6 +596,32 @@ public class RenardeBackofficeTest {
 
         Panache.getEntityManager().clear();
         Assertions.assertEquals(0, ExampleEntity.count());
+    }
+
+    @Test
+    public void testBackofficeBinaryAccess() {
+        Assertions.assertEquals(0, ExampleEntity.count());
+
+        ExampleEntity entity = new ExampleEntity();
+        entity.requiredString = "aString";
+        entity.arrayBlob = "Hello World".getBytes();
+        transact(() -> entity.persist());
+
+        Assertions.assertEquals(1, ExampleEntity.count());
+        ExampleEntity loadedEntity = ExampleEntity.findAll().firstResult();
+
+        given()
+                .when().get("/_renarde/backoffice/ExampleEntity/" + loadedEntity.id + "/arrayBlob")
+                .then()
+                .statusCode(200)
+                .contentType(ContentType.BINARY)
+                .body(Matchers.equalTo("Hello World"));
+
+        given()
+                .when().get("/_renarde/backoffice/ExampleEntity/" + loadedEntity.id + "/sqlBlob")
+                .then()
+                .statusCode(204)
+                .contentType(ContentType.BINARY);
     }
 
     @Transactional

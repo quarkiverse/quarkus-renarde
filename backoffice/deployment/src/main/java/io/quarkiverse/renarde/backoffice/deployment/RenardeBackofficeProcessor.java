@@ -5,6 +5,7 @@ import java.io.Reader;
 import java.lang.annotation.Annotation;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.sql.Blob;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -20,7 +21,7 @@ import java.util.function.Supplier;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.Entity;
 import javax.transaction.Transactional;
-import javax.validation.constraints.NotEmpty;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -32,13 +33,13 @@ import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestPath;
+import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import io.quarkiverse.renarde.Controller;
 import io.quarkiverse.renarde.backoffice.BackUtil;
 import io.quarkiverse.renarde.backoffice.CreateAction;
 import io.quarkiverse.renarde.backoffice.EditAction;
 import io.quarkiverse.renarde.backoffice.deployment.ModelField.Type;
-import io.quarkiverse.renarde.util.Validation;
 import io.quarkus.arc.Arc;
 import io.quarkus.arc.ArcContainer;
 import io.quarkus.arc.InstanceHandle;
@@ -172,6 +173,7 @@ public class RenardeBackofficeProcessor {
         // TODO: hand it off to RenardeProcessor to generate annotations and uri methods
         // TODO: generate templateinstance native build item or what?
         // TODO: authenticated
+
         String controllerClass = PACKAGE_PREFIX + "." + simpleName + "Controller";
         try (ClassCreator c = ClassCreator.builder()
                 .classOutput(new GeneratedJaxRsResourceGizmoAdaptor(jaxrsOutput)).className(
@@ -214,6 +216,47 @@ public class RenardeBackofficeProcessor {
             editOrCreateAction(c, controllerClass, entityClass, simpleName, fields, Mode.CREATE);
 
             deleteAction(c, controllerClass, entityClass, simpleName);
+
+            addBinaryFieldGetters(c, controllerClass, entityClass, fields);
+        }
+    }
+
+    //
+    //  @GET
+    //  @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    //  @Path("{id}/field")
+    //  public byte[] fieldForBinary(@RestPath Long id){
+    //      Entity entity = Entity.findById(id);
+    //      notFoundIfNull(entity);
+    //      return BackUtil.readBytes(entity.getField());
+    //  }
+    //
+    private void addBinaryFieldGetters(ClassCreator c, String controllerClass, String entityClass, List<ModelField> fields) {
+        for (ModelField field : fields) {
+            if (field.type == Type.Binary) {
+                // Add a method to read the binary field data
+                try (MethodCreator m = c.getMethodCreator(field.name + "ForBinary", byte[].class, Long.class)) {
+                    m.getParameterAnnotations(0).addAnnotation(RestPath.class).addValue("value", "id");
+                    m.addAnnotation(Path.class).addValue("value", "{id}/" + field.name);
+                    m.addAnnotation(GET.class);
+                    m.addAnnotation(Produces.class).addValue("value", new String[] { MediaType.APPLICATION_OCTET_STREAM });
+                    AssignableResultHandle entityVariable = findEntityById(m, controllerClass, entityClass);
+                    ResultHandle fieldValue = m
+                            .invokeVirtualMethod(MethodDescriptor.ofMethod(entityClass, field.entityField.getGetterName(),
+                                    field.entityField.descriptor), entityVariable);
+                    if (field.entityField.descriptor.equals("[B")) {
+                        m.returnValue(fieldValue);
+                    } else if (field.entityField.descriptor.equals("L" + Blob.class.getName().replace('.', '/') + ";")) {
+                        ResultHandle bytes = m.invokeStaticMethod(
+                                MethodDescriptor.ofMethod(BackUtil.class, "readBytes", byte[].class, Blob.class),
+                                fieldValue);
+                        m.returnValue(bytes);
+                    } else {
+                        throw new RuntimeException(
+                                "Unknown binary field " + field + " descriptor: " + field.entityField.descriptor);
+                    }
+                }
+            }
         }
     }
 
@@ -253,6 +296,7 @@ public class RenardeBackofficeProcessor {
         }
     }
 
+    // @Consumes(MediaType.MULTIPART_FORM_DATA)
     // @Path("edit/{id}")
     // @POST
     // @Transactional
@@ -261,6 +305,8 @@ public class RenardeBackofficeProcessor {
     //                    @RestForm("task") String task,
     //                    @RestForm("done") String done,
     //                    @RestForm("doneDate") String doneDate,
+    //                    @RestForm("blob$unset") String blob$unset,
+    //                    @RestForm("blob") FileUpload blob,
     //                    @RestForm("owner") String owner) {
     //   if(validationFailed(){
     //     // edit(id);
@@ -272,6 +318,10 @@ public class RenardeBackofficeProcessor {
     //   todo.setDone(BackUtil.booleanField(done));
     //   todo.setDoneDate(BackUtil.dateField(doneDate));
     //   todo.setOwner(BackUtil.isSet(owner) ? User.findById(Long.valueOf(owner)) : null);
+    //   if(BackUtil.isSet(blob))
+    //      todo.setBlob(BackUtil.blobField(blob));
+    //   else if(BackUtil.booleanField(blob$unset))
+    //      todo.setBlob(null);
     //   flash("message", "Updated: "+todo);
     //   if(action == EditAction.Save) {
     //     // index();
@@ -282,6 +332,7 @@ public class RenardeBackofficeProcessor {
     //   }
     // }
 
+    // @Consumes(MediaType.MULTIPART_FORM_DATA)
     // @Path("create")
     // @POST
     // @Transactional
@@ -289,6 +340,8 @@ public class RenardeBackofficeProcessor {
     //                    @RestForm("task") String task,
     //                    @RestForm("done") String done,
     //                    @RestForm("doneDate") String doneDate,
+    //                    @RestForm("blob$unset") String blob$unset,
+    //                    @RestForm("blob") FileUpload blob,
     //                    @RestForm("owner") String owner) {
     //   if(validationFailed(){
     //     // create();
@@ -299,6 +352,10 @@ public class RenardeBackofficeProcessor {
     //   todo.setDone(BackUtil.booleanField(done));
     //   todo.setDoneDate(BackUtil.dateField(doneDate));
     //   todo.setOwner(BackUtil.isSet(owner) ? User.findById(Long.valueOf(owner)) : null);
+    //   if(BackUtil.isSet(blob))
+    //      todo.setBlob(BackUtil.blobField(blob));
+    //   else if(BackUtil.booleanField(blob$unset))
+    //      todo.setBlob(null);
     //   todo.persist();
     //   flash("message", "Created: "+todo);
     //   if(action == CreateAction.Create) {
@@ -314,47 +371,84 @@ public class RenardeBackofficeProcessor {
     // }
     private void editOrCreateAction(ClassCreator c, String controllerClass, String entityClass, String simpleName,
             List<ModelField> fields, Mode mode) {
-        Class[] editParams;
+        int neededParams = 1; // action
+        if (mode == Mode.EDIT) {
+            neededParams++; // id
+        }
+        for (ModelField field : fields) {
+            // binary fields take two parameters
+            if (field.type == ModelField.Type.Binary) {
+                neededParams++;
+            }
+            neededParams++;
+        }
+        String[] editParams;
+        String[] parameterNames;
         int offset = 0;
         StringBuilder signature = new StringBuilder("(");
+        editParams = new String[neededParams];
         if (mode == Mode.EDIT) {
-            editParams = new Class[fields.size() + 2];
-            editParams[0] = Long.class;
-            editParams[1] = EditAction.class;
+            editParams[0] = Long.class.getName();
+            editParams[1] = EditAction.class.getName();
             signature.append("Ljava/lang/Long;");
             signature.append("L" + EditAction.class.getName().replace('.', '/') + ";");
             offset = 2;
+            parameterNames = new String[editParams.length];
+            parameterNames[0] = "id";
+            parameterNames[1] = "action";
         } else {
-            editParams = new Class[fields.size() + 1];
-            editParams[0] = CreateAction.class;
+            editParams[0] = CreateAction.class.getName();
             signature.append("L" + CreateAction.class.getName().replace('.', '/') + ";");
             offset = 1;
+            parameterNames = new String[editParams.length];
+            parameterNames[0] = "action";
         }
-        for (int i = 0; i < fields.size(); i++) {
-            if (fields.get(i).type == ModelField.Type.MultiRelation
-                    || fields.get(i).type == ModelField.Type.MultiMultiRelation) {
-                editParams[i + offset] = List.class;
+        int i = 0;
+        for (ModelField field : fields) {
+            if (field.type == ModelField.Type.MultiRelation
+                    || field.type == ModelField.Type.MultiMultiRelation) {
+                editParams[i + offset] = List.class.getName();
                 signature.append("Ljava/util/List<Ljava/lang/String;>;");
+            } else if (field.type == ModelField.Type.Binary) {
+                // two parameters
+                editParams[i + offset] = String.class.getName();
+                editParams[i + offset + 1] = FileUpload.class.getName();
+                signature.append("Ljava/lang/String;");
+                signature.append("L" + FileUpload.class.getName().replace('.', '/') + ";");
+                i++;
             } else {
-                editParams[i + offset] = String.class;
+                editParams[i + offset] = String.class.getName();
                 signature.append("Ljava/lang/String;");
             }
+            i++;
         }
         signature.append(")V");
         try (MethodCreator m = c.getMethodCreator(mode == Mode.CREATE ? "create" : "edit", void.class, editParams)) {
             m.setSignature(signature.toString());
             if (mode == Mode.EDIT) {
                 m.getParameterAnnotations(0).addAnnotation(RestPath.class).addValue("value", "id");
+                m.getParameterAnnotations(1).addAnnotation(RestForm.class).addValue("value", "action");
+            } else {
+                m.getParameterAnnotations(0).addAnnotation(RestForm.class).addValue("value", "action");
             }
-            m.getParameterAnnotations(offset - 1).addAnnotation(RestForm.class).addValue("value", "action");
-            for (int i = 0; i < fields.size(); i++) {
-                m.getParameterAnnotations(i + offset).addAnnotation(RestForm.class).addValue("value", fields.get(i).name);
-                // FIXME: this only works if we have method parameter names, but gizmo doesn't support it yet
-                // https://github.com/quarkusio/gizmo/issues/112
-                //                for (Class<? extends Annotation> validationAnnotation : fields.get(i).validation) {
-                //                    m.getParameterAnnotations(i + offset).addAnnotation(validationAnnotation);
-                //                }
+            i = 0;
+            for (ModelField field : fields) {
+                // binary fields take two parameters
+                if (field.type == ModelField.Type.Binary) {
+                    m.getParameterAnnotations(i + offset).addAnnotation(RestForm.class).addValue("value",
+                            field.name + "$unset");
+                    parameterNames[i + offset] = field.name + "$unset";
+                    i++;
+                }
+                m.getParameterAnnotations(i + offset).addAnnotation(RestForm.class).addValue("value", field.name);
+                for (Class<? extends Annotation> validationAnnotation : field.validation) {
+                    m.getParameterAnnotations(i + offset).addAnnotation(validationAnnotation);
+                }
+                parameterNames[i + offset] = field.name;
+                i++;
             }
+            m.setParameterNames(parameterNames);
+            m.addAnnotation(Consumes.class).addValue("value", new String[] { MediaType.MULTIPART_FORM_DATA });
             m.addAnnotation(Path.class).addValue("value", mode == Mode.CREATE ? "create" : "edit/{id}");
             m.addAnnotation(POST.class);
             m.addAnnotation(Transactional.class);
@@ -362,20 +456,6 @@ public class RenardeBackofficeProcessor {
             String uriTarget = URI_PREFIX + "/" + simpleName + (mode == Mode.CREATE ? "/create" : "/edit/");
 
             // first check validation
-
-            // FIXME: workaround for https://github.com/quarkusio/gizmo/issues/112
-            for (int i = 0; i < fields.size(); i++) {
-                ModelField field = fields.get(i);
-                for (Class<? extends Annotation> validationAnnotation : field.validation) {
-                    if (validationAnnotation == NotEmpty.class) {
-                        ResultHandle validation = m.readInstanceField(
-                                FieldDescriptor.of(controllerClass, "validation", Validation.class), m.getThis());
-                        m.invokeVirtualMethod(
-                                MethodDescriptor.ofMethod(Validation.class, "required", void.class, String.class, Object.class),
-                                validation, m.load(field.name), m.getMethodParam(i + offset));
-                    }
-                }
-            }
 
             BranchResult validation = m.ifTrue(m.invokeVirtualMethod(
                     MethodDescriptor.ofMethod(controllerClass, "validationFailed", boolean.class), m.getThis()));
@@ -392,26 +472,70 @@ public class RenardeBackofficeProcessor {
                 entityVariable = m.createVariable(entityTypeDescriptor);
                 m.assign(entityVariable, m.newInstance(MethodDescriptor.ofConstructor(entityClass)));
             }
-            for (int i = 0; i < fields.size(); i++) {
-                ModelField field = fields.get(i);
+            i = 0;
+            for (ModelField field : fields) {
                 ResultHandle value = null;
+                ResultHandle parameterValue = m.getMethodParam(i + offset);
+                i++;
                 if (field.type == Type.Text || field.type == Type.LargeText) {
                     if (field.entityField.descriptor.equals("Ljava/lang/String;")) {
                         value = m.invokeStaticMethod(
                                 MethodDescriptor.ofMethod(BackUtil.class, "stringField", String.class, String.class),
-                                m.getMethodParam(i + offset));
+                                parameterValue);
                     } else if (field.entityField.descriptor.equals("C")) {
                         value = m.invokeStaticMethod(
                                 MethodDescriptor.ofMethod(BackUtil.class, "charField", char.class, String.class),
-                                m.getMethodParam(i + offset));
+                                parameterValue);
                     } else {
                         throw new RuntimeException(
                                 "Unknown text field " + field + " descriptor: " + field.entityField.descriptor);
                     }
+                } else if (field.type == Type.Binary) {
+                    // binary fields consume two parameters
+                    ResultHandle parameterUnsetValue = parameterValue;
+                    parameterValue = m.getMethodParam(i + offset);
+                    i++;
+                    BranchResult hasValueTest = m.ifTrue(m.invokeStaticMethod(
+                            MethodDescriptor.ofMethod(BackUtil.class, "isSet", boolean.class, FileUpload.class),
+                            parameterValue));
+                    // we do not set the value, we handle setters ourselves
+                    try (BytecodeCreator hasValueTrueBranch = hasValueTest.trueBranch()) {
+                        ResultHandle uploadValue;
+                        if (field.entityField.descriptor.equals("[B")) {
+                            uploadValue = hasValueTrueBranch.invokeStaticMethod(
+                                    MethodDescriptor.ofMethod(BackUtil.class, "byteArrayField", byte[].class, FileUpload.class),
+                                    parameterValue);
+                        } else if (field.entityField.descriptor.equals("L" + Blob.class.getName().replace('.', '/') + ";")) {
+                            uploadValue = hasValueTrueBranch.invokeStaticMethod(
+                                    MethodDescriptor.ofMethod(BackUtil.class, "blobField", Blob.class, FileUpload.class),
+                                    parameterValue);
+                        } else {
+                            throw new RuntimeException(
+                                    "Unknown binary field " + field + " descriptor: " + field.entityField.descriptor);
+                        }
+                        hasValueTrueBranch.invokeVirtualMethod(
+                                MethodDescriptor.ofMethod(entityClass, field.entityField.getSetterName(), void.class,
+                                        field.entityField.descriptor),
+                                entityVariable, uploadValue);
+                    }
+                    try (BytecodeCreator hasValueFalseBranch = hasValueTest.falseBranch()) {
+                        BranchResult unsetTest = hasValueFalseBranch.ifTrue(hasValueFalseBranch.invokeStaticMethod(
+                                MethodDescriptor.ofMethod(BackUtil.class, "booleanField", boolean.class, String.class),
+                                parameterUnsetValue));
+                        try (BytecodeCreator unsetTrueBranch = unsetTest.trueBranch()) {
+                            // set to null
+                            unsetTrueBranch.invokeVirtualMethod(
+                                    MethodDescriptor.ofMethod(entityClass, field.entityField.getSetterName(), void.class,
+                                            field.entityField.descriptor),
+                                    entityVariable, unsetTrueBranch.loadNull());
+                        }
+                        // nothing on the false branch
+                        unsetTest.falseBranch().close();
+                    }
                 } else if (field.entityField.descriptor.equals("Z")) {
                     value = m.invokeStaticMethod(
                             MethodDescriptor.ofMethod(BackUtil.class, "booleanField", boolean.class, String.class),
-                            m.getMethodParam(i + offset));
+                            parameterValue);
                 } else if (field.type == Type.Number) {
                     Class<?> primitiveClass;
                     switch (field.entityField.descriptor) {
@@ -440,28 +564,28 @@ public class RenardeBackofficeProcessor {
                     value = m.invokeStaticMethod(
                             MethodDescriptor.ofMethod(BackUtil.class, primitiveClass.getName() + "Field", primitiveClass,
                                     String.class),
-                            m.getMethodParam(i + offset));
+                            parameterValue);
                 } else if (field.entityField.descriptor.equals("Ljava/util/Date;")) {
                     value = m.invokeStaticMethod(
                             MethodDescriptor.ofMethod(BackUtil.class, "dateField", Date.class, String.class),
-                            m.getMethodParam(i + offset));
+                            parameterValue);
                 } else if (field.entityField.descriptor.equals("Ljava/time/LocalDateTime;")) {
                     value = m.invokeStaticMethod(
                             MethodDescriptor.ofMethod(BackUtil.class, "localDateTimeField", LocalDateTime.class, String.class),
-                            m.getMethodParam(i + offset));
+                            parameterValue);
                 } else if (field.entityField.descriptor.equals("Ljava/time/LocalDate;")) {
                     value = m.invokeStaticMethod(
                             MethodDescriptor.ofMethod(BackUtil.class, "localDateField", LocalDate.class, String.class),
-                            m.getMethodParam(i + offset));
+                            parameterValue);
                 } else if (field.entityField.descriptor.equals("Ljava/time/LocalTime;")) {
                     value = m.invokeStaticMethod(
                             MethodDescriptor.ofMethod(BackUtil.class, "localTimeField", LocalTime.class, String.class),
-                            m.getMethodParam(i + offset));
+                            parameterValue);
                 } else if (field.type == ModelField.Type.Enum) {
                     value = m.invokeStaticMethod(
                             MethodDescriptor.ofMethod(BackUtil.class, "enumField", Enum.class, Class.class, String.class),
                             m.loadClass(field.getClassName()),
-                            m.getMethodParam(i + offset));
+                            parameterValue);
                     value = m.checkCast(value, field.entityField.descriptor);
                 } else if (field.type == ModelField.Type.MultiRelation
                         || field.type == ModelField.Type.MultiMultiRelation) {
@@ -529,7 +653,7 @@ public class RenardeBackofficeProcessor {
                     // }
                     m.assign(iterator,
                             m.invokeInterfaceMethod(MethodDescriptor.ofMethod(Iterable.class, "iterator", Iterator.class),
-                                    m.getMethodParam(i + offset)));
+                                    parameterValue));
                     try (BytecodeCreator loop = m.whileLoop(bc -> bc.ifTrue(bc.invokeInterfaceMethod(
                             MethodDescriptor.ofMethod(Iterator.class, "hasNext", boolean.class), iterator))).block()) {
                         ResultHandle next = loop.checkCast(
@@ -575,12 +699,12 @@ public class RenardeBackofficeProcessor {
                 } else if (field.type == ModelField.Type.Relation) {
                     BranchResult branch = m.ifTrue(m.invokeStaticMethod(
                             MethodDescriptor.ofMethod(BackUtil.class, "isSet", boolean.class, String.class),
-                            m.getMethodParam(i + offset)));
+                            parameterValue));
                     AssignableResultHandle valueVar = m.createVariable(field.entityField.descriptor);
                     try (BytecodeCreator tb = branch.trueBranch()) {
                         value = tb.invokeStaticMethod(
                                 MethodDescriptor.ofMethod(Long.class, "valueOf", Long.class, String.class),
-                                tb.getMethodParam(i + offset));
+                                parameterValue);
                         value = tb.invokeStaticMethod(
                                 MethodDescriptor.ofMethod(field.getClassName(), "findById", PanacheEntityBase.class,
                                         Object.class),
@@ -617,7 +741,7 @@ public class RenardeBackofficeProcessor {
                     m.getThis(), m.load("message"), message);
             // final redirect
             if (mode == Mode.EDIT) {
-                BranchResult ifSave = m.ifReferencesEqual(m.getMethodParam(offset - 1),
+                BranchResult ifSave = m.ifReferencesEqual(m.getMethodParam(1),
                         m.readStaticField(FieldDescriptor.of(EditAction.class, "Save", EditAction.class)));
                 try (BytecodeCreator tb = ifSave.trueBranch()) {
                     String indexTarget = URI_PREFIX + "/" + simpleName + "/index";
@@ -628,14 +752,14 @@ public class RenardeBackofficeProcessor {
                     redirectToAction(fb, controllerClass, editTarget, simpleName, () -> fb.getMethodParam(0));
                 }
             } else {
-                BranchResult ifCreate = m.ifReferencesEqual(m.getMethodParam(offset - 1),
+                BranchResult ifCreate = m.ifReferencesEqual(m.getMethodParam(0),
                         m.readStaticField(FieldDescriptor.of(CreateAction.class, "Create", CreateAction.class)));
                 try (BytecodeCreator tb = ifCreate.trueBranch()) {
                     String indexTarget = URI_PREFIX + "/" + simpleName + "/index";
                     redirectToAction(tb, controllerClass, indexTarget, simpleName, null);
                 }
                 try (BytecodeCreator fb = ifCreate.falseBranch()) {
-                    BranchResult ifCreateAndContinueEditing = fb.ifReferencesEqual(fb.getMethodParam(offset - 1),
+                    BranchResult ifCreateAndContinueEditing = fb.ifReferencesEqual(fb.getMethodParam(0),
                             fb.readStaticField(
                                     FieldDescriptor.of(CreateAction.class, "CreateAndContinueEditing", CreateAction.class)));
                     try (BytecodeCreator tb2 = ifCreateAndContinueEditing.trueBranch()) {
