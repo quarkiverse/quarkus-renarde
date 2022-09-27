@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import io.quarkiverse.renarde.util.JavaExtensions;
 import io.quarkus.hibernate.orm.panache.Panache;
 import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.http.ContentType;
 import model.ExampleEntity;
 import model.ExampleEnum;
 import model.ManyToManyNotOwningEntity;
@@ -180,6 +181,7 @@ public class RenardeBackofficeTest {
 
         given()
                 .when()
+                .contentType(ContentType.MULTIPART)
                 .formParam("primitiveBoolean", "on")
                 .formParam("primitiveByte", "1")
                 .formParam("primitiveShort", "2")
@@ -255,6 +257,7 @@ public class RenardeBackofficeTest {
 
         given()
                 .when()
+                .contentType(ContentType.MULTIPART)
                 .formParam("date", new SimpleDateFormat(JavaExtensions.HTML_NORMALISED_WITHOUT_SECONDS_FORMAT).format(date))
                 .formParam("localDateTime", localDateTime.format(JavaExtensions.HTML_NORMALISED_WITHOUT_SECONDS))
                 .formParam("localTime", localDateTime.format(JavaExtensions.HTML_TIME_WITHOUT_SECONDS))
@@ -294,8 +297,9 @@ public class RenardeBackofficeTest {
     private void testBackOfficeLink(String uri, String action, Matcher<String> matcher) {
         given()
                 .when()
-                .formParam("requiredString", "aString")
-                .formParam("action", action)
+                .contentType(ContentType.MULTIPART)
+                .multiPart("requiredString", "aString")
+                .multiPart("action", action)
                 .redirects().follow(false)
                 .log().ifValidationFails()
                 .post("/_renarde/backoffice/ExampleEntity/" + uri)
@@ -450,6 +454,7 @@ public class RenardeBackofficeTest {
 
         given()
                 .when()
+                .contentType(ContentType.MULTIPART)
                 // no default value for unchecked
                 //        .formParam("primitiveBoolean", "")
                 .formParam("primitiveByte", "11")

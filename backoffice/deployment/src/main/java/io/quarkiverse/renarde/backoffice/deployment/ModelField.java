@@ -39,7 +39,8 @@ public class ModelField {
         Relation,
         MultiRelation,
         Ignore,
-        MultiMultiRelation;
+        MultiMultiRelation,
+        Binary;
     }
 
     private static final DotName DOTNAME_MANYTOMANY = DotName.createSimple(ManyToMany.class.getName());
@@ -104,6 +105,9 @@ public class ModelField {
             step = 0.00001;
         } else if (entityField.descriptor.equals("Z")) {
             this.type = Type.Checkbox;
+        } else if (entityField.descriptor.equals("[B")
+                || entityField.descriptor.equals("Ljava/sql/Blob;")) {
+            this.type = Type.Binary;
         } else if (entityField.descriptor.equals("Ljava/lang/String;")) {
             if (field.hasAnnotation(DOTNAME_LOB)) {
                 this.type = Type.LargeText;

@@ -25,7 +25,7 @@
   <button class="btn btn-danger"><i class="bi bi-trash"></i>Delete</button>
  \{/form}
 </h2>
-\{#form entity.id.toString()}
+\{#form entity.id.toString() enctype="multipart/form-data"}
  {#for field in fields}
  \{#crud_field name="{field.name}" label="{field.label}" help="{field.help}"}
   {#switch field.type}
@@ -51,6 +51,12 @@
     \{#crud_input name="{field.name}" value=entity.{field.name} type="text" {#if field.min}min="{field.min}"{/if} {#if field.max}max="{field.max}"{/if}/}
    {#case LargeText}
     \{#crud_textarea name="{field.name}" value=entity.{field.name}/}
+   {#case Binary}
+    \{#crud_input name="{field.name}" type="file"/}
+    \{#if entity.{field.name}}
+      <a href="\{entity.id}/{field.name}">Current file (TODO: SIZE)</a>
+    \{/if}
+    TODO: delete
    {#else}
     \{#crud_input name="{field.name}" value=entity.{field.name}/}
   {/switch}

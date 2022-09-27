@@ -1,5 +1,10 @@
 package io.quarkiverse.renarde.backoffice;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.sql.Blob;
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -11,6 +16,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
+import org.hibernate.engine.jdbc.BlobProxy;
+import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import io.quarkiverse.renarde.util.JavaExtensions;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
@@ -138,5 +146,37 @@ public class BackUtil {
 
     public static boolean isSet(String value) {
         return value != null && !value.isEmpty();
+    }
+
+    public static byte[] byteArrayField(FileUpload fileUpload) {
+        if (fileUpload == null)
+            return null;
+        try {
+            return Files.readAllBytes(fileUpload.filePath());
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public static Blob blobField(FileUpload fileUpload) {
+        if (fileUpload == null)
+            return null;
+        try {
+            return BlobProxy.generateProxy(Files.readAllBytes(fileUpload.filePath()));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public static byte[] readBytes(Blob blob) {
+        if (blob == null) {
+            return null;
+        }
+        // FIXME: this cast may mean that we should rather return an InputStream via getBinaryStream()?
+        try {
+            return blob.getBytes(0, (int) blob.length());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
