@@ -1,4 +1,4 @@
-package io.quarkiverse.renarde.oidc;
+package io.quarkiverse.renarde.security;
 
 import javax.inject.Inject;
 

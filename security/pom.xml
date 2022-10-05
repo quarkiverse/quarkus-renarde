@@ -6,14 +6,9 @@
     <artifactId>quarkus-renarde-parent</artifactId>
     <version>1.0.4-SNAPSHOT</version>
   </parent>
-  <artifactId>quarkus-renarde-oidc</artifactId>
-  <name>Quarkus - Renarde - OIDC</name>
+  <artifactId>quarkus-renarde-security</artifactId>
+  <name>Quarkus - Renarde - Security</name>
   <dependencies>
-    <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>quarkus-renarde-security</artifactId>
-        <version>${project.version}</version>
-    </dependency>
     <dependency>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-core</artifactId>
@@ -21,14 +16,6 @@
     <dependency>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-security</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>io.quarkus</groupId>
-        <artifactId>quarkus-oidc</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>io.quarkus</groupId>
-        <artifactId>quarkus-rest-client-reactive</artifactId>
     </dependency>
     <dependency>
         <groupId>${project.groupId}</groupId>

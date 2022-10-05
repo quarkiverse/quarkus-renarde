@@ -114,8 +114,8 @@ public class RenardeProcessor {
     public static final DotName DOTNAME_ROUTER = DotName.createSimple(Router.class.getName());
     public static final DotName DOTNAME_UNREMOVABLE = DotName.createSimple(Unremovable.class.getName());
     public static final DotName DOTNAME_TRANSACTIONAL = DotName.createSimple(Transactional.class.getName());
-    public static final DotName DOTNAME_USER = DotName.createSimple("io.quarkiverse.renarde.oidc.RenardeUser");
-    public static final DotName DOTNAME_SECURITY = DotName.createSimple("io.quarkiverse.renarde.oidc.RenardeSecurity");
+    public static final DotName DOTNAME_USER = DotName.createSimple("io.quarkiverse.renarde.security.RenardeUser");
+    public static final DotName DOTNAME_SECURITY = DotName.createSimple("io.quarkiverse.renarde.security.RenardeSecurity");
     public static final DotName DOTNAME_NAMED = DotName.createSimple(Named.class.getName());
 
     private static final String FEATURE = "renarde";

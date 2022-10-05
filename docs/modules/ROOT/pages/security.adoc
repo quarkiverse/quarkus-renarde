@@ -8,14 +8,14 @@ a mix of both.
 == Custom authentication with JWT
 
 In order to handle your own authentication by storing users in your database, you can use xref:security-jwt.adoc[JWT tokens].
-Start with importing the `renarde-oidc` module:
+Start with importing the `renarde-security` module:
 
-[source,xml]
+[source,xml,subs=attributes+]
 ----
 <dependency>
   <groupId>io.quarkiverse.renarde</groupId>
-  <artifactId>quarkus-renarde-oidc</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <artifactId>quarkus-renarde-security</artifactId>
+  <version>{quarkus-renarde-version}</version>
 </dependency>
 ----
 
@@ -42,7 +42,7 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Table;
 
-import io.quarkiverse.renarde.oidc.RenardeUser;
+import io.quarkiverse.renarde.security.RenardeUser;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 
 @Entity
@@ -113,13 +113,13 @@ package util;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
-import io.quarkiverse.renarde.oidc.RenardeSecurity;
-import io.quarkiverse.renarde.oidc.RenardeUser;
-import io.quarkiverse.renarde.oidc.RenardeUserProvider;
+import io.quarkiverse.renarde.security.RenardeSecurity;
+import io.quarkiverse.renarde.security.RenardeUser;
+import io.quarkiverse.renarde.security.RenardeUserProvider;
 import model.User;
 
 @ApplicationScoped
-public class MyOidcSetup implements RenardeUserProvider {
+public class MySecuritySetup implements RenardeUserProvider {
 
     @Inject
     RenardeSecurity security;
@@ -230,7 +230,7 @@ import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestQuery;
 
 import email.Emails;
-import io.quarkiverse.renarde.oidc.RenardeSecurity;
+import io.quarkiverse.renarde.security.RenardeSecurity;
 import io.quarkiverse.renarde.router.Router;
 import io.quarkiverse.renarde.util.StringUtils;
 import io.quarkus.elytron.security.common.BcryptUtil;
@@ -461,12 +461,12 @@ quarkus.http.auth.proactive=false
 
 Make sure you import the `renarde-oidc` module in your `pom.xml`:
 
-[source,xml]
+[source,xml,subs=attributes+]
 ----
 <dependency>
   <groupId>io.quarkiverse.renarde</groupId>
   <artifactId>quarkus-renarde-oidc</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>{quarkus-renarde-version}</version>
 </dependency>
 ----
 
@@ -486,7 +486,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
-import io.quarkiverse.renarde.oidc.RenardeUser;
+import io.quarkiverse.renarde.security.RenardeUser;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 
 @Entity
@@ -574,9 +574,10 @@ import javax.transaction.Transactional;
 import javax.ws.rs.core.Response;
 
 import io.quarkiverse.renarde.oidc.RenardeOidcHandler;
-import io.quarkiverse.renarde.oidc.RenardeSecurity;
-import io.quarkiverse.renarde.oidc.RenardeUser;
-import io.quarkiverse.renarde.oidc.RenardeUserProvider;
+import io.quarkiverse.renarde.oidc.RenardeOidcSecurity;
+import io.quarkiverse.renarde.security.RenardeSecurity;
+import io.quarkiverse.renarde.security.RenardeUser;
+import io.quarkiverse.renarde.security.RenardeUserProvider;
 import io.quarkiverse.renarde.router.Router;
 import io.quarkiverse.renarde.util.Flash;
 import io.quarkiverse.renarde.util.RedirectException;
@@ -586,11 +587,14 @@ import rest.Application;
 import rest.Login;
 
 @ApplicationScoped
-public class MyOidcSetup implements RenardeUserProvider, RenardeOidcHandler {
+public class MySecuritySetup implements RenardeUserProvider, RenardeOidcHandler {
 
     @Inject
     RenardeSecurity security;
-    
+
+    @Inject
+    RenardeOidcSecurity oidcSecurity;
+
     @Inject
     Flash flash;
 
@@ -621,10 +625,10 @@ public class MyOidcSetup implements RenardeUserProvider, RenardeOidcHandler {
             user.tenantId = tenantId;
             user.authId = authId;
             
-            user.email = security.getOidcEmail();
-            user.firstName = security.getOidcFirstName();
-            user.lastName = security.getOidcLastName();
-            user.userName = security.getOidcUserName();
+            user.email = oidcSecurity.getOidcEmail();
+            user.firstName = oidcSecurity.getOidcFirstName();
+            user.lastName = oidcSecurity.getOidcLastName();
+            user.userName = oidcSecurity.getOidcUserName();
 
             user.status = UserStatus.CONFIRMATION_REQUIRED;
             user.confirmationCode = UUID.randomUUID().toString();

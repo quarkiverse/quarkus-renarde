@@ -3,14 +3,13 @@ package io.quarkiverse.renarde.oidc.impl;
 import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.core.Response;
 
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.resteasy.reactive.RestPath;
 
 import io.quarkiverse.renarde.Controller;
 import io.quarkiverse.renarde.oidc.RenardeOidcHandler;
-import io.quarkiverse.renarde.oidc.RenardeSecurity;
+import io.quarkiverse.renarde.oidc.RenardeOidcSecurity;
 import io.quarkus.oidc.IdToken;
 import io.quarkus.oidc.OidcSession;
 import io.quarkus.oidc.UserInfo;
@@ -38,18 +37,8 @@ public class RenardeSecurityController extends Controller {
         oidcHandler.loginWithOidcSession(tenantId, principal.getName());
     }
 
-    /**
-     * Logout action, redirects to index
-     */
-    @Path("logout")
-    public Response logout() {
-        // FIXME: doesn't work
-        // oidcSession.logout().await().indefinitely();
-        return security.makeLogoutResponse();
-    }
-
     @Inject
-    RenardeSecurity security;
+    RenardeOidcSecurity security;
 
     @Inject
     RenardeOidcHandler oidcHandler;
