@@ -50,6 +50,10 @@
       <artifactId>quarkus-qute-deployment</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-csrf-reactive-deployment</artifactId>
+    </dependency>
+    <dependency>
       <groupId>io.quarkiverse.renarde</groupId>
       <artifactId>quarkus-renarde</artifactId>
       <version>${project.version}</version>
@@ -67,6 +71,12 @@
     <dependency>
       <groupId>io.quarkiverse.renarde</groupId>
       <artifactId>quarkus-renarde-security</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkiverse.renarde</groupId>
+      <artifactId>quarkus-renarde-test</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>

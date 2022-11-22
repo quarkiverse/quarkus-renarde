@@ -9,9 +9,11 @@ import java.net.URL;
 
 import jakarta.ws.rs.core.MediaType;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import io.quarkiverse.renarde.oidc.test.RenardeCookieFilter;
+import io.quarkiverse.renarde.test.DisableCSRFFilter;
 import io.quarkiverse.renarde.util.Flash;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
@@ -222,5 +224,77 @@ public class RenardeResourceTest {
                 .then()
                 .statusCode(200)
                 .body(is("Hello Security from FroMage"));
+    }
+
+    // since we're using renarde-test which installs a CSRF filter, let's make sure we remove it for this test
+    @DisableCSRFFilter
+    @Test
+    public void testCsrf() {
+        RenardeCookieFilter cookieFilter = new RenardeCookieFilter();
+        String htmlForm = given()
+                .filter(cookieFilter)
+                .when().get("/Application/csrf")
+                .then()
+                .statusCode(200)
+                .extract().asString();
+        String start = "<input type=\"hidden\" name=\"csrf-token\" value=\"";
+        int startIndex = htmlForm.indexOf(start);
+        Assertions.assertTrue(startIndex > 0, "Failed to find token in form: " + htmlForm);
+        int endIndex = htmlForm.indexOf('"', startIndex + start.length() + 1);
+        Assertions.assertTrue(endIndex > 0, "Failed to find end of token in form: " + htmlForm);
+        String token = htmlForm.substring(startIndex + start.length(), endIndex);
+        Assertions.assertTrue(token.length() > 0, "Empty token in form: " + htmlForm);
+        // no token, no dice
+        given()
+                .filter(cookieFilter)
+                .when()
+                .param("name", "Stef")
+                .post("/Application/csrfForm1")
+                .then()
+                .statusCode(400);
+        // token: good
+        given()
+                .filter(cookieFilter)
+                .when()
+                .param("csrf-token", token)
+                .param("name", "Stef")
+                .post("/Application/csrfForm1")
+                .then()
+                .statusCode(200)
+                .body(is("OK: Stef"));
+        // no token, no dice
+        given()
+                .filter(cookieFilter)
+                .when()
+                .multiPart("name", "Stef")
+                .post("/Application/csrfForm2")
+                .then()
+                .statusCode(400);
+        // token: good
+        given()
+                .filter(cookieFilter)
+                .when()
+                .multiPart("csrf-token", token)
+                .multiPart("name", "Stef")
+                .post("/Application/csrfForm2")
+                .then()
+                .statusCode(200)
+                .body(is("OK: Stef"));
+        given()
+                .filter(cookieFilter)
+                .when()
+                .param("csrf-token", token)
+                .post("/Application/csrfForm3")
+                .then()
+                .statusCode(200)
+                .body(is("OK"));
+        given()
+                .filter(cookieFilter)
+                .when()
+                .multiPart("csrf-token", token)
+                .post("/Application/csrfForm4")
+                .then()
+                .statusCode(200)
+                .body(is("OK"));
     }
 }

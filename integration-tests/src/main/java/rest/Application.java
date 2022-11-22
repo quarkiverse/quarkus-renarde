@@ -4,12 +4,15 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.transaction.Transactional.TxType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.core.MediaType;
 
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestPath;
@@ -18,6 +21,7 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import io.quarkiverse.renarde.Controller;
 import io.quarkiverse.renarde.router.Router;
+import io.quarkus.csrf.reactive.runtime.CsrfTokenParameterProvider;
 import io.quarkus.elytron.security.common.BcryptUtil;
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
@@ -34,6 +38,8 @@ public class Application extends Controller {
         public static native TemplateInstance validatedForm();
 
         public static native TemplateInstance test(User user);
+
+        public static native TemplateInstance csrf();
     }
 
     @POST
@@ -116,5 +122,40 @@ public class Application extends Controller {
         user.username = "FroMage";
         user.password = BcryptUtil.bcryptHash("1q2w3e");
         user.persistAndFlush();
+    }
+
+    public TemplateInstance csrf() {
+        return Templates.csrf();
+    }
+
+    @Inject
+    CsrfTokenParameterProvider csrfToken;
+
+    public String csrfToken() {
+        return csrfToken.getToken();
+    }
+
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @POST
+    public String csrfForm1(@RestForm String name) {
+        return "OK: " + name;
+    }
+
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @POST
+    public String csrfForm2(@RestForm String name) {
+        return "OK: " + name;
+    }
+
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @POST
+    public String csrfForm3() {
+        return "OK";
+    }
+
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @POST
+    public String csrfForm4() {
+        return "OK";
     }
 }

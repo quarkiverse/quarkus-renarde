@@ -21,6 +21,7 @@
     <module>jpa</module>
     <module>pdf</module>
     <module>barcode</module>
+    <module>test</module>
     <module>backoffice</module>
   </modules>
   <scm>

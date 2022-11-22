@@ -70,7 +70,6 @@ import io.quarkiverse.renarde.impl.RenardeRecorder;
 import io.quarkiverse.renarde.router.Router;
 import io.quarkiverse.renarde.router.RouterMethod;
 import io.quarkiverse.renarde.util.AuthenticationFailedExceptionMapper;
-import io.quarkiverse.renarde.util.CRSF;
 import io.quarkiverse.renarde.util.Filters;
 import io.quarkiverse.renarde.util.Flash;
 import io.quarkiverse.renarde.util.I18N;
@@ -78,7 +77,6 @@ import io.quarkiverse.renarde.util.JavaExtensions;
 import io.quarkiverse.renarde.util.MyParamConverters;
 import io.quarkiverse.renarde.util.MyValidationInterceptor;
 import io.quarkiverse.renarde.util.QuteResolvers;
-import io.quarkiverse.renarde.util.RandomHolder;
 import io.quarkiverse.renarde.util.RedirectExceptionMapper;
 import io.quarkiverse.renarde.util.RenardeJWTAuthMechanism;
 import io.quarkiverse.renarde.util.RenderArgs;
@@ -110,7 +108,6 @@ import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.HotDeploymentWatchedFileBuildItem;
 import io.quarkus.deployment.builditem.LaunchModeBuildItem;
 import io.quarkus.deployment.builditem.RunTimeConfigurationDefaultBuildItem;
-import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
 import io.quarkus.deployment.logging.LogCleanupFilterBuildItem;
 import io.quarkus.deployment.pkg.builditem.CurateOutcomeBuildItem;
 import io.quarkus.deployment.util.AsmUtil;
@@ -162,11 +159,6 @@ public class RenardeProcessor {
     @BuildStep
     FeatureBuildItem feature() {
         return new FeatureBuildItem(FEATURE);
-    }
-
-    @BuildStep
-    RuntimeInitializedClassBuildItem cryptoConfiguration() {
-        return new RuntimeInitializedClassBuildItem(RandomHolder.class.getCanonicalName());
     }
 
     @BuildStep
@@ -310,7 +302,6 @@ public class RenardeProcessor {
             BuildProducer<AdditionalIndexedClassesBuildItem> additionalIndexedClassesBuildItems) {
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(Filters.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(QuteResolvers.class));
-        additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(CRSF.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(Flash.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(I18N.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(RenderArgs.class));

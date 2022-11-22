@@ -1,9 +1,87 @@
 = Renarde image:renarde-head.svg[width=25em] Web Framework Security guide
+:favicon: _images/renarde-head.svg
 
 include::./includes/attributes.adoc[]
 
 Renarde image:renarde-head.svg[width=15em] can help you deal with security and user registration, either manually, using OIDC, or
 a mix of both.
+
+== CSRF
+
+Renarde comes with built-in support for https://owasp.org/www-community/attacks/csrf[Cross-Site Request Forgery (CSRF)] protection,
+via the (already imported) https://quarkus.io/guides/security-csrf-prevention[`quarkus-csrf-reactive`] module dependency.
+
+To be safe, make sure that all your `GET`, `HEAD` and `OPTIONS` endpoints do not alter application state, and
+always include a CSRF token to your `POST`, `PUT`, `DELETE` (and other) endpoints. On your endpoint side, you
+do not need to do anything, we will check the token for you. But on your form end, you need to include the CSRF
+token, which can be done by using the xref:index.adoc#renarde-tags[`{#form/}`] tag to create your form, or the
+xref:index.adoc#renarde-tags[`{#authenticityToken/}`] to generate a hidden form element with the token, or by writing
+the form element manually:
+
+[source,html]
+----
+<input type="hidden" name="{inject:csrf.parameterName}" value="{inject:csrf.token}"/>
+----
+
+=== Tests when using CSRF
+
+When writing tests, if you are using https://quarkus.io/guides/getting-started-testing[`@QuarkusTest`] and 
+https://rest-assured.io/[`RestAssured`] to test endpoints secured with CSRF protection,
+you will need to make sure you obtain and pass the appropriate CSRF token to your `POST` (and similar) endpoints.
+
+There are two ways to deal with this.
+
+=== The easy way
+
+Import the `quarkus-renarde-test` module:
+
+[source,xml,subs=attributes+]
+----
+<dependency
+  <groupId>io.quarkiverse.renarde</groupId>
+  <artifactId>quarkus-renarde-test</artifactId>
+  <version>{quarkus-renarde-version}</version>
+  <scope>test</scope>
+</dependency
+----
+
+This will automatically register a https://junit.org/junit5/docs/current/user-guide/#extensions-registration-automatic[JUnit Extension]
+which makes sure `RestAssured` has a filter set up for each of your
+test methods, which will pass a generated valid CSRF token as both cookie and form parameter. Not that this is only
+done for `POST` (and related) methods which contain either no body, or a form body 
+(https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST[url-encoded or multipart]).
+
+NOTE: you can use the `@DisableCSRFFilter` annotation on your test method or class in order to disable the CSRF
+filter. For example, if you want to handle it yourself.
+
+=== The hard way
+
+You will need to obtain a CSRF token from any `GET` endpoint, and resend it as part of your `POST` requests:
+
+[source,java]
+----
+@Test
+public void test() {
+  String csrfToken = RestAssured
+    .given()
+    .when()
+    .get("/Application/index")
+    .then()
+    .extract().cookie("csrf-token");
+  // now we can call POST
+  RestAssured
+    .given()
+    .when()
+    // for CSRF protection
+    .cookie("csrf-token", csrfToken)
+    .param("csrf-token", csrfToken)
+    // for your actual endpoint
+    .param("param", "value")
+    .post("/Application/doSomething")
+    .then()
+    .statusCode(200);
+}
+----
 
 == Custom authentication with JWT
 

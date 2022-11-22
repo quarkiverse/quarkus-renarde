@@ -52,6 +52,12 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>io.quarkiverse.renarde</groupId>
+      <artifactId>quarkus-renarde-test</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
     	<groupId>io.quarkus</groupId>
     	<artifactId>quarkus-junit5-internal</artifactId>
     	<scope>test</scope>

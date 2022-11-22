@@ -415,13 +415,14 @@ Renarde comes with a few extra tags to make your life easier:
 |Tag|Description 
 
 |`{#authenticityToken/}`
-|Generate a hidden HTML form element containing a CRSF token to be matched in the next request.
+|Generate a hidden HTML form element containing a xref:security.adoc#csrf[CSRF] token to be matched in the next request.
 
 |`{#error 'field'/}`
 |Inserts the error message for the given field name
 
 |`{#form uri method='POST' class='css' id='id'}...{/form}`
-|Generates an HTML form for the given `URI`, `method` (defaults to `POST`) and optional CSS classes and IDs. Includes a CRSF token.
+|Generates an HTML form for the given `URI`, `method` (defaults to `POST`) and optional CSS classes and IDs. 
+Includes a xref:security.adoc#csrf[CSRF] token.
 
 |`{#gravatar email size='mm'/}`
 |Inserts a gravatar image for the given `email`, with optional `size` (defaults to `mm`)
@@ -604,7 +605,7 @@ As you can see, we have default values for certain attributes, a special error c
 error, and we default the value to the one preserved in the flash scope, which is filled whenever validation
 fails, so that the user can see the validation error without losing their form values.
 
-As for the `form` Renarde tag, it is also fairly simple, and only includes an authenticity token for CRSF protection.
+As for the `form` Renarde tag, it is also fairly simple, and only includes an authenticity token for CSRF protection.
 
 [source,html]
 ----

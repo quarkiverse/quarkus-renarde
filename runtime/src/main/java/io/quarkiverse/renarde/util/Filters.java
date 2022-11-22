@@ -8,12 +8,10 @@ import jakarta.ws.rs.container.ContainerResponseContext;
 
 import org.jboss.resteasy.reactive.server.ServerRequestFilter;
 import org.jboss.resteasy.reactive.server.ServerResponseFilter;
-import org.jboss.resteasy.reactive.server.WithFormRead;
 import org.jboss.resteasy.reactive.server.spi.ResteasyReactiveContainerRequestContext;
 
 import io.quarkus.qute.TemplateInstance;
 import io.quarkus.qute.i18n.MessageBundles;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 
@@ -26,24 +24,12 @@ public class Filters {
     Flash flash;
 
     @Inject
-    CRSF crsf;
-
-    @Inject
     I18N i18n;
 
-    @WithFormRead
     @ServerRequestFilter
     public void filterRequest(ResteasyReactiveContainerRequestContext requestContext, HttpServerRequest req) {
         flash.handleFlashCookie();
-        crsf.readCRSFCookie();
         i18n.readLanguageCookie(requestContext);
-        // check CRSF param for every method except the three safe ones
-        if (req.method() != HttpMethod.GET
-                && req.method() != HttpMethod.HEAD
-                && req.method() != HttpMethod.OPTIONS) {
-            //FIXME: can't do this for now because form values are not read when filter is invoked
-            //            crsf.checkCRSFToken();
-        }
     }
 
     // this must run before the Qute response filter
@@ -57,7 +43,6 @@ public class Filters {
         }
         i18n.setLanguageCookie();
         flash.setFlashCookie();
-        crsf.setCRSFCookie();
     }
 
     void setTemplateLocaleAndRenderArgs(TemplateInstance template) {

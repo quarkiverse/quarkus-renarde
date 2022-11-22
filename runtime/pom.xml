@@ -50,6 +50,10 @@
         <artifactId>quarkus-hibernate-validator</artifactId>
     </dependency>
     <dependency>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-csrf-reactive</artifactId>
+    </dependency>
+    <dependency>
         <groupId>io.quarkus.qute</groupId>
         <artifactId>qute-core</artifactId>
     </dependency>
