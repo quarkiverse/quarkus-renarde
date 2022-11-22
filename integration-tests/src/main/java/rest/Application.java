@@ -24,12 +24,14 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import org.jboss.resteasy.reactive.MultipartForm;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestPath;
 import org.jboss.resteasy.reactive.RestQuery;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
+import org.jboss.resteasy.reactive.server.ServerExceptionMapper;
 
 import io.quarkiverse.renarde.Controller;
 import io.quarkiverse.renarde.router.Router;
@@ -98,5 +100,10 @@ public class Application extends Controller {
                 + "\n" + Router.getURI(Application::index)
                 + "\n" + Router.getURI(Application::params, "first", 42l, "search")
                 + "\n" + Router.getURI(Application::primitiveParams, true, 'a', (byte) 2, (short) 3, 4, 5l, 6.0f, 7.0d);
+    }
+
+    @ServerExceptionMapper
+    public Response mapIt(RuntimeException x) {
+        return null;
     }
 }

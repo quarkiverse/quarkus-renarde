@@ -66,10 +66,12 @@ import io.quarkiverse.renarde.util.RenderArgs;
 import io.quarkiverse.renarde.util.Validation;
 import io.quarkus.arc.Unremovable;
 import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
+import io.quarkus.arc.deployment.AutoAddScopeBuildItem;
 import io.quarkus.arc.deployment.ExcludedTypeBuildItem;
 import io.quarkus.arc.deployment.GeneratedBeanBuildItem;
 import io.quarkus.arc.deployment.GeneratedBeanGizmoAdaptor;
 import io.quarkus.arc.deployment.UnremovableBeanBuildItem;
+import io.quarkus.arc.processor.BuiltinScope;
 import io.quarkus.bootstrap.workspace.ArtifactSources;
 import io.quarkus.bootstrap.workspace.SourceDir;
 import io.quarkus.deployment.Capabilities;
@@ -350,6 +352,7 @@ public class RenardeProcessor {
 
     @BuildStep
     void collectControllers(CombinedIndexBuildItem indexBuildItem,
+            BuildProducer<AutoAddScopeBuildItem> autoAddScopeBuildItems,
             BuildProducer<AdditionalResourceClassBuildItem> additionalResourceClassBuildItems,
             BuildProducer<AnnotationsTransformerBuildItem> annotationTransformerBuildItems,
             BuildProducer<io.quarkus.arc.deployment.AnnotationsTransformerBuildItem> arcTransformers,
@@ -384,17 +387,24 @@ public class RenardeProcessor {
         annotationTransformerBuildItems.produce(new AnnotationsTransformerBuildItem(
                 AnnotationsTransformer.builder().appliesTo(Kind.CLASS).transform(ti -> transformController(ti, controllers))));
 
+        autoAddScopeBuildItems.produce(AutoAddScopeBuildItem.builder()
+                .match((klass, foo, bar) -> !Modifier.isAbstract(klass.flags())
+                        && controllers.contains(klass.name()))
+                .defaultScope(BuiltinScope.REQUEST)
+                .priority(10)
+                .build());
+
         arcTransformers.produce(new io.quarkus.arc.deployment.AnnotationsTransformerBuildItem(
                 new io.quarkus.arc.processor.AnnotationsTransformer() {
                     @Override
                     public void transform(TransformationContext transformationContext) {
-                        if (transformationContext.isClass()
-                                && !Modifier.isAbstract(transformationContext.getTarget().asClass().flags())
-                                && controllers.contains(transformationContext.getTarget().asClass().name())) {
-                            // FIXME: probably don't add a scope annotation if it has one already?
-                            transformationContext.transform().add(ResteasyReactiveDotNames.REQUEST_SCOPED)
-                                    .done();
-                        }
+                        //                        if (transformationContext.isClass()
+                        //                                && !Modifier.isAbstract(transformationContext.getTarget().asClass().flags())
+                        //                                && controllers.contains(transformationContext.getTarget().asClass().name())) {
+                        //                            // FIXME: probably don't add a scope annotation if it has one already?
+                        //                            transformationContext.transform().add(ResteasyReactiveDotNames.REQUEST_SCOPED)
+                        //                                    .done();
+                        //                        }
                         if (transformationContext.isMethod()) {
                             MethodInfo method = transformationContext.getTarget().asMethod();
                             if (controllers.contains(method.declaringClass().name())
