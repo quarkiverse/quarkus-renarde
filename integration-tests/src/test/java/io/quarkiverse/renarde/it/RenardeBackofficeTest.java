@@ -2,6 +2,9 @@ package io.quarkiverse.renarde.it;
 
 import static io.restassured.RestAssured.given;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -599,7 +602,7 @@ public class RenardeBackofficeTest {
     }
 
     @Test
-    public void testBackofficeBinaryAccess() {
+    public void testBackofficeBinaryAccess() throws IOException {
         Assertions.assertEquals(0, ExampleEntity.count());
 
         ExampleEntity entity = new ExampleEntity();
@@ -614,14 +617,27 @@ public class RenardeBackofficeTest {
                 .when().get("/_renarde/backoffice/ExampleEntity/" + loadedEntity.id + "/arrayBlob")
                 .then()
                 .statusCode(200)
-                .contentType(ContentType.BINARY)
+                .contentType(ContentType.TEXT)
                 .body(Matchers.equalTo("Hello World"));
 
         given()
                 .when().get("/_renarde/backoffice/ExampleEntity/" + loadedEntity.id + "/sqlBlob")
                 .then()
-                .statusCode(204)
-                .contentType(ContentType.BINARY);
+                .statusCode(204);
+
+        byte[] jpgBytes = Files.readAllBytes(Path.of("../docs/modules/ROOT/assets/images/oidc-apple-1.png"));
+
+        transact(() -> {
+            ExampleEntity toUpdate = (ExampleEntity) ExampleEntity.listAll().get(0);
+            toUpdate.arrayBlob = jpgBytes;
+        });
+
+        given()
+                .when().get("/_renarde/backoffice/ExampleEntity/" + loadedEntity.id + "/arrayBlob")
+                .then()
+                .statusCode(200)
+                .contentType("image/png")
+                .header("Content-Length", "" + jpgBytes.length);
     }
 
     @Transactional

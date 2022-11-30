@@ -17,9 +17,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import javax.ws.rs.core.Response;
+
 import org.hibernate.engine.jdbc.BlobProxy;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
 
+import io.quarkiverse.renarde.util.FileUtils;
 import io.quarkiverse.renarde.util.JavaExtensions;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 
@@ -182,5 +185,18 @@ public class BackUtil {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static Response binaryResponse(byte[] bytes) {
+        if (bytes == null || bytes.length == 0)
+            return Response.noContent().build();
+        String mime = FileUtils.getMimeType("", bytes);
+        return Response.ok(bytes, mime).build();
+    }
+
+    public static Response binaryResponse(Blob blob) {
+        if (blob == null)
+            return Response.noContent().build();
+        return binaryResponse(readBytes(blob));
     }
 }

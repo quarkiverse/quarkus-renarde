@@ -225,17 +225,17 @@ public class RenardeBackofficeProcessor {
     //  @GET
     //  @Produces(MediaType.APPLICATION_OCTET_STREAM)
     //  @Path("{id}/field")
-    //  public byte[] fieldForBinary(@RestPath Long id){
+    //  public Response fieldForBinary(@RestPath Long id){
     //      Entity entity = Entity.findById(id);
     //      notFoundIfNull(entity);
-    //      return BackUtil.readBytes(entity.getField());
+    //      return BackUtil.binaryResponse(entity.getField());
     //  }
     //
     private void addBinaryFieldGetters(ClassCreator c, String controllerClass, String entityClass, List<ModelField> fields) {
         for (ModelField field : fields) {
             if (field.type == Type.Binary) {
                 // Add a method to read the binary field data
-                try (MethodCreator m = c.getMethodCreator(field.name + "ForBinary", byte[].class, Long.class)) {
+                try (MethodCreator m = c.getMethodCreator(field.name + "ForBinary", Response.class, Long.class)) {
                     m.getParameterAnnotations(0).addAnnotation(RestPath.class).addValue("value", "id");
                     m.addAnnotation(Path.class).addValue("value", "{id}/" + field.name);
                     m.addAnnotation(GET.class);
@@ -245,12 +245,15 @@ public class RenardeBackofficeProcessor {
                             .invokeVirtualMethod(MethodDescriptor.ofMethod(entityClass, field.entityField.getGetterName(),
                                     field.entityField.descriptor), entityVariable);
                     if (field.entityField.descriptor.equals("[B")) {
-                        m.returnValue(fieldValue);
-                    } else if (field.entityField.descriptor.equals("L" + Blob.class.getName().replace('.', '/') + ";")) {
-                        ResultHandle bytes = m.invokeStaticMethod(
-                                MethodDescriptor.ofMethod(BackUtil.class, "readBytes", byte[].class, Blob.class),
+                        ResultHandle response = m.invokeStaticMethod(
+                                MethodDescriptor.ofMethod(BackUtil.class, "binaryResponse", Response.class, byte[].class),
                                 fieldValue);
-                        m.returnValue(bytes);
+                        m.returnValue(response);
+                    } else if (field.entityField.descriptor.equals("L" + Blob.class.getName().replace('.', '/') + ";")) {
+                        ResultHandle response = m.invokeStaticMethod(
+                                MethodDescriptor.ofMethod(BackUtil.class, "binaryResponse", Response.class, Blob.class),
+                                fieldValue);
+                        m.returnValue(response);
                     } else {
                         throw new RuntimeException(
                                 "Unknown binary field " + field + " descriptor: " + field.entityField.descriptor);

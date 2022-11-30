@@ -53,6 +53,11 @@
         <groupId>io.quarkus.qute</groupId>
         <artifactId>qute-core</artifactId>
     </dependency>
+    <dependency>
+        <groupId>org.overviewproject</groupId>
+        <artifactId>mime-types</artifactId>
+        <version>1.0.4</version>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
