@@ -472,11 +472,11 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(1, document.select("input[name='arrayBlob'][type='file']").size());
         Assertions.assertEquals(1, document.select("input[name='arrayBlob$unset'][type='checkbox']").size());
         Assertions.assertEquals(1, document.select("a[href='../" + entity.id + "/arrayBlob']").size());
-        Assertions.assertEquals("Current file (11B)", document.select("a[href='../" + entity.id + "/arrayBlob']").text());
+        Assertions.assertEquals("Current file (11B text/plain)", document.select("a[href='../" + entity.id + "/arrayBlob']").text());
         Assertions.assertEquals(1, document.select("input[name='sqlBlob'][type='file']").size());
         Assertions.assertEquals(1, document.select("input[name='sqlBlob$unset'][type='checkbox']").size());
         Assertions.assertEquals(1, document.select("a[href='../" + entity.id + "/sqlBlob']").size());
-        Assertions.assertEquals("Current file (9B)", document.select("a[href='../" + entity.id + "/sqlBlob']").text());
+        Assertions.assertEquals("Current file (9B text/plain)", document.select("a[href='../" + entity.id + "/sqlBlob']").text());
 
         LocalDateTime otherLocalDateTime = LocalDateTime.of(1996, 11, 22, 13, 24, 44);
         Instant otherInstant = otherLocalDateTime.atZone(ZoneId.systemDefault()).toInstant();

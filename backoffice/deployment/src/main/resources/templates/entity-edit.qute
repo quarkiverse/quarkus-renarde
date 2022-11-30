@@ -55,7 +55,7 @@
     \{#crud_input name="{field.name}" type="file"/}
     \{#if entity.{field.name}}
       \{#crud_input name="{field.name}$unset" type="checkbox"/} Delete.<br/>
-      <a href="../\{entity.id}/{field.name}">Current file (\{entity.{field.name}.length.binarySize})</a>
+      <a href="../\{entity.id}/{field.name}">Current file (\{entity.{field.name}.length.binarySize} \{entity.{field.name}.mimeType})</a>
     \{/if}
    {#else}
     \{#crud_input name="{field.name}" value=entity.{field.name}/}

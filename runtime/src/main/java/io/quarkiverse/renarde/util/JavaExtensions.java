@@ -3,6 +3,8 @@ package io.quarkiverse.renarde.util;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.Blob;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -155,6 +157,24 @@ public class JavaExtensions {
             return String.format("%.2fTB", rounded);
         rounded /= 1000;
         return String.format("%.2fPB", rounded);
+    }
+
+    public static String mimeType(byte[] bytes) {
+        if (bytes == null || bytes.length == 0) {
+            return null;
+        }
+        return FileUtils.getMimeType("", bytes);
+    }
+
+    public static String mimeType(Blob blob) {
+        try {
+            if (blob == null || blob.length() == 0) {
+                return null;
+            }
+            return FileUtils.getMimeType("", blob.getBytes(0l, (int) blob.length()));
+        } catch (SQLException e) {
+            return null;
+        }
     }
 
     @TemplateExtension(namespace = "flash", matchName = "*")
