@@ -105,4 +105,15 @@ public class RenardeResourceTest {
                 .statusCode(200)
                 .body(is("param: myParam, file: file contents, fileUpload: fileUpload.txt"));
     }
+
+    @Test
+    public void testValidationError() {
+        given()
+                .when()
+                .multiPart("email", "foo@bar.com")
+                .post("/Application/validationError")
+                .then()
+                .statusCode(200)
+                .body(is("Error\n\n")); // one newline for {#ifError}, one for {#error}
+    }
 }

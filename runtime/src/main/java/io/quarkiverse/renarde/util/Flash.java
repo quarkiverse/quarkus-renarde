@@ -137,7 +137,7 @@ public class Flash {
 
     // FIXME: this is just to get around not being able to prefix error. in Qute
     public <T> T getError(String key) {
-        return (T) values.get("error." + key);
+        return (T) futureValues.get("error." + key);
     }
 
     public Map<String, Object> values() {

@@ -32,6 +32,7 @@ import io.quarkiverse.renarde.Controller;
 import io.quarkiverse.renarde.router.Router;
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
+import io.smallrye.common.annotation.Blocking;
 
 public class Application extends Controller {
 
@@ -40,6 +41,8 @@ public class Application extends Controller {
         public static native TemplateInstance index();
 
         public static native TemplateInstance routingTags();
+
+        public static native TemplateInstance validationError(String email);
     }
 
     @POST
@@ -60,6 +63,18 @@ public class Application extends Controller {
 
     public TemplateInstance routingTags() {
         return Templates.routingTags();
+    }
+
+    @Blocking
+    @POST
+    public TemplateInstance validationError(@RestForm String email) {
+        validation.addError("email", "Error");
+
+        if (validationFailed()) {
+            return Templates.validationError(email);
+        }
+
+        return Templates.index();
     }
 
     @Path("/absolute")
