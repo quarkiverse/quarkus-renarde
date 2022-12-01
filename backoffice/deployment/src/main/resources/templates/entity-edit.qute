@@ -36,7 +36,10 @@
    {#case Time}
     \{#crud_input name="{field.name}" type="time" value=entity.{field.name}.htmlNormalised??/}
    {#case Checkbox}
-    \{#crud_input name="{field.name}" type="checkbox" value=entity.{field.name}/}
+    <div class="form-check">
+     \{#crud_input name="{field.name}" id="{field.name}" type="checkbox" value=entity.{field.name}/}
+     <label class="form-check-label" for="{field.name}">{field.label}</label>
+    </div>
    {#case Relation}
     \{#crud_select name="{field.name}" value=entity.{field.name}.id.toString() values={field.name}PossibleValues nullable=true/}
    {#case MultiRelation}
@@ -54,8 +57,11 @@
    {#case Binary}
     \{#crud_input name="{field.name}" type="file"/}
     \{#if entity.{field.name}}
-      \{#crud_input name="{field.name}$unset" type="checkbox"/} Delete.<br/>
-      <a href="../\{entity.id}/{field.name}">Current file (\{entity.{field.name}.length.binarySize} \{entity.{field.name}.mimeType})</a>
+      <div class="form-check">
+       \{#crud_input name="{field.name}$unset" id="{field.name}$unset" type="checkbox"/}
+       <label class="form-check-label" for="{field.name}$unset">Delete</label>
+      </div>
+      <a href="../\{entity.id}/{field.name}">Current file</a> (\{#if entity.{field.name}.name??}\{entity.{field.name}.name} \{/if}\{entity.{field.name}.length.binarySize} \{entity.{field.name}.mimeType})
     \{/if}
    {#else}
     \{#crud_input name="{field.name}" value=entity.{field.name}/}

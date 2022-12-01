@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import io.quarkiverse.renarde.jpa.NamedBlob;
 import io.quarkiverse.renarde.util.JavaExtensions;
 import io.quarkus.hibernate.orm.panache.Panache;
 import io.quarkus.test.junit.QuarkusTest;
@@ -189,6 +190,7 @@ public class RenardeBackofficeTest {
 
         Assertions.assertEquals(1, document.select("input[name='arrayBlob'][type='file']").size());
         Assertions.assertEquals(1, document.select("input[name='sqlBlob'][type='file']").size());
+        Assertions.assertEquals(1, document.select("input[name='namedBlob'][type='file']").size());
 
         LocalDateTime localDateTime = LocalDateTime.of(1997, 12, 23, 14, 25, 45);
         Instant instant = localDateTime.atZone(ZoneId.systemDefault()).toInstant();
@@ -222,6 +224,7 @@ public class RenardeBackofficeTest {
                 .multiPart("manyToManyNotOwning", manyToManyOwningIds.get(1))
                 .multiPart("arrayBlob", "array.txt", "array contents".getBytes(), MediaType.TEXT_PLAIN)
                 .multiPart("sqlBlob", "sql.txt", LOREM_1500b.getBytes(), MediaType.TEXT_PLAIN)
+                .multiPart("namedBlob", "named.pdf", LOREM_1500b.getBytes(), "application/pdf")
                 .multiPart("action", "CreateAndCreateAnother")
                 .redirects().follow(false)
                 .post("/_renarde/backoffice/ExampleEntity/create")
@@ -265,6 +268,11 @@ public class RenardeBackofficeTest {
         Assertions.assertArrayEquals(entity.sqlBlob.getBytes(0, (int) entity.sqlBlob.length()), LOREM_1500b.getBytes());
         Assertions.assertNotNull(entity.arrayBlob);
         Assertions.assertArrayEquals(entity.arrayBlob, "array contents".getBytes());
+        Assertions.assertNotNull(entity.namedBlob);
+        Assertions.assertEquals(entity.namedBlob.name, "named.pdf");
+        Assertions.assertEquals(entity.namedBlob.mimeType, "application/pdf");
+        Assertions.assertArrayEquals(entity.namedBlob.contents.getBytes(0, (int) entity.sqlBlob.length()),
+                LOREM_1500b.getBytes());
     }
 
     @Test
@@ -368,6 +376,10 @@ public class RenardeBackofficeTest {
         entity.manyToManyNotOwning.add(manyToManyOwning.get(1));
         entity.arrayBlob = "not touched".getBytes();
         entity.sqlBlob = BlobProxy.generateProxy("to update".getBytes());
+        entity.namedBlob = new NamedBlob();
+        entity.namedBlob.name = "named.pdf";
+        entity.namedBlob.contents = BlobProxy.generateProxy("to update as well".getBytes());
+        entity.namedBlob.mimeType = "application/pdf";
         // oneToMany is not owning
         ExampleEntity damnit = entity;
         transact(() -> {
@@ -472,11 +484,12 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(1, document.select("input[name='arrayBlob'][type='file']").size());
         Assertions.assertEquals(1, document.select("input[name='arrayBlob$unset'][type='checkbox']").size());
         Assertions.assertEquals(1, document.select("a[href='../" + entity.id + "/arrayBlob']").size());
-        Assertions.assertEquals("Current file (11B text/plain)", document.select("a[href='../" + entity.id + "/arrayBlob']").text());
         Assertions.assertEquals(1, document.select("input[name='sqlBlob'][type='file']").size());
         Assertions.assertEquals(1, document.select("input[name='sqlBlob$unset'][type='checkbox']").size());
         Assertions.assertEquals(1, document.select("a[href='../" + entity.id + "/sqlBlob']").size());
-        Assertions.assertEquals("Current file (9B text/plain)", document.select("a[href='../" + entity.id + "/sqlBlob']").text());
+        Assertions.assertEquals(1, document.select("input[name='namedBlob'][type='file']").size());
+        Assertions.assertEquals(1, document.select("input[name='namedBlob$unset'][type='checkbox']").size());
+        Assertions.assertEquals(1, document.select("a[href='../" + entity.id + "/namedBlob']").size());
 
         LocalDateTime otherLocalDateTime = LocalDateTime.of(1996, 11, 22, 13, 24, 44);
         Instant otherInstant = otherLocalDateTime.atZone(ZoneId.systemDefault()).toInstant();
@@ -508,6 +521,7 @@ public class RenardeBackofficeTest {
                 .multiPart("manyToManyNotOwning", manyToManyOwning.get(0).id)
                 // do not send arrayBlob to make sure it's not updated
                 .multiPart("sqlBlob", "sql.txt", LOREM_1500b.getBytes(), MediaType.TEXT_PLAIN)
+                .multiPart("namedBlob", "named.txt", LOREM_1500b.getBytes(), MediaType.TEXT_PLAIN)
                 .multiPart("action", "SaveAndContinueEditing")
                 .redirects().follow(false)
                 .post("/_renarde/backoffice/ExampleEntity/edit/" + entity.id)
@@ -550,6 +564,11 @@ public class RenardeBackofficeTest {
         // updated
         Assertions.assertNotNull(entity.sqlBlob);
         Assertions.assertArrayEquals(entity.sqlBlob.getBytes(0, (int) entity.sqlBlob.length()), LOREM_1500b.getBytes());
+        Assertions.assertNotNull(entity.namedBlob);
+        Assertions.assertArrayEquals(entity.namedBlob.contents.getBytes(0, (int) entity.sqlBlob.length()),
+                LOREM_1500b.getBytes());
+        Assertions.assertEquals(entity.namedBlob.name, "named.txt");
+        Assertions.assertEquals(entity.namedBlob.mimeType, "text/plain");
 
         // last round to test unsetting binary fields
         given()
@@ -557,6 +576,7 @@ public class RenardeBackofficeTest {
                 .multiPart("requiredString", "otherString")
                 .multiPart("arrayBlob$unset", "on")
                 .multiPart("sqlBlob$unset", "on")
+                .multiPart("namedBlob$unset", "on")
                 .multiPart("action", "SaveAndContinueEditing")
                 .redirects().follow(false)
                 .post("/_renarde/backoffice/ExampleEntity/edit/" + entity.id)
@@ -570,6 +590,7 @@ public class RenardeBackofficeTest {
         Assertions.assertNotNull(entity);
         Assertions.assertNull(entity.arrayBlob);
         Assertions.assertNull(entity.sqlBlob);
+        Assertions.assertNull(entity.namedBlob);
     }
 
     @Test

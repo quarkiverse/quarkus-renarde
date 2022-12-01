@@ -22,6 +22,7 @@ import javax.ws.rs.core.Response;
 import org.hibernate.engine.jdbc.BlobProxy;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
 
+import io.quarkiverse.renarde.jpa.NamedBlob;
 import io.quarkiverse.renarde.util.FileUtils;
 import io.quarkiverse.renarde.util.JavaExtensions;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
@@ -175,6 +176,23 @@ public class BackUtil {
         }
     }
 
+    public static NamedBlob namedBlobField(FileUpload fileUpload) {
+        if (!isSet(fileUpload))
+            return null;
+        try {
+            NamedBlob blob = new NamedBlob();
+            blob.name = fileUpload.fileName();
+            blob.mimeType = fileUpload.contentType();
+            byte[] bytes = Files.readAllBytes(fileUpload.filePath());
+            if (blob.mimeType == null || blob.mimeType.isEmpty())
+                blob.mimeType = FileUtils.getMimeType(blob.name, bytes);
+            blob.contents = BlobProxy.generateProxy(bytes);
+            return blob;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     public static byte[] readBytes(Blob blob) {
         if (blob == null) {
             return null;
@@ -198,5 +216,13 @@ public class BackUtil {
         if (blob == null)
             return Response.noContent().build();
         return binaryResponse(readBytes(blob));
+    }
+
+    public static Response binaryResponse(NamedBlob namedBlob) {
+        if (namedBlob == null)
+            return Response.noContent().build();
+        return Response.ok(readBytes(namedBlob.contents), namedBlob.mimeType)
+                .header("Content-Disposition", "attachment; filename=\"" + namedBlob.name + "\"")
+                .build();
     }
 }

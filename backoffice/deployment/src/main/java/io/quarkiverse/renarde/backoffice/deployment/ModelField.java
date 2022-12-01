@@ -20,6 +20,7 @@ import org.jboss.jandex.DotName;
 import org.jboss.jandex.FieldInfo;
 import org.jboss.jandex.IndexView;
 
+import io.quarkiverse.renarde.jpa.NamedBlob;
 import io.quarkiverse.renarde.util.JavaExtensions;
 import io.quarkus.panache.common.deployment.EntityField;
 import io.quarkus.panache.common.deployment.EntityModel;
@@ -50,6 +51,7 @@ public class ModelField {
     private static final DotName DOTNAME_ENUMERATED = DotName.createSimple(Enumerated.class.getName());
     private static final DotName DOTNAME_COLUMN = DotName.createSimple(Column.class.getName());
     private static final DotName DOTNAME_LOB = DotName.createSimple(Lob.class.getName());
+    public static final String NAMED_BLOB_DESCRIPTOR = "L" + NamedBlob.class.getName().replace('.', '/') + ";";
 
     // For views
     public String name;
@@ -106,7 +108,8 @@ public class ModelField {
         } else if (entityField.descriptor.equals("Z")) {
             this.type = Type.Checkbox;
         } else if (entityField.descriptor.equals("[B")
-                || entityField.descriptor.equals("Ljava/sql/Blob;")) {
+                || entityField.descriptor.equals("Ljava/sql/Blob;")
+                || entityField.descriptor.equals(NAMED_BLOB_DESCRIPTOR)) {
             this.type = Type.Binary;
         } else if (entityField.descriptor.equals("Ljava/lang/String;")) {
             if (field.hasAnnotation(DOTNAME_LOB)) {

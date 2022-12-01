@@ -18,6 +18,7 @@
     <module>oidc</module>
     <module>oidc-tests</module>
     <module>docs</module>
+    <module>jpa</module>
     <module>backoffice</module>
   </modules>
   <properties>

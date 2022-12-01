@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.List;
 
 import javax.persistence.Column;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Enumerated;
 import javax.persistence.Lob;
@@ -16,6 +17,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
+import io.quarkiverse.renarde.jpa.NamedBlob;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 
 @Entity
@@ -42,6 +44,8 @@ public class ExampleEntity extends PanacheEntity {
     public byte[] arrayBlob;
     @Lob
     public Blob sqlBlob;
+    @Embedded
+    public NamedBlob namedBlob;
 
     // not owning
     @OneToOne(mappedBy = "exampleEntity")

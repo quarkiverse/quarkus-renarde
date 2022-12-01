@@ -40,6 +40,7 @@ import io.quarkiverse.renarde.backoffice.BackUtil;
 import io.quarkiverse.renarde.backoffice.CreateAction;
 import io.quarkiverse.renarde.backoffice.EditAction;
 import io.quarkiverse.renarde.backoffice.deployment.ModelField.Type;
+import io.quarkiverse.renarde.jpa.NamedBlob;
 import io.quarkus.arc.Arc;
 import io.quarkus.arc.ArcContainer;
 import io.quarkus.arc.InstanceHandle;
@@ -249,9 +250,14 @@ public class RenardeBackofficeProcessor {
                                 MethodDescriptor.ofMethod(BackUtil.class, "binaryResponse", Response.class, byte[].class),
                                 fieldValue);
                         m.returnValue(response);
-                    } else if (field.entityField.descriptor.equals("L" + Blob.class.getName().replace('.', '/') + ";")) {
+                    } else if (field.entityField.descriptor.equals("Ljava/sql/Blob;")) {
                         ResultHandle response = m.invokeStaticMethod(
                                 MethodDescriptor.ofMethod(BackUtil.class, "binaryResponse", Response.class, Blob.class),
+                                fieldValue);
+                        m.returnValue(response);
+                    } else if (field.entityField.descriptor.equals(ModelField.NAMED_BLOB_DESCRIPTOR)) {
+                        ResultHandle response = m.invokeStaticMethod(
+                                MethodDescriptor.ofMethod(BackUtil.class, "binaryResponse", Response.class, NamedBlob.class),
                                 fieldValue);
                         m.returnValue(response);
                     } else {
@@ -508,9 +514,14 @@ public class RenardeBackofficeProcessor {
                             uploadValue = hasValueTrueBranch.invokeStaticMethod(
                                     MethodDescriptor.ofMethod(BackUtil.class, "byteArrayField", byte[].class, FileUpload.class),
                                     parameterValue);
-                        } else if (field.entityField.descriptor.equals("L" + Blob.class.getName().replace('.', '/') + ";")) {
+                        } else if (field.entityField.descriptor.equals("Ljava/sql/Blob;")) {
                             uploadValue = hasValueTrueBranch.invokeStaticMethod(
                                     MethodDescriptor.ofMethod(BackUtil.class, "blobField", Blob.class, FileUpload.class),
+                                    parameterValue);
+                        } else if (field.entityField.descriptor.equals(ModelField.NAMED_BLOB_DESCRIPTOR)) {
+                            uploadValue = hasValueTrueBranch.invokeStaticMethod(
+                                    MethodDescriptor.ofMethod(BackUtil.class, "namedBlobField", NamedBlob.class,
+                                            FileUpload.class),
                                     parameterValue);
                         } else {
                             throw new RuntimeException(
