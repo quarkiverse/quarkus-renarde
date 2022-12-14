@@ -20,6 +20,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
+import javax.transaction.Transactional;
+import javax.transaction.Transactional.TxType;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
@@ -32,7 +36,6 @@ import io.quarkiverse.renarde.Controller;
 import io.quarkiverse.renarde.router.Router;
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
-import io.smallrye.common.annotation.Blocking;
 
 public class Application extends Controller {
 
@@ -42,7 +45,7 @@ public class Application extends Controller {
 
         public static native TemplateInstance routingTags();
 
-        public static native TemplateInstance validationError(String email);
+        public static native TemplateInstance validatedForm();
     }
 
     @POST
@@ -65,16 +68,24 @@ public class Application extends Controller {
         return Templates.routingTags();
     }
 
-    @Blocking
+    public TemplateInstance validatedForm() {
+        return Templates.validatedForm();
+    }
+
+    // FIXME: I'm not sure why form() works but this doesn't. I'm getting an error because it's called on the IO thread
+    @Transactional(TxType.NEVER)
     @POST
-    public TemplateInstance validationError(@RestForm String email) {
-        validation.addError("email", "Error");
-
-        if (validationFailed()) {
-            return Templates.validationError(email);
+    public TemplateInstance validatedAction(@RestForm @NotBlank String required,
+            @RestForm @Email String email,
+            @RestForm String manual,
+            @RestForm boolean redirect) {
+        validation.required("manual", manual);
+        // only flash the errors and params if we test redirects
+        if (redirect && validationFailed()) {
+            validatedForm();
         }
-
-        return Templates.index();
+        // make sure errors show up even without a redirect
+        return Templates.validatedForm();
     }
 
     @Path("/absolute")

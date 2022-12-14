@@ -44,12 +44,22 @@ public class Validation {
         errors.add(new Error(field, message));
     }
 
+    // Called from ifError.html
     public boolean hasError(String field) {
         for (Error error : errors) {
             if (error.field.equals(field))
                 return true;
         }
         return false;
+    }
+
+    // Called from error.html
+    public String getError(String field) {
+        for (Error error : errors) {
+            if (error.field.equals(field))
+                return error.message;
+        }
+        return null;
     }
 
     public static class Error {

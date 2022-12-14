@@ -7,6 +7,7 @@ import javax.ws.rs.core.MediaType;
 
 import org.junit.jupiter.api.Test;
 
+import io.quarkiverse.renarde.oidc.test.RenardeCookieFilter;
 import io.quarkus.test.junit.QuarkusTest;
 
 @QuarkusTest
@@ -109,11 +110,43 @@ public class RenardeResourceTest {
     @Test
     public void testValidationError() {
         given()
+                .redirects().follow(false)
                 .when()
-                .multiPart("email", "foo@bar.com")
-                .post("/Application/validationError")
+                .formParam("redirect", "false")
+                // invalid
+                .formParam("email", "foobar.com")
+                // missing: required, manual
+                .post("/Application/validatedAction")
                 .then()
                 .statusCode(200)
-                .body(is("Error\n\n")); // one newline for {#ifError}, one for {#error}
+                .body(is(
+                        "Email: must be a well-formed email address\n\n\nManual: Required\n\n\nRequired: must not be blank\n\n\n"));
+    }
+
+    @Test
+    public void testValidationErrorFlash() {
+        RenardeCookieFilter cookieFilter = new RenardeCookieFilter();
+        String uri = given()
+                .redirects().follow(false)
+                .filter(cookieFilter)
+                .when()
+                .formParam("redirect", "true")
+                // invalid
+                .formParam("email", "foobar.com")
+                // missing: required, manual
+                .post("/Application/validatedAction")
+                .then()
+                .statusCode(303)
+                .extract().header("Location");
+        given()
+                .redirects().follow(false)
+                .filter(cookieFilter)
+                .when()
+                .get(uri)
+                .then()
+                .statusCode(200)
+                .body(is(
+                        "Email: must be a well-formed email address\n\n\nManual: Required\n\n\nRequired: must not be blank\n\n\n"));
+
     }
 }
