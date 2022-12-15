@@ -9,6 +9,9 @@ import org.junit.jupiter.api.Test;
 
 import io.quarkiverse.renarde.oidc.test.RenardeCookieFilter;
 import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.response.ExtractableResponse;
+import io.restassured.response.Response;
+import io.restassured.response.ValidatableResponse;
 
 @QuarkusTest
 public class RenardeResourceTest {
@@ -147,6 +150,45 @@ public class RenardeResourceTest {
                 .statusCode(200)
                 .body(is(
                         "Email: must be a well-formed email address\n\n\nManual: Required\n\n\nRequired: must not be blank\n\n\n"));
-
     }
+
+    @Test
+    public void testRedirectHook() {
+        RenardeCookieFilter cookieFilter = new RenardeCookieFilter();
+        follow("/RedirectHook/redirectHookDirect", cookieFilter)
+                .statusCode(200)
+                .body(is("OK"));
+
+        cookieFilter.getCookieStore().clear();
+        follow("/RedirectHook/redirectHookIndirect", cookieFilter)
+                .statusCode(200)
+                .body(is("OK"));
+    }
+
+    private ValidatableResponse follow(String uri, RenardeCookieFilter cookieFilter) {
+        do {
+            // make sure we turn any https into http, because some providers force https
+            if (uri.startsWith("https://")) {
+                uri = "http" + uri.substring(5);
+            }
+            ValidatableResponse response = given()
+                    .when()
+                    .filter(cookieFilter)
+                    // mandatory for Location redirects
+                    .urlEncodingEnabled(false)
+                    .redirects().follow(false)
+                    .log().ifValidationFails()
+                    .get(uri)
+                    .then()
+                    .log().ifValidationFails();
+            ExtractableResponse<Response> extract = response.extract();
+            if (extract.statusCode() == 302
+                    || extract.statusCode() == 303) {
+                uri = extract.header("Location");
+            } else {
+                return response;
+            }
+        } while (true);
+    }
+
 }

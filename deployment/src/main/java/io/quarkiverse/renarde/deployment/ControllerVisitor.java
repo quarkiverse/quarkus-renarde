@@ -18,6 +18,11 @@ import io.quarkiverse.renarde.router.Router;
 import io.quarkus.deployment.util.AsmUtil;
 import io.quarkus.runtime.util.HashUtil;
 
+/**
+ * This visitor augments controllers, to generate methods for building URIs and replacing calls
+ * to controller public methods to replace them with redirects. See AugmentedController in the tests
+ * for a manually augmented version to explain what we do here.
+ */
 public class ControllerVisitor implements BiFunction<String, ClassVisitor, ClassVisitor> {
 
     public static final DotName DOTNAME_LONG = DotName.createSimple(Long.class.getName());
@@ -145,6 +150,10 @@ public class ControllerVisitor implements BiFunction<String, ClassVisitor, Class
                         ControllerClass ownerController = controllers.get(ownerClass);
                         String key = name + "/" + descriptor;
                         if (ownerController != null && ownerController.methods.get(key) != null) {
+                            // first invoke the redirect hook this.beforeRedirect()
+                            super.visitIntInsn(Opcodes.ALOAD, 0);
+                            super.visitMethodInsn(Opcodes.INVOKEVIRTUAL, CONTROLLER_BINARY_NAME, "beforeRedirect", "()V",
+                                    false);
                             /*
                              * We turn this.method(…) calls into (static) __redirect$method(…) calls
                              */
@@ -344,7 +353,7 @@ public class ControllerVisitor implements BiFunction<String, ClassVisitor, Class
         }
 
         private String uriDescriptor(ControllerMethod method) {
-            // same signature but takes extra boolean and returns a String
+            // same signature but takes extra boolean and returns a URI
             int lastParen = method.descriptor.lastIndexOf(')');
             return "(Z" + method.descriptor.substring(1, lastParen + 1) + "Ljava/net/URI;";
         }

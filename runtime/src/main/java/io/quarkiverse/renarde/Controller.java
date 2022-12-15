@@ -85,6 +85,13 @@ public class Controller {
         throw new WebApplicationException(RestResponse.StatusCode.NOT_FOUND);
     }
 
+    /**
+     * This hook is called before any redirects caused by calls to controller public methods,
+     * including redirect(FooController.class).method().
+     */
+    protected void beforeRedirect() {
+    }
+
     protected Response seeOther(String uri) {
         try {
             return seeOther(new URI(uri));
