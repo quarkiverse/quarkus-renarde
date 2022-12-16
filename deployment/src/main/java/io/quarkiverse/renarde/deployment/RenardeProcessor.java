@@ -200,10 +200,12 @@ public class RenardeProcessor {
             Optional<String> decryptKeyLocationOpt = config.getOptionalValue("mp.jwt.decrypt.key.location", String.class);
             Optional<String> signKeyLocationOpt = config.getOptionalValue("smallrye.jwt.sign.key.location", String.class);
             // PUBLIC
+            Optional<String> verifyKeyOpt = config.getOptionalValue("mp.jwt.verify.publickey", String.class);
             Optional<String> verifyKeyLocationOpt = config.getOptionalValue("mp.jwt.verify.publickey.location", String.class);
             Optional<String> encryptKeyLocationOpt = config.getOptionalValue("smallrye.jwt.encrypt.key.location", String.class);
             if (!decryptKeyLocationOpt.isPresent()
                     && !signKeyLocationOpt.isPresent()
+                    && !verifyKeyOpt.isPresent()
                     && !verifyKeyLocationOpt.isPresent()
                     && !encryptKeyLocationOpt.isPresent()) {
                 // FIXME: folder
