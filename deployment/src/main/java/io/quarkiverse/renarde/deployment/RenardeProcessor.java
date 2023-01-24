@@ -50,6 +50,8 @@ import io.quarkiverse.renarde.Controller;
 import io.quarkiverse.renarde.deployment.ControllerVisitor.ControllerClass;
 import io.quarkiverse.renarde.deployment.ControllerVisitor.ControllerMethod;
 import io.quarkiverse.renarde.deployment.ControllerVisitor.UriPart;
+import io.quarkiverse.renarde.impl.RenardeConfig;
+import io.quarkiverse.renarde.impl.RenardeRecorder;
 import io.quarkiverse.renarde.router.Router;
 import io.quarkiverse.renarde.router.RouterMethod;
 import io.quarkiverse.renarde.util.AuthenticationFailedExceptionMapper;
@@ -62,10 +64,13 @@ import io.quarkiverse.renarde.util.MyValidationInterceptor;
 import io.quarkiverse.renarde.util.QuteResolvers;
 import io.quarkiverse.renarde.util.RandomHolder;
 import io.quarkiverse.renarde.util.RedirectExceptionMapper;
+import io.quarkiverse.renarde.util.RenardeJWTAuthMechanism;
 import io.quarkiverse.renarde.util.RenderArgs;
 import io.quarkiverse.renarde.util.Validation;
 import io.quarkus.arc.Unremovable;
 import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
+import io.quarkus.arc.deployment.BeanContainerBuildItem;
+import io.quarkus.arc.deployment.BuildTimeConditionBuildItem;
 import io.quarkus.arc.deployment.ExcludedTypeBuildItem;
 import io.quarkus.arc.deployment.GeneratedBeanBuildItem;
 import io.quarkus.arc.deployment.GeneratedBeanGizmoAdaptor;
@@ -76,6 +81,8 @@ import io.quarkus.deployment.Capabilities;
 import io.quarkus.deployment.Capability;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
+import io.quarkus.deployment.annotations.ExecutionTime;
+import io.quarkus.deployment.annotations.Record;
 import io.quarkus.deployment.builditem.AdditionalIndexedClassesBuildItem;
 import io.quarkus.deployment.builditem.ApplicationIndexBuildItem;
 import io.quarkus.deployment.builditem.BytecodeTransformerBuildItem;
@@ -101,6 +108,7 @@ import io.quarkus.resteasy.reactive.server.spi.AnnotationsTransformerBuildItem;
 import io.quarkus.resteasy.reactive.spi.AdditionalResourceClassBuildItem;
 import io.quarkus.resteasy.reactive.spi.ParamConverterBuildItem;
 import io.quarkus.runtime.StartupEvent;
+import io.quarkus.smallrye.jwt.runtime.auth.JWTAuthMechanism;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 
@@ -115,7 +123,12 @@ public class RenardeProcessor {
     public static final DotName DOTNAME_UNREMOVABLE = DotName.createSimple(Unremovable.class.getName());
     public static final DotName DOTNAME_TRANSACTIONAL = DotName.createSimple(Transactional.class.getName());
     public static final DotName DOTNAME_USER = DotName.createSimple("io.quarkiverse.renarde.security.RenardeUser");
+    public static final DotName DOTNAME_USER_WITH_PASSWORD = DotName
+            .createSimple("io.quarkiverse.renarde.security.RenardeUserWithPassword");
     public static final DotName DOTNAME_SECURITY = DotName.createSimple("io.quarkiverse.renarde.security.RenardeSecurity");
+    public static final DotName DOTNAME_RENARDE_FORM_LOGIN_CONTROLLER = DotName
+            .createSimple("io.quarkiverse.renarde.security.impl.RenardeFormLoginController");
+    public static final DotName DOTNAME_LOGIN_PAGE = DotName.createSimple("io.quarkiverse.renarde.security.LoginPage");
     public static final DotName DOTNAME_NAMED = DotName.createSimple(Named.class.getName());
 
     private static final String FEATURE = "renarde";
@@ -278,6 +291,8 @@ public class RenardeProcessor {
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(JavaExtensions.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(MyValidationInterceptor.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(AuthenticationFailedExceptionMapper.class));
+        additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(RenardeJWTAuthMechanism.class));
+        additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(RenardeConfig.class));
 
         paramConverterBuildItems.produce(new ParamConverterBuildItem(MyParamConverters.class.getName(), Priorities.USER, true));
 
@@ -298,9 +313,16 @@ public class RenardeProcessor {
     }
 
     @BuildStep
+    ExcludedTypeBuildItem removeOriginalJWTAuthMechanism() {
+        return new ExcludedTypeBuildItem(JWTAuthMechanism.class.getName());
+    }
+
+    @BuildStep
     void produceUserInRequestScope(ApplicationIndexBuildItem indexBuildItem,
             BuildProducer<GeneratedBeanBuildItem> generatedBeans) {
         Set<ClassInfo> users = indexBuildItem.getIndex().getAllKnownImplementors(DOTNAME_USER);
+        // not sure why I need to do this, but if I don't, I get zero user implementors
+        users.addAll(indexBuildItem.getIndex().getAllKnownImplementors(DOTNAME_USER_WITH_PASSWORD));
         if (users.isEmpty())
             return;
         if (users.size() > 2) {
@@ -352,22 +374,32 @@ public class RenardeProcessor {
 
     @BuildStep
     void collectControllers(CombinedIndexBuildItem indexBuildItem,
+            List<ExcludedControllerBuildItem> excludedControllerBuildItems,
             BuildProducer<AdditionalResourceClassBuildItem> additionalResourceClassBuildItems,
             BuildProducer<AnnotationsTransformerBuildItem> annotationTransformerBuildItems,
             BuildProducer<io.quarkus.arc.deployment.AnnotationsTransformerBuildItem> arcTransformers,
             BuildProducer<UnremovableBeanBuildItem> unremovableBeans,
             BuildProducer<BytecodeTransformerBuildItem> bytecodeTransformers,
-            BuildProducer<GeneratedBeanBuildItem> generatedBeans) {
+            BuildProducer<GeneratedBeanBuildItem> generatedBeans,
+            BuildProducer<LoginPageBuildItem> loginPageBuildItem) {
+        Set<DotName> excludedControllers = new HashSet<>();
+        for (ExcludedControllerBuildItem excludedControllerBuildItem : excludedControllerBuildItems) {
+            excludedControllers.add(excludedControllerBuildItem.excludedClass);
+        }
         Set<DotName> controllers = new HashSet<>();
         Map<String, ControllerVisitor.ControllerClass> methodsByClass = new HashMap<>();
         for (ClassInfo controllerInfo : indexBuildItem.getIndex().getAllKnownSubclasses(DOTNAME_CONTROLLER)) {
+            // skip excluded controllers
+            if (excludedControllers.contains(controllerInfo.name())) {
+                continue;
+            }
             controllers.add(controllerInfo.name());
             // do not register abstract controllers as beans or resources
             if (!Modifier.isAbstract(controllerInfo.flags())) {
                 additionalResourceClassBuildItems.produce(new AdditionalResourceClassBuildItem(controllerInfo, ""));
                 unremovableBeans.produce(UnremovableBeanBuildItem.beanTypes(controllerInfo.name()));
             }
-            methodsByClass.put(controllerInfo.name().toString(), scanController(controllerInfo));
+            methodsByClass.put(controllerInfo.name().toString(), scanController(controllerInfo, loginPageBuildItem));
         }
         for (DotName controller : controllers) {
             bytecodeTransformers
@@ -467,7 +499,8 @@ public class RenardeProcessor {
         }
     }
 
-    private ControllerVisitor.ControllerClass scanController(ClassInfo controllerInfo) {
+    private ControllerVisitor.ControllerClass scanController(ClassInfo controllerInfo,
+            BuildProducer<LoginPageBuildItem> loginPageBuildItem) {
         Map<String, ControllerMethod> methods = new HashMap<>();
         for (MethodInfo method : controllerInfo.methods()) {
             if (!isControllerMethod(method))
@@ -531,6 +564,10 @@ public class RenardeProcessor {
                     parts.add(new ControllerVisitor.QueryParamUriPart(name, paramIndex, asmParamIndex));
                 }
                 asmParamIndex += AsmUtil.getParameterSize(method.parameterType(paramIndex));
+            }
+
+            if (method.hasAnnotation(DOTNAME_LOGIN_PAGE)) {
+                loginPageBuildItem.produce(new LoginPageBuildItem(parts));
             }
 
             String descriptor = AsmUtil.getDescriptor(method, v -> v);
@@ -648,5 +685,31 @@ public class RenardeProcessor {
             }
         }
         return parameterAnnotations;
+    }
+
+    @BuildStep
+    void removeLoginControllerIfNoUserWithPassword(CombinedIndexBuildItem indexBuildItem,
+            BuildProducer<ExcludedControllerBuildItem> excludedControllerBuildItems,
+            BuildProducer<ExcludedTypeBuildItem> excludedTypeBuildItems,
+            BuildProducer<BuildTimeConditionBuildItem> buildTimeConditionBuildItems) {
+        if (indexBuildItem.getIndex().getAllKnownImplementors(DOTNAME_USER_WITH_PASSWORD).isEmpty()) {
+            // for Renarde
+            excludedControllerBuildItems.produce(new ExcludedControllerBuildItem(DOTNAME_RENARDE_FORM_LOGIN_CONTROLLER));
+            // for RESTEasy Reactive
+            excludedTypeBuildItems.produce(new ExcludedTypeBuildItem(DOTNAME_RENARDE_FORM_LOGIN_CONTROLLER.toString()));
+            ClassInfo klass = indexBuildItem.getIndex().getClassByName(DOTNAME_RENARDE_FORM_LOGIN_CONTROLLER);
+            // don't exclude it if the user didn't import the security module
+            if (klass != null) {
+                buildTimeConditionBuildItems.produce(new BuildTimeConditionBuildItem(klass, false));
+            }
+        }
+    }
+
+    @BuildStep
+    @Record(ExecutionTime.STATIC_INIT)
+    void configureLoginPage(RenardeRecorder recorder,
+            LoginPageBuildItem loginPageBuildItem, BeanContainerBuildItem beanContainerBuildItem) {
+        recorder.configureLoginPage(beanContainerBuildItem.getValue(),
+                loginPageBuildItem != null ? loginPageBuildItem.uri : null);
     }
 }

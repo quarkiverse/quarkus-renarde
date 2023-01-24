@@ -22,6 +22,12 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
               <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+				{#if inject:user}
+					{inject:user.userId()}
+					<li class="nav-item"><a class="nav-link" aria-current="page" href="{uri:RenardeSecurityController.logout()}">Logout</a></li>
+				{#else}
+					<li class="nav-item"><a class="nav-link" aria-current="page" href="{uri:RenardeFormLoginController.login()}">Login</a></li>
+				{/if}
               </ul>
             </div>
           </div>

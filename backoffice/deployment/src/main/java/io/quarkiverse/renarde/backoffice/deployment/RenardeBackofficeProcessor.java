@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -29,6 +30,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.jboss.jandex.AnnotationInstance;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 import org.jboss.resteasy.reactive.RestForm;
@@ -36,16 +38,19 @@ import org.jboss.resteasy.reactive.RestPath;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import io.quarkiverse.renarde.Controller;
-import io.quarkiverse.renarde.backoffice.BackUtil;
-import io.quarkiverse.renarde.backoffice.CreateAction;
-import io.quarkiverse.renarde.backoffice.EditAction;
+import io.quarkiverse.renarde.backoffice.BackofficeController;
+import io.quarkiverse.renarde.backoffice.BackofficeIndexController;
 import io.quarkiverse.renarde.backoffice.deployment.ModelField.Type;
+import io.quarkiverse.renarde.backoffice.impl.BackUtil;
+import io.quarkiverse.renarde.backoffice.impl.CreateAction;
+import io.quarkiverse.renarde.backoffice.impl.EditAction;
 import io.quarkiverse.renarde.jpa.NamedBlob;
 import io.quarkus.arc.Arc;
 import io.quarkus.arc.ArcContainer;
 import io.quarkus.arc.InstanceHandle;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
+import io.quarkus.deployment.builditem.ApplicationArchivesBuildItem;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.GeneratedResourceBuildItem;
 import io.quarkus.gizmo.AssignableResultHandle;
@@ -82,12 +87,15 @@ public class RenardeBackofficeProcessor {
     }
 
     private static final DotName DOTNAME_ENTITY = DotName.createSimple(Entity.class.getName());
+    private static final DotName DOTNAME_BACKOFFICE_CONTROLLER = DotName.createSimple(BackofficeController.class);
+    private static final DotName DOTNAME_BACKOFFICE_INDEX_CONTROLLER = DotName.createSimple(BackofficeIndexController.class);
 
     @BuildStep
     public void processModel(HibernateMetamodelForFieldAccessBuildItem metamodel,
             CombinedIndexBuildItem index,
             BuildProducer<GeneratedResourceBuildItem> output,
-            BuildProducer<GeneratedJaxRsResourceBuildItem> jaxrsOutput) {
+            BuildProducer<GeneratedJaxRsResourceBuildItem> jaxrsOutput,
+            ApplicationArchivesBuildItem applicationArchives) {
         Engine engine = Engine.builder()
                 .addDefaults()
                 .addValueResolver(new ReflectionValueResolver())
@@ -95,7 +103,7 @@ public class RenardeBackofficeProcessor {
                     @Override
                     public Optional<TemplateLocation> locate(String id) {
                         URL url = RenardeBackofficeProcessor.class.getClassLoader()
-                                .getResource("/templates/" + id);
+                                .getResource("templates/" + id);
                         if (url == null) {
                             return Optional.empty();
                         }
@@ -105,7 +113,7 @@ public class RenardeBackofficeProcessor {
                             public Reader read() {
                                 return new InputStreamReader(
                                         RenardeBackofficeProcessor.class.getClassLoader()
-                                                .getResourceAsStream("/templates/" + id),
+                                                .getResourceAsStream("templates/" + id),
                                         StandardCharsets.UTF_8);
                             }
 
@@ -118,15 +126,32 @@ public class RenardeBackofficeProcessor {
                     }
                 }).build();
 
-        generateAllController(jaxrsOutput);
+        Collection<ClassInfo> entityControllers = index.getIndex().getAllKnownSubclasses(DOTNAME_BACKOFFICE_CONTROLLER);
+        Collection<ClassInfo> indexControllers = index.getIndex().getAllKnownSubclasses(DOTNAME_BACKOFFICE_INDEX_CONTROLLER);
+        if (indexControllers.size() > 1) {
+            throw new RuntimeException("More than one subclass of " + DOTNAME_BACKOFFICE_INDEX_CONTROLLER + " is not allowed: "
+                    + indexControllers);
+        }
+
+        java.nio.file.Path userMainTemplate = applicationArchives.getRootArchive().getChildPath("templates/main.html");
+        String mainTemplate = "main.html";
+        if (userMainTemplate == null) {
+            TemplateInstance template = engine.getTemplate("main.qute").instance();
+            render(output, template, "main.html");
+            mainTemplate = URI_PREFIX + "/main.html";
+        }
+
+        generateAllController(jaxrsOutput, indexControllers);
 
         List<String> entities = new ArrayList<>();
-        for (String entity : metamodel.getMetamodelInfo().getEntitiesWithPublicFields()) {
-            ClassInfo classInfo = index.getIndex().getClassByName(DotName.createSimple(entity));
+        for (ClassInfo entityController : entityControllers) {
+            org.jboss.jandex.Type entityType = entityController.superClassType().asParameterizedType().arguments().get(0);
+            DotName entityName = entityType.asClassType().name();
+            ClassInfo classInfo = index.getIndex().getClassByName(entityName);
             // skip mapped superclasses
-            if (classInfo.classAnnotation(DOTNAME_ENTITY) == null)
+            if (classInfo.declaredAnnotation(DOTNAME_ENTITY) == null)
                 continue;
-            EntityModel entityModel = metamodel.getMetamodelInfo().getEntityModel(entity);
+            EntityModel entityModel = metamodel.getMetamodelInfo().getEntityModel(entityName.toString());
             String simpleName = entityModel.name;
             int nameLastDot = simpleName.lastIndexOf('.');
             if (nameLastDot != -1)
@@ -136,31 +161,36 @@ public class RenardeBackofficeProcessor {
             // collect fields
             List<ModelField> fields = new ArrayList<>();
             for (Entry<String, EntityField> entry : entityModel.fields.entrySet()) {
-                ModelField mf = new ModelField(entry.getValue(), entity, metamodel.getMetamodelInfo(), index.getIndex());
+                ModelField mf = new ModelField(entry.getValue(), entityName.toString(), metamodel.getMetamodelInfo(),
+                        index.getIndex());
                 if (mf.type != Type.Ignore) {
                     fields.add(mf);
                 }
             }
 
-            generateEntityController(entity, simpleName, fields, jaxrsOutput);
+            generateEntityController(entityName.toString(), entityController, simpleName, fields, jaxrsOutput);
 
             TemplateInstance indexTemplate = engine.getTemplate("entity-index.qute").instance();
             indexTemplate.data("entity", simpleName);
+            indexTemplate.data("mainTemplate", mainTemplate);
             render(output, indexTemplate, simpleName + "/index.html");
 
             TemplateInstance editTemplate = engine.getTemplate("entity-edit.qute").instance();
             editTemplate.data("entity", simpleName);
             editTemplate.data("fields", fields);
+            editTemplate.data("mainTemplate", mainTemplate);
             render(output, editTemplate, simpleName + "/edit.html");
 
             TemplateInstance createTemplate = engine.getTemplate("entity-create.qute").instance();
             createTemplate.data("entity", simpleName);
             createTemplate.data("fields", fields);
+            createTemplate.data("mainTemplate", mainTemplate);
             render(output, createTemplate, simpleName + "/create.html");
         }
 
         TemplateInstance template = engine.getTemplate("index.qute").instance();
         template.data("entities", entities);
+        template.data("mainTemplate", mainTemplate);
         render(output, template, "index.html");
     }
 
@@ -169,17 +199,20 @@ public class RenardeBackofficeProcessor {
                 template.render().getBytes(StandardCharsets.UTF_8)));
     }
 
-    private void generateEntityController(String entityClass, String simpleName,
+    private void generateEntityController(String entityClass, ClassInfo entityController, String simpleName,
             List<ModelField> fields, BuildProducer<GeneratedJaxRsResourceBuildItem> jaxrsOutput) {
         // TODO: hand it off to RenardeProcessor to generate annotations and uri methods
         // TODO: generate templateinstance native build item or what?
-        // TODO: authenticated
 
         String controllerClass = PACKAGE_PREFIX + "." + simpleName + "Controller";
         try (ClassCreator c = ClassCreator.builder()
                 .classOutput(new GeneratedJaxRsResourceGizmoAdaptor(jaxrsOutput)).className(
                         controllerClass)
-                .superClass(Controller.class).build()) {
+                .superClass(entityController.name().toString()).build()) {
+            // copy annotations from the superclass
+            for (AnnotationInstance annotationInstance : entityController.declaredAnnotations()) {
+                c.addAnnotation(annotationInstance);
+            }
             c.addAnnotation(Blocking.class.getName());
             c.addAnnotation(RequestScoped.class.getName());
             c.addAnnotation(Path.class).addValue("value", URI_PREFIX + "/" + simpleName);
@@ -917,13 +950,30 @@ public class RenardeBackofficeProcessor {
                 MethodDescriptor.ofMethod(Template.class, "instance", TemplateInstance.class), template);
     }
 
-    private void generateAllController(BuildProducer<GeneratedJaxRsResourceBuildItem> jaxrsOutput) {
+    private void generateAllController(BuildProducer<GeneratedJaxRsResourceBuildItem> jaxrsOutput,
+            Collection<ClassInfo> indexControllers) {
         // TODO: hand it off to RenardeProcessor to generate annotations and uri methods
         // TODO: generate templateinstance native build item or what?
+
+        String superClass = Controller.class.getName();
+        List<AnnotationInstance> declaredAnnotations = null;
+        if (!indexControllers.isEmpty()) {
+            ClassInfo indexController = indexControllers.iterator().next();
+            superClass = indexController.name().toString();
+            declaredAnnotations = indexController.declaredAnnotations();
+        }
+
         try (ClassCreator c = ClassCreator.builder()
                 .classOutput(new GeneratedJaxRsResourceGizmoAdaptor(jaxrsOutput)).className(
                         PACKAGE_PREFIX + ".Index")
-                .superClass(Controller.class).build()) {
+                .superClass(superClass).build()) {
+            // copy annotations from the superclass
+            if (declaredAnnotations != null) {
+                for (AnnotationInstance annotationInstance : declaredAnnotations) {
+                    c.addAnnotation(annotationInstance);
+                }
+            }
+            // TODO: probably want to check that those annotations are not already declared in the supertype?
             c.addAnnotation(Blocking.class.getName());
             c.addAnnotation(RequestScoped.class.getName());
             c.addAnnotation(Path.class).addValue("value", URI_PREFIX);

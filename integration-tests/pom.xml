@@ -15,6 +15,10 @@
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-arc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
       <artifactId>quarkus-hibernate-orm-panache</artifactId>
     </dependency>
     <dependency>
@@ -28,6 +32,11 @@
     </dependency>
     <dependency>
       <groupId>io.quarkiverse.renarde</groupId>
+      <artifactId>quarkus-renarde-security</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkiverse.renarde</groupId>
       <artifactId>quarkus-renarde-backoffice</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -36,6 +45,11 @@
       <artifactId>quarkus-renarde-oidc-tests</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+    	<groupId>io.quarkus</groupId>
+    	<artifactId>quarkus-junit5-internal</artifactId>
+    	<scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.webjars</groupId>

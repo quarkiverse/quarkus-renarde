@@ -18,7 +18,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import io.quarkiverse.renarde.util.Flash;
 import io.quarkiverse.renarde.util.RedirectException;
 import io.quarkus.security.identity.SecurityIdentity;
-import io.smallrye.jwt.auth.principal.JWTCallerPrincipal;
 import io.smallrye.jwt.build.Jwt;
 
 @ApplicationScoped
@@ -30,9 +29,9 @@ public class RenardeSecurity {
     String jwtCookie;
 
     public NewCookie makeUserCookie(RenardeUser user) {
-        Set<String> roles = user.getRoles();
+        Set<String> roles = user.roles();
         String token = Jwt.issuer(jwtIssuer)
-                .upn(user.getUserId())
+                .upn(user.userId())
                 .groups(roles)
                 // FIXME: config
                 .expiresIn(Duration.ofDays(10))
@@ -56,15 +55,15 @@ public class RenardeSecurity {
 
     public RenardeUser getUser() {
         if (!identity.isAnonymous()) {
-            JWTCallerPrincipal principal = (JWTCallerPrincipal) identity.getPrincipal();
+            String name = identity.getPrincipal().getName();
             String tenantId = tenantProvider.getTenantId();
             if (tenantId == null) {
                 tenantId = "manual";
             }
-            RenardeUser user = userProvider.findUser(tenantId, principal.getName());
+            RenardeUser user = userProvider.findUser(tenantId, name);
             // old cookie, no such user
             if (user == null) {
-                flash.flash("message", "Invalid user: " + principal.getName());
+                flash.flash("message", "Invalid user: " + name);
                 throw new RedirectException(makeLogoutResponse());
             }
             // let's not produce users if we're still registering them, but we must differentiate them
@@ -72,7 +71,7 @@ public class RenardeSecurity {
             // we have an OIDC session but the user is not registered yet, so we don't want there to
             // be a current user, but we also don't want to logout and clear the OIDC session while
             // we're registering the user
-            if (!user.isRegistered()) {
+            if (!user.registered()) {
                 return null;
             }
             return user;

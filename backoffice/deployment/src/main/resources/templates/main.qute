@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+  <!-- A default main.html in case users don't override it -->
+  <head>
+    <title>\{#insert title/}</title>
+    \{#insert moreStyles /}
+    \{#insert moreScripts /}
+  </head>
+  <body>
+    \{#insert /}
+  </body>
+</html>

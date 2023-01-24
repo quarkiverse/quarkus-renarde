@@ -1,4 +1,4 @@
-\{#include main.html }
+\{#include {mainTemplate} }
 \{#title}All entities\{/title}
 \{#moreStyles}
 <style>
@@ -16,22 +16,26 @@
   </ol>
 </nav>
 
-<table class="table">
-  <thead>
-    <tr>
-      <th scope="col">Entities</th>
-    </tr>
-  </thead>
-  <tbody>
-    {#for entity in entities}
-    <tr>
-      <td>
-        <a href="{entity}/index">{entity}</a>
-        <a href="{entity}/create" class="btn btn-success backoffice-action"><i class="bi bi-plus"></i>Create</a>
-      </td>
-    </tr>
-    {/for}
-  </tbody>
-</table>
+{#if entities.empty}
+  <h1>No entities found</h1>
+{#else}
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Entities</th>
+      </tr>
+    </thead>
+    <tbody>
+      {#for entity in entities}
+      <tr>
+        <td>
+          <a href="{entity}/index">{entity}</a>
+          <a href="{entity}/create" class="btn btn-success backoffice-action"><i class="bi bi-plus"></i>Create</a>
+        </td>
+      </tr>
+      {/for}
+    </tbody>
+  </table>
+{/if}
 
 \{/include}

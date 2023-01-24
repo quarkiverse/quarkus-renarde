@@ -1,20 +1,30 @@
 package io.quarkiverse.renarde.it;
 
 import static io.restassured.RestAssured.given;
+import static org.apache.http.client.params.ClientPNames.COOKIE_POLICY;
+import static org.apache.http.client.params.CookiePolicy.BROWSER_COMPATIBILITY;
 import static org.hamcrest.Matchers.is;
 
+import java.net.URL;
+
+import javax.transaction.Transactional;
 import javax.ws.rs.core.MediaType;
 
 import org.junit.jupiter.api.Test;
 
 import io.quarkiverse.renarde.oidc.test.RenardeCookieFilter;
+import io.quarkus.elytron.security.common.BcryptUtil;
+import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
-import io.restassured.response.ExtractableResponse;
-import io.restassured.response.Response;
-import io.restassured.response.ValidatableResponse;
+import io.restassured.config.HttpClientConfig;
+import io.restassured.config.RestAssuredConfig;
+import model.User;
 
 @QuarkusTest
 public class RenardeResourceTest {
+
+    @TestHTTPResource
+    URL baseURI;
 
     @Test
     public void testHelloEndpoint() {
@@ -154,41 +164,60 @@ public class RenardeResourceTest {
 
     @Test
     public void testRedirectHook() {
+        RestAssuredConfig redirectWithCookiesConfig = RestAssuredConfig.newConfig()
+                .httpClient(HttpClientConfig.httpClientConfig().setParam(COOKIE_POLICY, BROWSER_COMPATIBILITY));
+        given()
+                .config(redirectWithCookiesConfig)
+                .when()
+                .get("/RedirectHook/redirectHookDirect")
+                .then()
+                .statusCode(200)
+                .body(is("OK"));
+
+        given()
+                .config(redirectWithCookiesConfig)
+                .when()
+                .get("/RedirectHook/redirectHookIndirect")
+                .then()
+                .statusCode(200)
+                .body(is("OK"));
+    }
+
+    @Transactional
+    void setup() {
+        User.deleteAll();
+        User user = new User();
+        user.username = "FroMage";
+        user.password = BcryptUtil.bcryptHash("1q2w3e");
+        user.persistAndFlush();
+    }
+
+    @Test
+    public void testAuthentication() {
+        setup();
+        // the redirect cookie is indirectly tested via a success redirection
         RenardeCookieFilter cookieFilter = new RenardeCookieFilter();
-        follow("/RedirectHook/redirectHookDirect", cookieFilter)
+        given()
+                .redirects().follow(false)
+                .filter(cookieFilter)
+                .get("/SecureController/hello")
+                .then()
+                .statusCode(302)
+                .header("Location", baseURI + "_renarde/security/login");
+        given()
+                .redirects().follow(false)
+                .filter(cookieFilter)
+                .formParam("username", "FroMage")
+                .formParam("password", "1q2w3e")
+                .post("/_renarde/security/login")
+                .then()
+                .statusCode(303)
+                .header("Location", baseURI + "SecureController/hello");
+        given()
+                .filter(cookieFilter)
+                .get("/SecureController/hello")
+                .then()
                 .statusCode(200)
-                .body(is("OK"));
-
-        cookieFilter.getCookieStore().clear();
-        follow("/RedirectHook/redirectHookIndirect", cookieFilter)
-                .statusCode(200)
-                .body(is("OK"));
+                .body(is("Hello Security from FroMage"));
     }
-
-    private ValidatableResponse follow(String uri, RenardeCookieFilter cookieFilter) {
-        do {
-            // make sure we turn any https into http, because some providers force https
-            if (uri.startsWith("https://")) {
-                uri = "http" + uri.substring(5);
-            }
-            ValidatableResponse response = given()
-                    .when()
-                    .filter(cookieFilter)
-                    // mandatory for Location redirects
-                    .urlEncodingEnabled(false)
-                    .redirects().follow(false)
-                    .log().ifValidationFails()
-                    .get(uri)
-                    .then()
-                    .log().ifValidationFails();
-            ExtractableResponse<Response> extract = response.extract();
-            if (extract.statusCode() == 302
-                    || extract.statusCode() == 303) {
-                uri = extract.header("Location");
-            } else {
-                return response;
-            }
-        } while (true);
-    }
-
 }

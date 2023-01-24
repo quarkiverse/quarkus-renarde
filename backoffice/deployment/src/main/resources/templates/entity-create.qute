@@ -1,4 +1,4 @@
-\{#include main.html }
+\{#include {mainTemplate} }
 \{#title}Create {entity}\{/title}
 
 <nav aria-label="breadcrumb">

@@ -1,4 +1,4 @@
-\{#include main.html }
+\{#include {mainTemplate} }
 \{#title}{entity} \{entity.toString()}\{/title}
 \{#moreStyles}
 <style>

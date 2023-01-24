@@ -4,9 +4,12 @@ import java.util.Set;
 
 public interface RenardeUser {
 
-    Set<String> getRoles();
+    // we don't want getters because it messes with Hibernate getters in case of type mismatch
+    Set<String> roles();
 
-    String getUserId();
+    // we don't want getters because it messes with Hibernate getters in case of type mismatch
+    String userId();
 
-    boolean isRegistered();
+    // we don't want getters because it messes with Hibernate getters in case of type mismatch
+    boolean registered();
 }

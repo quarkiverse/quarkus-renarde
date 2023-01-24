@@ -1,0 +1,31 @@
+{#include main.html}
+{#title}Login{/title}
+<div class="card border-warning" >
+  <div class="card-body">
+    <h5 class="card-title">Login required</h5>
+	{#form uri:RenardeFormLoginController.login()}
+		<div class="mb-3">
+			<label for="username" class="form-label">User name</label>
+			<input name="username" id="username" placeholder="User name" value="{inject:flash.get('username')}" class="form-control {#ifError 'username'}is-invalid{/ifError}"/>
+			{#ifError 'username'}
+				<div class="invalid-feedback">
+					Error: {#error 'username'/}
+				</div>
+			{/ifError}
+		</div>
+		<div class="mb-3">
+			<label for="password" class="form-label">Password</label>
+			<input name="password" id="password" type="password" value="{inject:flash.get('password')}" class="form-control {#ifError 'password'}is-invalid{/ifError}"/>
+			{#ifError 'password'}
+				<div class="invalid-feedback">
+					Error: {#error 'password'/}
+				</div>
+			{/ifError}
+		</div>
+		<div>
+			<button class="btn btn-primary">Login</button>
+		</div>
+	{/form}
+  </div>
+</div>
+{/include}

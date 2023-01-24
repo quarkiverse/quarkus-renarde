@@ -1,4 +1,4 @@
-package io.quarkiverse.renarde.backoffice;
+package io.quarkiverse.renarde.backoffice.impl;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
