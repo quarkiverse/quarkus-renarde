@@ -223,27 +223,7 @@ public class RenardeProcessor {
                     && !encryptKeyLocationOpt.isPresent()) {
                 // FIXME: folder
 
-                File buildDir = null;
-                ArtifactSources src = curateOutcomeBuildItem.getApplicationModel().getAppArtifact().getSources();
-                if (src != null) { // shouldn't be null in dev mode
-                    Collection<SourceDir> srcDirs = src.getResourceDirs();
-                    if (srcDirs.isEmpty()) {
-                        // in the module has no resources dir?
-                        srcDirs = src.getSourceDirs();
-                    }
-                    if (!srcDirs.isEmpty()) {
-                        // pick the first resources output dir
-                        Path resourcesOutputDir = srcDirs.iterator().next().getOutputDir();
-                        buildDir = resourcesOutputDir.toFile();
-                    }
-                }
-                if (buildDir == null) {
-                    // the module doesn't have any sources nor resources, stick to the build dir
-                    buildDir = new File(
-                            curateOutcomeBuildItem.getApplicationModel().getAppArtifact().getWorkspaceModule().getBuildDir(),
-                            "classes");
-                }
-
+                File buildDir = getBuildDirectory(curateOutcomeBuildItem);
                 buildDir.mkdirs();
                 File privateKey = new File(buildDir, "dev.privateKey.pem");
                 File publicKey = new File(buildDir, "dev.publicKey.pem");
@@ -276,6 +256,31 @@ public class RenardeProcessor {
                         new RunTimeConfigurationDefaultBuildItem("smallrye.jwt.encrypt.key.location", publicKey.getName()));
             }
         }
+    }
+
+    public static File getBuildDirectory(CurateOutcomeBuildItem curateOutcomeBuildItem) {
+        File buildDir = null;
+        ArtifactSources src = curateOutcomeBuildItem.getApplicationModel().getAppArtifact().getSources();
+        if (src != null) { // shouldn't be null in dev mode
+            Collection<SourceDir> srcDirs = src.getResourceDirs();
+            if (srcDirs.isEmpty()) {
+                // in the module has no resources dir?
+                srcDirs = src.getSourceDirs();
+            }
+            if (!srcDirs.isEmpty()) {
+                // pick the first resources output dir
+                Path resourcesOutputDir = srcDirs.iterator().next().getOutputDir();
+                buildDir = resourcesOutputDir.toFile();
+            }
+        }
+        if (buildDir == null) {
+            // the module doesn't have any sources nor resources, stick to the build dir
+            buildDir = new File(
+                    curateOutcomeBuildItem.getApplicationModel().getAppArtifact().getWorkspaceModule().getBuildDir(),
+                    "classes");
+        }
+
+        return buildDir;
     }
 
     @BuildStep
