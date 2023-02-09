@@ -1,9 +1,9 @@
 package io.quarkiverse.renarde.util;
 
-import javax.ws.rs.core.MediaType;
-
 import org.overviewproject.mime_types.GetBytesException;
 import org.overviewproject.mime_types.MimeTypeDetector;
+
+import jakarta.ws.rs.core.MediaType;
 
 public class FileUtils {
     private final static MimeTypeDetector DETECTOR = new MimeTypeDetector();

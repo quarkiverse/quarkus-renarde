@@ -5,12 +5,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
-
 import io.quarkiverse.renarde.security.RenardeUserWithPassword;
 import io.quarkus.elytron.security.common.BcryptUtil;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
 @Table(name = "user_entity")
 @Entity

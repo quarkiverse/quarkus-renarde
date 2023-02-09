@@ -8,14 +8,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Named;
-
 import org.jboss.resteasy.reactive.server.core.ResteasyReactiveRequestContext;
 import org.jboss.resteasy.reactive.server.core.multipart.FormData;
-import org.jboss.resteasy.reactive.server.core.multipart.FormData.FormValue;
+import org.jboss.resteasy.reactive.server.multipart.FormValue;
 
 import io.quarkus.vertx.http.runtime.CurrentVertxRequest;
 import io.vertx.core.http.Cookie;
@@ -23,6 +18,10 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 @Named("flash")
 @RequestScoped

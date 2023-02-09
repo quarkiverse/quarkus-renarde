@@ -15,9 +15,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.transaction.Transactional;
-import javax.ws.rs.core.MediaType;
-
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.hibernate.engine.jdbc.BlobProxy;
@@ -33,6 +30,8 @@ import io.quarkiverse.renarde.util.JavaExtensions;
 import io.quarkus.hibernate.orm.panache.Panache;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
+import jakarta.transaction.Transactional;
+import jakarta.ws.rs.core.MediaType;
 import model.ExampleEntity;
 import model.ExampleEnum;
 import model.ManyToManyNotOwningEntity;

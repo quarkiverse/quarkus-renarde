@@ -1,11 +1,10 @@
 package io.quarkiverse.renarde.security.impl;
 
-import javax.inject.Inject;
-import javax.ws.rs.Path;
-import javax.ws.rs.core.Response;
-
 import io.quarkiverse.renarde.Controller;
 import io.quarkiverse.renarde.security.RenardeSecurity;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.core.Response;
 
 // Note that we're using _renarde because MS doesn't allow @renarde, so
 // don't try to be smart here

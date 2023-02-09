@@ -1,10 +1,5 @@
 package io.quarkiverse.renarde.oidc.impl;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.json.JsonNumber;
-import javax.json.JsonString;
-import javax.json.JsonValue;
-
 import org.eclipse.microprofile.jwt.Claims;
 import org.jose4j.jwt.JwtClaims;
 
@@ -16,6 +11,10 @@ import io.quarkus.security.identity.SecurityIdentityAugmentor;
 import io.quarkus.security.runtime.QuarkusSecurityIdentity;
 import io.smallrye.jwt.auth.principal.DefaultJWTCallerPrincipal;
 import io.smallrye.mutiny.Uni;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.json.JsonNumber;
+import jakarta.json.JsonString;
+import jakarta.json.JsonValue;
 
 /**
  * GitHub and Facebook don't send a upn so we must extract it from the UserInfo.id

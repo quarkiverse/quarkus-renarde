@@ -28,7 +28,7 @@ Let's see how you can quickly build a Web Application with Renarde. Let's start 
 ----
 package rest;
 
-import javax.ws.rs.Path;
+import jakarta.ws.rs.Path;
 
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
@@ -81,8 +81,8 @@ package model;
 import java.util.Date;
 import java.util.List;
 
-import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
+import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToOne;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 
@@ -118,8 +118,8 @@ package rest;
 import java.util.Date;
 import java.util.List;
 
-import javax.validation.constraints.NotBlank;
-import javax.ws.rs.POST;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.ws.rs.POST;
 
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestPath;
@@ -716,8 +716,8 @@ will not be called and will be replaced by a redirect that points to the endpoin
 ----
 package rest;
 
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
 
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
@@ -751,8 +751,8 @@ If there are any parameters that form the URI, you must pass them along:
 ----
 package rest;
 
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
 
 import org.jboss.resteasy.reactive.RestPath;
 import org.jboss.resteasy.reactive.RestQuery;
@@ -794,7 +794,7 @@ If you want to redirect to another controller, you can use the `redirect(Class)`
 ----
 package rest;
 
-import javax.ws.rs.POST;
+import jakarta.ws.rs.POST;
 
 import io.quarkiverse.renarde.Controller;
 

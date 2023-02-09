@@ -2,13 +2,12 @@ package io.quarkiverse.renarde.test;
 
 import java.net.URI;
 
-import javax.ws.rs.core.UriBuilder;
-
 import org.jboss.resteasy.reactive.RestPath;
 import org.jboss.resteasy.reactive.RestQuery;
 
 import io.quarkiverse.renarde.Controller;
 import io.quarkiverse.renarde.router.Router;
+import jakarta.ws.rs.core.UriBuilder;
 
 /**
  * This class has the augmentation in ControllerVisitor done manually, to help illustrate it.

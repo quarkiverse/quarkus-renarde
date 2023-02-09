@@ -17,8 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import javax.ws.rs.core.Response;
-
 import org.hibernate.engine.jdbc.BlobProxy;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
 
@@ -26,6 +24,7 @@ import io.quarkiverse.renarde.jpa.NamedBlob;
 import io.quarkiverse.renarde.util.FileUtils;
 import io.quarkiverse.renarde.util.JavaExtensions;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import jakarta.ws.rs.core.Response;
 
 public class BackUtil {
 

@@ -1,9 +1,8 @@
 package model;
 
-import javax.persistence.Entity;
-import javax.persistence.OneToOne;
-
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToOne;
 
 @Entity
 public class OneToOneNotOwningEntity extends PanacheEntity {

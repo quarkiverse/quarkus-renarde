@@ -7,9 +7,6 @@ import static org.hamcrest.Matchers.is;
 
 import java.net.URL;
 
-import javax.transaction.Transactional;
-import javax.ws.rs.core.MediaType;
-
 import org.junit.jupiter.api.Test;
 
 import io.quarkiverse.renarde.oidc.test.RenardeCookieFilter;
@@ -18,6 +15,8 @@ import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.config.HttpClientConfig;
 import io.restassured.config.RestAssuredConfig;
+import jakarta.transaction.Transactional;
+import jakarta.ws.rs.core.MediaType;
 import model.User;
 
 @QuarkusTest

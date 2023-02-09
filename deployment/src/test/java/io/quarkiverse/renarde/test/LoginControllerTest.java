@@ -5,9 +5,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.ws.rs.Path;
-
 import org.hamcrest.Matchers;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
@@ -25,6 +22,8 @@ import io.quarkus.security.Authenticated;
 import io.quarkus.test.QuarkusUnitTest;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.restassured.RestAssured;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.Path;
 
 public class LoginControllerTest {
 

@@ -6,8 +6,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import javax.enterprise.event.Observes;
-
 import io.quarkiverse.renarde.router.Router;
 import io.quarkus.qute.CompletedStage;
 import io.quarkus.qute.EngineBuilder;
@@ -16,6 +14,7 @@ import io.quarkus.qute.Expression;
 import io.quarkus.qute.NamespaceResolver;
 import io.quarkus.qute.ValueResolver;
 import io.smallrye.mutiny.Uni;
+import jakarta.enterprise.event.Observes;
 
 public class QuteResolvers {
 

@@ -2,9 +2,6 @@ package io.quarkiverse.renarde.oidc;
 
 import java.util.List;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-
 import org.eclipse.microprofile.jwt.Claims;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -14,6 +11,8 @@ import io.quarkus.oidc.AccessTokenCredential;
 import io.quarkus.oidc.IdToken;
 import io.quarkus.oidc.OidcSession;
 import io.quarkus.oidc.UserInfo;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class RenardeOidcSecurity {

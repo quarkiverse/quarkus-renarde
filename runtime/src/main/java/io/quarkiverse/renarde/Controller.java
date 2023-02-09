@@ -3,11 +3,6 @@ package io.quarkiverse.renarde;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
 import org.jboss.resteasy.reactive.RestResponse;
 
 import io.quarkiverse.renarde.util.Flash;
@@ -15,6 +10,10 @@ import io.quarkiverse.renarde.util.RedirectException;
 import io.quarkiverse.renarde.util.RenderArgs;
 import io.quarkiverse.renarde.util.Validation;
 import io.quarkus.security.identity.SecurityIdentity;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 
 public class Controller {
 

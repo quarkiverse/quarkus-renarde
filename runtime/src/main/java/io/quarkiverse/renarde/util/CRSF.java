@@ -2,20 +2,19 @@ package io.quarkiverse.renarde.util;
 
 import java.util.Base64;
 
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.inject.spi.CDI;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
-
 import org.jboss.resteasy.reactive.server.core.ResteasyReactiveRequestContext;
 import org.jboss.resteasy.reactive.server.core.multipart.FormData;
-import org.jboss.resteasy.reactive.server.core.multipart.FormData.FormValue;
+import org.jboss.resteasy.reactive.server.multipart.FormValue;
 
 import io.quarkus.vertx.http.runtime.CurrentVertxRequest;
 import io.vertx.core.http.Cookie;
 import io.vertx.core.http.HttpServerRequest;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 
 @Named("CRSF")
 @RequestScoped
