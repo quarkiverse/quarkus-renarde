@@ -4,7 +4,7 @@
   <parent>
     <groupId>io.quarkiverse.renarde</groupId>
     <artifactId>quarkus-renarde-backoffice-parent</artifactId>
-    <version>3.0.0</version>
+    <version>3.0.1-SNAPSHOT</version>
   </parent>
   <artifactId>quarkus-renarde-backoffice-deployment</artifactId>
   <name>Quarkus - Renarde - Backoffice - Deployment</name>
