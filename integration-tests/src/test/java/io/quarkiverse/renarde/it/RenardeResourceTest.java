@@ -7,18 +7,15 @@ import static org.hamcrest.Matchers.is;
 
 import java.net.URL;
 
-import javax.transaction.Transactional;
 import javax.ws.rs.core.MediaType;
 
 import org.junit.jupiter.api.Test;
 
 import io.quarkiverse.renarde.oidc.test.RenardeCookieFilter;
-import io.quarkus.elytron.security.common.BcryptUtil;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.config.HttpClientConfig;
 import io.restassured.config.RestAssuredConfig;
-import model.User;
 
 @QuarkusTest
 public class RenardeResourceTest {
@@ -183,18 +180,12 @@ public class RenardeResourceTest {
                 .body(is("OK"));
     }
 
-    @Transactional
-    void setup() {
-        User.deleteAll();
-        User user = new User();
-        user.username = "FroMage";
-        user.password = BcryptUtil.bcryptHash("1q2w3e");
-        user.persistAndFlush();
-    }
-
     @Test
     public void testAuthentication() {
-        setup();
+        given()
+                .post("/Application/setupUser")
+                .then()
+                .statusCode(204);
         // the redirect cookie is indirectly tested via a success redirection
         RenardeCookieFilter cookieFilter = new RenardeCookieFilter();
         given()

@@ -18,6 +18,7 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import io.quarkiverse.renarde.Controller;
 import io.quarkiverse.renarde.router.Router;
+import io.quarkus.elytron.security.common.BcryptUtil;
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
 import model.User;
@@ -106,5 +107,14 @@ public class Application extends Controller {
                 + "\n" + Router.getURI(Application::index)
                 + "\n" + Router.getURI(Application::params, "first", 42l, "search")
                 + "\n" + Router.getURI(Application::primitiveParams, true, 'a', (byte) 2, (short) 3, 4, 5l, 6.0f, 7.0d);
+    }
+
+    @POST
+    public void setupUser() {
+        User.deleteAll();
+        User user = new User();
+        user.username = "FroMage";
+        user.password = BcryptUtil.bcryptHash("1q2w3e");
+        user.persistAndFlush();
     }
 }
