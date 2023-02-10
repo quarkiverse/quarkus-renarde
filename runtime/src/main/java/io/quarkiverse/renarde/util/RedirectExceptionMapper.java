@@ -1,8 +1,8 @@
 package io.quarkiverse.renarde.util;
 
-import org.jboss.resteasy.reactive.server.ServerExceptionMapper;
-
 import jakarta.ws.rs.core.Response;
+
+import org.jboss.resteasy.reactive.server.ServerExceptionMapper;
 
 public class RedirectExceptionMapper {
     @ServerExceptionMapper

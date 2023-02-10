@@ -4,6 +4,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
+import jakarta.transaction.Transactional;
+import jakarta.transaction.Transactional.TxType;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestPath;
 import org.jboss.resteasy.reactive.RestQuery;
@@ -14,12 +21,6 @@ import io.quarkiverse.renarde.router.Router;
 import io.quarkus.elytron.security.common.BcryptUtil;
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
-import jakarta.transaction.Transactional;
-import jakarta.transaction.Transactional.TxType;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
 import model.User;
 
 public class Application extends Controller {

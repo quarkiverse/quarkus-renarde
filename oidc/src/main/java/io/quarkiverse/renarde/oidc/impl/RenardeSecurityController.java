@@ -1,5 +1,9 @@
 package io.quarkiverse.renarde.oidc.impl;
 
+import jakarta.inject.Inject;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.resteasy.reactive.RestPath;
 
@@ -11,9 +15,6 @@ import io.quarkus.oidc.OidcSession;
 import io.quarkus.oidc.UserInfo;
 import io.quarkus.security.Authenticated;
 import io.smallrye.jwt.auth.principal.JWTCallerPrincipal;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
 
 // Note that we're using _renarde because MS doesn't allow @renarde, so
 // don't try to be smart here

@@ -4,9 +4,10 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.quarkus.arc.Arc;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
+
+import io.quarkus.arc.Arc;
 
 public class Router {
 

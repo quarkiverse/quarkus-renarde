@@ -7,8 +7,6 @@ import java.time.LocalTime;
 import java.util.Date;
 import java.util.List;
 
-import io.quarkiverse.renarde.jpa.NamedBlob;
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
@@ -18,6 +16,9 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+
+import io.quarkiverse.renarde.jpa.NamedBlob;
+import io.quarkus.hibernate.orm.panache.PanacheEntity;
 
 @Entity
 public class ExampleEntity extends PanacheEntity {

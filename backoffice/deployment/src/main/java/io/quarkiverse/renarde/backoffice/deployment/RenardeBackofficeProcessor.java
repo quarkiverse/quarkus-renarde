@@ -19,6 +19,17 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.persistence.Entity;
+import jakarta.transaction.Transactional;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
 import org.jboss.jandex.AnnotationInstance;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
@@ -64,16 +75,6 @@ import io.quarkus.qute.runtime.TemplateProducer;
 import io.quarkus.resteasy.reactive.spi.GeneratedJaxRsResourceBuildItem;
 import io.quarkus.resteasy.reactive.spi.GeneratedJaxRsResourceGizmoAdaptor;
 import io.smallrye.common.annotation.Blocking;
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.persistence.Entity;
-import jakarta.transaction.Transactional;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 
 public class RenardeBackofficeProcessor {
 

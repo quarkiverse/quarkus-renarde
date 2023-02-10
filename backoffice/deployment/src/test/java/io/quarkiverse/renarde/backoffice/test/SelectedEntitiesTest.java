@@ -2,6 +2,8 @@ package io.quarkiverse.renarde.backoffice.test;
 
 import java.net.URL;
 
+import jakarta.persistence.Entity;
+
 import org.hamcrest.Matchers;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
@@ -14,7 +16,6 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import io.quarkus.test.QuarkusUnitTest;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.restassured.RestAssured;
-import jakarta.persistence.Entity;
 
 public class SelectedEntitiesTest {
 

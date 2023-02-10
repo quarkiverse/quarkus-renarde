@@ -1,10 +1,11 @@
 package io.quarkiverse.renarde.security.impl;
 
+import jakarta.enterprise.context.ApplicationScoped;
+
 import io.quarkiverse.renarde.security.RenardeUser;
 import io.quarkiverse.renarde.security.RenardeUserProvider;
 import io.quarkus.arc.DefaultBean;
 import io.quarkus.logging.Log;
-import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 @DefaultBean

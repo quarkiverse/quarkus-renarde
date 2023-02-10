@@ -2,11 +2,11 @@ package io.quarkiverse.renarde.oidc.impl;
 
 import java.util.List;
 
-import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.Path;
+
+import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 @RegisterRestClient(baseUri = "https://api.github.com")
 @Path("/")

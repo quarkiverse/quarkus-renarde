@@ -20,6 +20,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
+import jakarta.transaction.Transactional;
+import jakarta.ws.rs.Priorities;
+
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.jboss.jandex.AnnotationInstance;
@@ -102,14 +111,6 @@ import io.quarkus.runtime.StartupEvent;
 import io.quarkus.smallrye.jwt.runtime.auth.JWTAuthMechanism;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.enterprise.event.Observes;
-import jakarta.enterprise.inject.Produces;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import jakarta.inject.Singleton;
-import jakarta.transaction.Transactional;
-import jakarta.ws.rs.Priorities;
 
 public class RenardeProcessor {
 

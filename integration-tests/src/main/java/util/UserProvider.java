@@ -1,8 +1,9 @@
 package util;
 
+import jakarta.enterprise.context.ApplicationScoped;
+
 import io.quarkiverse.renarde.security.RenardeUser;
 import io.quarkiverse.renarde.security.RenardeUserProvider;
-import jakarta.enterprise.context.ApplicationScoped;
 import model.User;
 
 @ApplicationScoped

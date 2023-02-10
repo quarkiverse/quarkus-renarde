@@ -2,9 +2,6 @@ package io.quarkiverse.renarde.util;
 
 import java.util.Set;
 
-import io.quarkus.hibernate.validator.runtime.interceptor.AbstractMethodValidationInterceptor;
-import io.quarkus.hibernate.validator.runtime.jaxrs.JaxrsEndPointValidated;
-import io.quarkus.hibernate.validator.runtime.jaxrs.ResteasyReactiveViolationException;
 import jakarta.annotation.Priority;
 import jakarta.inject.Inject;
 import jakarta.interceptor.AroundConstruct;
@@ -14,6 +11,10 @@ import jakarta.interceptor.InvocationContext;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import jakarta.validation.executable.ExecutableValidator;
+
+import io.quarkus.hibernate.validator.runtime.interceptor.AbstractMethodValidationInterceptor;
+import io.quarkus.hibernate.validator.runtime.jaxrs.JaxrsEndPointValidated;
+import io.quarkus.hibernate.validator.runtime.jaxrs.ResteasyReactiveViolationException;
 
 @JaxrsEndPointValidated
 @Interceptor

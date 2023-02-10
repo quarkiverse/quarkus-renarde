@@ -3,6 +3,8 @@ package io.quarkiverse.renarde.backoffice.test;
 import java.net.URL;
 import java.util.Set;
 
+import jakarta.persistence.Entity;
+
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
@@ -17,7 +19,6 @@ import io.quarkus.security.Authenticated;
 import io.quarkus.test.QuarkusUnitTest;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.restassured.RestAssured;
-import jakarta.persistence.Entity;
 
 public class SecureEntitiesWithUserTest {
 

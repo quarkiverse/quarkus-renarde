@@ -1,7 +1,8 @@
 package io.quarkiverse.renarde.security;
 
-import io.quarkiverse.renarde.Controller;
 import jakarta.inject.Inject;
+
+import io.quarkiverse.renarde.Controller;
 
 /**
  * A controller subtype with a current user.
