@@ -1,7 +1,7 @@
 package io.quarkiverse.renarde.it;
 
-import io.quarkus.test.junit.NativeImageTest;
+import io.quarkus.test.junit.QuarkusIntegrationTest;
 
-@NativeImageTest
+@QuarkusIntegrationTest
 public class NativeRenardeResourceIT extends RenardeResourceTest {
 }
