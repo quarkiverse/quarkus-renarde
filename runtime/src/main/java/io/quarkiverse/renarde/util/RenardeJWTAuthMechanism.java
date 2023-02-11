@@ -1,8 +1,8 @@
 package io.quarkiverse.renarde.util;
 
-import javax.annotation.Priority;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
+import jakarta.annotation.Priority;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 import io.quarkiverse.renarde.impl.RenardeConfig;
 import io.quarkus.smallrye.jwt.runtime.auth.JWTAuthMechanism;

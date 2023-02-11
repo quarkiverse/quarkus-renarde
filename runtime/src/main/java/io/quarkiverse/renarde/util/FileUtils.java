@@ -1,6 +1,6 @@
 package io.quarkiverse.renarde.util;
 
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MediaType;
 
 import org.overviewproject.mime_types.GetBytesException;
 import org.overviewproject.mime_types.MimeTypeDetector;
