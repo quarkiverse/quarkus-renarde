@@ -1,5 +1,5 @@
 name: quarkus-renarde
 title: Quarkus Renarde
-version: dev
+version: 1.x
 nav:
   - modules/ROOT/nav.adoc
