@@ -38,7 +38,7 @@ public class RenardeSecurity {
                 .innerSign().encrypt();
         // FIXME: expiry, auto-refresh?
         return new NewCookie(jwtCookie, token, "/", null, Cookie.DEFAULT_VERSION, null, NewCookie.DEFAULT_MAX_AGE, null, false,
-        		true);
+                true);
     }
 
     @Inject
