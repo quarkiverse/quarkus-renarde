@@ -2,7 +2,7 @@ package io.quarkiverse.renarde.backoffice.test;
 
 import java.net.URL;
 
-import javax.persistence.Entity;
+import jakarta.persistence.Entity;
 
 import org.hamcrest.Matchers;
 import org.jboss.shrinkwrap.api.ShrinkWrap;

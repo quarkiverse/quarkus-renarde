@@ -1,6 +1,6 @@
 package io.quarkiverse.renarde.security;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import io.quarkiverse.renarde.Controller;
 

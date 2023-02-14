@@ -2,8 +2,8 @@ package io.quarkiverse.renarde.util;
 
 import java.util.Map.Entry;
 
-import javax.inject.Inject;
-import javax.ws.rs.container.ContainerResponseContext;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.container.ContainerResponseContext;
 
 import org.jboss.resteasy.reactive.server.ServerRequestFilter;
 import org.jboss.resteasy.reactive.server.ServerResponseFilter;

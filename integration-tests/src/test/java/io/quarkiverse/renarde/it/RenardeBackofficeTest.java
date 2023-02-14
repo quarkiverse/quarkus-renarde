@@ -15,8 +15,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.transaction.Transactional;
-import javax.ws.rs.core.MediaType;
+import jakarta.transaction.Transactional;
+import jakarta.ws.rs.core.MediaType;
 
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;

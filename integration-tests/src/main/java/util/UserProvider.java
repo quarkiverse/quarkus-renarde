@@ -1,6 +1,6 @@
 package util;
 
-import javax.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import io.quarkiverse.renarde.security.RenardeUser;
 import io.quarkiverse.renarde.security.RenardeUserProvider;

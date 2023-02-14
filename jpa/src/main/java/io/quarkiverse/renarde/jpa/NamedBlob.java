@@ -3,9 +3,9 @@ package io.quarkiverse.renarde.jpa;
 import java.sql.Blob;
 import java.sql.SQLException;
 
-import javax.persistence.Embeddable;
-import javax.persistence.Embedded;
-import javax.persistence.Lob;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Lob;
 
 /**
  * You can use this in your entity to represent named blobs, don't forget to use {@link Embedded} on
