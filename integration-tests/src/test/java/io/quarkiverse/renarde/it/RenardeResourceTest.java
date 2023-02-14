@@ -12,10 +12,12 @@ import jakarta.ws.rs.core.MediaType;
 import org.junit.jupiter.api.Test;
 
 import io.quarkiverse.renarde.oidc.test.RenardeCookieFilter;
+import io.quarkiverse.renarde.util.Flash;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.config.HttpClientConfig;
 import io.restassured.config.RestAssuredConfig;
+import io.restassured.matcher.RestAssuredMatchers;
 
 @QuarkusTest
 public class RenardeResourceTest {
@@ -147,6 +149,10 @@ public class RenardeResourceTest {
                 .post("/Application/validatedAction")
                 .then()
                 .statusCode(303)
+                .cookie(Flash.FLASH_COOKIE_NAME,
+                        RestAssuredMatchers.detailedCookie()
+                                .sameSite("Lax")
+                                .httpOnly(true))
                 .extract().header("Location");
         given()
                 .redirects().follow(false)
@@ -203,6 +209,11 @@ public class RenardeResourceTest {
                 .post("/_renarde/security/login")
                 .then()
                 .statusCode(303)
+                .cookie("QuarkusUser",
+                        RestAssuredMatchers.detailedCookie()
+                                // requires https://github.com/quarkusio/quarkus/pull/31124
+                                //                		.sameSite("Lax")
+                                .httpOnly(true))
                 .header("Location", baseURI + "SecureController/hello");
         given()
                 .filter(cookieFilter)

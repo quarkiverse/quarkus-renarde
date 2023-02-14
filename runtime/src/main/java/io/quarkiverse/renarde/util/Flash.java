@@ -19,6 +19,7 @@ import org.jboss.resteasy.reactive.server.multipart.FormValue;
 
 import io.quarkus.vertx.http.runtime.CurrentVertxRequest;
 import io.vertx.core.http.Cookie;
+import io.vertx.core.http.CookieSameSite;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
@@ -49,7 +50,9 @@ public class Flash {
         if (!response.headWritten())
             response.addCookie(
                     Cookie.cookie(FLASH_COOKIE_NAME, encodeCookieValue(values))
-                            .setPath("/"));
+                            .setPath("/")
+                            .setHttpOnly(true)
+                            .setSameSite(CookieSameSite.LAX));
     }
 
     public static String encodeCookieValue(Map<String, Object> values) {

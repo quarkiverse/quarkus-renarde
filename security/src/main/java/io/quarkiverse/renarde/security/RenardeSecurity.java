@@ -9,8 +9,8 @@ import java.util.Set;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.NewCookie;
+import jakarta.ws.rs.core.NewCookie.SameSite;
 import jakarta.ws.rs.core.Response;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -37,8 +37,12 @@ public class RenardeSecurity {
                 .expiresIn(Duration.ofDays(10))
                 .innerSign().encrypt();
         // FIXME: expiry, auto-refresh?
-        return new NewCookie(jwtCookie, token, "/", null, Cookie.DEFAULT_VERSION, null, NewCookie.DEFAULT_MAX_AGE, null, false,
-                false);
+        return new NewCookie.Builder(jwtCookie)
+                .value(token)
+                .path("/")
+                .sameSite(SameSite.LAX)
+                .httpOnly(true)
+                .build();
     }
 
     @Inject
