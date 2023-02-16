@@ -11,12 +11,16 @@ import jakarta.ws.rs.core.UriInfo;
 import org.jboss.resteasy.reactive.RestResponse;
 
 import io.quarkiverse.renarde.util.Flash;
+import io.quarkiverse.renarde.util.I18N;
 import io.quarkiverse.renarde.util.RedirectException;
 import io.quarkiverse.renarde.util.RenderArgs;
 import io.quarkiverse.renarde.util.Validation;
 import io.quarkus.security.identity.SecurityIdentity;
 
 public class Controller {
+
+    @Inject
+    protected I18N i18n;
 
     @Inject
     protected SecurityIdentity identity;
