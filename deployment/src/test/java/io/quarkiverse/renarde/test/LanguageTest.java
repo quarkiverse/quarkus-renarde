@@ -1,17 +1,20 @@
 package io.quarkiverse.renarde.test;
 
 import java.net.URL;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.core.Response;
 
 import org.hamcrest.Matchers;
 import org.jboss.resteasy.reactive.RestForm;
+import org.jboss.resteasy.reactive.RestResponse;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -25,6 +28,7 @@ import io.quarkus.test.QuarkusUnitTest;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.restassured.RestAssured;
 import io.restassured.filter.cookie.CookieFilter;
+import io.smallrye.mutiny.Uni;
 
 public class LanguageTest {
 
@@ -113,66 +117,59 @@ public class LanguageTest {
                 .body(Matchers.is("en"));
     }
 
-    @Disabled("not yet supported, need to be able to declare a response filter before Qute")
     @Test
     public void testQuteLanguage() {
-        CookieFilter cookieFilter = new CookieFilter();
         RestAssured
-                .given()
-                .filter(cookieFilter)
-                .when()
                 .get("/qute").then()
                 .statusCode(200)
                 .body(Matchers.is("english message"));
         RestAssured
                 .given()
-                .filter(cookieFilter)
-                .when()
-                .param("l", "fr")
-                .post("/lang").then()
-                .statusCode(200)
                 .cookie(I18N.LANGUAGE_COOKIE_NAME, "fr")
-                .body(Matchers.is("fr"));
+                .get("/qute").then()
+                .statusCode(200)
+                .body(Matchers.is("message français"));
         RestAssured
                 .given()
-                .filter(cookieFilter)
-                .when()
-                .get("/qute").then()
+                .cookie(I18N.LANGUAGE_COOKIE_NAME, "fr")
+                .get("/qute-uni").then()
+                .statusCode(200)
+                .body(Matchers.is("message français"));
+        RestAssured
+                .given()
+                .cookie(I18N.LANGUAGE_COOKIE_NAME, "fr")
+                .get("/qute-cs").then()
+                .statusCode(200)
+                .body(Matchers.is("message français"));
+        RestAssured
+                .given()
+                .cookie(I18N.LANGUAGE_COOKIE_NAME, "fr")
+                .get("/qute-response").then()
+                .statusCode(200)
+                .body(Matchers.is("message français"));
+        RestAssured
+                .given()
+                .cookie(I18N.LANGUAGE_COOKIE_NAME, "fr")
+                .get("/qute-rest-response").then()
                 .statusCode(200)
                 .body(Matchers.is("message français"));
     }
 
     @Test
     public void testTypeUnsafeLanguage() {
-        CookieFilter cookieFilter = new CookieFilter();
         RestAssured
-                .given()
-                .filter(cookieFilter)
-                .when()
                 .get("/type-unsafe").then()
                 .statusCode(200)
                 .body(Matchers.is("english message\nenglish STEF message\nmissing"));
         RestAssured
                 .given()
-                .filter(cookieFilter)
-                .when()
-                .param("l", "fr")
-                .post("/lang").then()
-                .statusCode(200)
                 .cookie(I18N.LANGUAGE_COOKIE_NAME, "fr")
-                .body(Matchers.is("fr"));
-        RestAssured
-                .given()
-                .filter(cookieFilter)
-                .when()
                 .get("/type-unsafe").then()
                 .statusCode(200)
                 .body(Matchers.is("message français\nmessage STEF français\nmissing"));
         // now try a missing language
         RestAssured
                 .given()
-                .filter(cookieFilter)
-                .when()
                 .param("l", "de")
                 .post("/lang").then()
                 .statusCode(500);
@@ -191,6 +188,26 @@ public class LanguageTest {
         @Path("/qute")
         public TemplateInstance qute() {
             return Templates.qute();
+        }
+
+        @Path("/qute-cs")
+        public CompletionStage<TemplateInstance> quteCs() {
+            return CompletableFuture.completedFuture(Templates.qute());
+        }
+
+        @Path("/qute-uni")
+        public Uni<TemplateInstance> quteUni() {
+            return Uni.createFrom().item(Templates.qute());
+        }
+
+        @Path("/qute-response")
+        public Response quteResponse() {
+            return Response.ok(Templates.qute()).build();
+        }
+
+        @Path("/qute-rest-response")
+        public RestResponse<TemplateInstance> quteRestResponse() {
+            return RestResponse.ok(Templates.qute());
         }
 
         @Path("/type-unsafe")
