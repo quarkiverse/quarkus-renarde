@@ -154,6 +154,11 @@ public class Router {
 
     private static Map<String, RouterMethod> routerMethods = new HashMap<>();
 
+    // Called by generated class __RenardeInit
+    public static void clearRoutes() {
+        routerMethods.clear();
+    }
+
     // Called by generated class __RenardeInit for each controller route
     public static void registerRoute(String route, RouterMethod method) {
         if (routerMethods.containsKey(route)) {
