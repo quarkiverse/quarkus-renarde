@@ -1,5 +1,8 @@
 package io.quarkiverse.renarde.deployment;
 
+import static org.jboss.resteasy.reactive.common.processor.ResteasyReactiveDotNames.COMPLETION_STAGE;
+import static org.jboss.resteasy.reactive.common.processor.ResteasyReactiveDotNames.UNI;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -15,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -44,6 +48,7 @@ import org.jboss.jandex.AnnotationValue;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.MethodInfo;
+import org.jboss.jandex.ParameterizedType;
 import org.jboss.jandex.Type;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.common.processor.ResteasyReactiveDotNames;
@@ -51,6 +56,9 @@ import org.jboss.resteasy.reactive.common.processor.transformation.AnnotationsTr
 import org.jboss.resteasy.reactive.common.processor.transformation.AnnotationsTransformer.TransformationContext;
 import org.jboss.resteasy.reactive.common.processor.transformation.Transformation;
 import org.jboss.resteasy.reactive.common.util.URLUtils;
+import org.jboss.resteasy.reactive.server.model.FixedHandlersChainCustomizer;
+import org.jboss.resteasy.reactive.server.model.HandlerChainCustomizer;
+import org.jboss.resteasy.reactive.server.processor.scanning.MethodScanner;
 
 import io.quarkiverse.renarde.Controller;
 import io.quarkiverse.renarde.deployment.ControllerVisitor.ControllerClass;
@@ -73,6 +81,7 @@ import io.quarkiverse.renarde.util.RandomHolder;
 import io.quarkiverse.renarde.util.RedirectExceptionMapper;
 import io.quarkiverse.renarde.util.RenardeJWTAuthMechanism;
 import io.quarkiverse.renarde.util.RenderArgs;
+import io.quarkiverse.renarde.util.TemplateResponseHandler;
 import io.quarkiverse.renarde.util.Validation;
 import io.quarkus.arc.Unremovable;
 import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
@@ -114,7 +123,9 @@ import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
 import io.quarkus.gizmo.ResultHandle;
 import io.quarkus.hibernate.validator.runtime.jaxrs.ResteasyReactiveEndPointValidationInterceptor;
+import io.quarkus.qute.TemplateInstance;
 import io.quarkus.resteasy.reactive.server.spi.AnnotationsTransformerBuildItem;
+import io.quarkus.resteasy.reactive.server.spi.MethodScannerBuildItem;
 import io.quarkus.resteasy.reactive.spi.AdditionalResourceClassBuildItem;
 import io.quarkus.resteasy.reactive.spi.ParamConverterBuildItem;
 import io.quarkus.runtime.LocalesBuildTimeConfig;
@@ -141,6 +152,7 @@ public class RenardeProcessor {
             .createSimple("io.quarkiverse.renarde.security.impl.RenardeFormLoginController");
     public static final DotName DOTNAME_LOGIN_PAGE = DotName.createSimple("io.quarkiverse.renarde.security.LoginPage");
     public static final DotName DOTNAME_NAMED = DotName.createSimple(Named.class.getName());
+    public static final DotName DOTNAME_TEMPLATE_INSTANCE = DotName.createSimple(TemplateInstance.class.getName());
 
     private static final String FEATURE = "renarde";
 
@@ -792,4 +804,37 @@ public class RenardeProcessor {
         }
     }
 
+    @BuildStep
+    public MethodScannerBuildItem configureHandler() {
+        // we register a scanner that runs in the first phase, to be before Qute's TemplateResponseUniHandler
+        // which means we run the risk of not having any Uni or CompletionStage unpacked yet, but that's fine
+        // we will hook into them
+        return new MethodScannerBuildItem(new MethodScanner() {
+            @Override
+            public List<HandlerChainCustomizer> scan(MethodInfo method, ClassInfo actualEndpointClass,
+                    Map<String, Object> methodContext) {
+                if (method.returnType().name().equals(DOTNAME_TEMPLATE_INSTANCE)
+                        || isAsyncTemplateInstance(method.returnType())) {
+                    return Collections.singletonList(
+                            new FixedHandlersChainCustomizer(
+                                    List.of(new TemplateResponseHandler()),
+                                    HandlerChainCustomizer.Phase.AFTER_METHOD_INVOKE));
+                }
+                return Collections.emptyList();
+            }
+
+            private boolean isAsyncTemplateInstance(Type type) {
+                boolean isAsyncTemplateInstance = false;
+                if (type.kind() == Type.Kind.PARAMETERIZED_TYPE) {
+                    ParameterizedType parameterizedType = type.asParameterizedType();
+                    if ((parameterizedType.name().equals(UNI) || parameterizedType.name().equals(COMPLETION_STAGE))
+                            && (parameterizedType.arguments().size() == 1)) {
+                        DotName firstParameterType = parameterizedType.arguments().get(0).name();
+                        isAsyncTemplateInstance = firstParameterType.equals(DOTNAME_TEMPLATE_INSTANCE);
+                    }
+                }
+                return isAsyncTemplateInstance;
+            }
+        });
+    }
 }
