@@ -465,6 +465,8 @@ public class RenardeProcessor {
 
             try (MethodCreator methodCreator = beanClassCreator.getMethodCreator("init", void.class, StartupEvent.class)) {
                 methodCreator.getParameterAnnotations(0).addAnnotation(Observes.class);
+                methodCreator.invokeStaticMethod(
+                        MethodDescriptor.ofMethod(Router.class, "clearRoutes", void.class));
                 for (ControllerClass controllerClass : methodsByClass.values()) {
                     // do not register routes for abstract controllers
                     if (controllerClass.isAbstract) {
