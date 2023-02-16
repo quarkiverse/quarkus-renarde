@@ -981,6 +981,106 @@ otherwise the links won't work for your email recipients.
 
 You can find more information in the xref:mailer.adoc[Quarkus mailer documentation].
 
+== Localisation / Internationalisation
+
+You can declare your default language and supported languages in `src/main/resources/application.properties`:
+
+[source,properties]
+----
+# This is the default locale for your application
+quarkus.default-locale=en
+# These are the supported locales (should include the default locale, but order is not important)
+quarkus.locales=en,fr
+----
+
+Next, you can declare your default language messages in the `src/main/resources/message.properties` file:
+
+[source,properties]
+----
+# A simple message
+hello=Hello World
+# A parameterised message for your view
+views_Application_index_greet=Hello %s
+----
+
+Declare your other language translations in the `src/main/resources/message_fr.properties` file:
+
+[source,properties]
+----
+hello=Bonjour Monde
+views_Application_index_greet=Salut %s
+----
+
+Now you can use these translated messages in your controller:
+
+[source,java]
+----
+public static class Application extends Controller {
+
+    @CheckedTemplate
+    public static class Templates {
+        public static native TemplateInstance index(String name);
+    }
+
+    public TemplateInstance index() {
+        return Templates.index("Stef");
+    }
+
+    public String hello() {
+		return i18n.formatMessage("hello");
+    }
+}
+----
+
+Or in your template:
+
+[source,txt]
+----
+With no parameter:
+{m:hello}
+With parameters:
+{m:views_Application_index_greet(name)}
+----
+
+=== Selecting the language
+
+The current language for a request will depend on the following (in order):
+
+. The `_renarde_language` cookie, if set
+. The https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language[`Accept-Language`] HTTP header, if set,
+  which defines an ordered list of languages by user preference. We will select a best matching language from the set
+  of `quarkus.locales`.
+. If nothing else, we default to the default language as set by `quarkus.default-locale`, which defaults to `en_US`.
+
+You can override the user's language with a cookie by calling `i18n.set(language)`:
+
+[source,java]
+----
+public static class Application extends Controller {
+
+    @CheckedTemplate
+    public static class Templates {
+        public static native TemplateInstance index();
+    }
+
+    public void index() {
+        return Templates.index();
+    }
+
+    @POST
+    public void french() {
+        i18n.set("fr");
+        index();
+    }
+
+    @POST
+    public void english() {
+        i18n.set("en");
+        index();
+    }
+}
+----
+
 == Flash scope
 
 If you need to pass values from one endpoint to another request after a redirect, you can use the Flash scope.

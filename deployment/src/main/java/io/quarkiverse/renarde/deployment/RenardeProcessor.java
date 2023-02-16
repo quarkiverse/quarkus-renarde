@@ -3,8 +3,10 @@ package io.quarkiverse.renarde.deployment;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.reflect.Modifier;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -15,10 +17,14 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Observes;
@@ -58,6 +64,7 @@ import io.quarkiverse.renarde.util.AuthenticationFailedExceptionMapper;
 import io.quarkiverse.renarde.util.CRSF;
 import io.quarkiverse.renarde.util.Filters;
 import io.quarkiverse.renarde.util.Flash;
+import io.quarkiverse.renarde.util.I18N;
 import io.quarkiverse.renarde.util.JavaExtensions;
 import io.quarkiverse.renarde.util.MyParamConverters;
 import io.quarkiverse.renarde.util.MyValidationInterceptor;
@@ -77,6 +84,7 @@ import io.quarkus.arc.deployment.GeneratedBeanGizmoAdaptor;
 import io.quarkus.arc.deployment.UnremovableBeanBuildItem;
 import io.quarkus.bootstrap.workspace.ArtifactSources;
 import io.quarkus.bootstrap.workspace.SourceDir;
+import io.quarkus.deployment.ApplicationArchive;
 import io.quarkus.deployment.Capabilities;
 import io.quarkus.deployment.Capability;
 import io.quarkus.deployment.annotations.BuildProducer;
@@ -84,10 +92,12 @@ import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.annotations.ExecutionTime;
 import io.quarkus.deployment.annotations.Record;
 import io.quarkus.deployment.builditem.AdditionalIndexedClassesBuildItem;
+import io.quarkus.deployment.builditem.ApplicationArchivesBuildItem;
 import io.quarkus.deployment.builditem.ApplicationIndexBuildItem;
 import io.quarkus.deployment.builditem.BytecodeTransformerBuildItem;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
+import io.quarkus.deployment.builditem.HotDeploymentWatchedFileBuildItem;
 import io.quarkus.deployment.builditem.LaunchModeBuildItem;
 import io.quarkus.deployment.builditem.RunTimeConfigurationDefaultBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
@@ -107,6 +117,7 @@ import io.quarkus.hibernate.validator.runtime.jaxrs.ResteasyReactiveEndPointVali
 import io.quarkus.resteasy.reactive.server.spi.AnnotationsTransformerBuildItem;
 import io.quarkus.resteasy.reactive.spi.AdditionalResourceClassBuildItem;
 import io.quarkus.resteasy.reactive.spi.ParamConverterBuildItem;
+import io.quarkus.runtime.LocalesBuildTimeConfig;
 import io.quarkus.runtime.StartupEvent;
 import io.quarkus.smallrye.jwt.runtime.auth.JWTAuthMechanism;
 import io.smallrye.mutiny.Multi;
@@ -286,6 +297,7 @@ public class RenardeProcessor {
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(QuteResolvers.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(CRSF.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(Flash.class));
+        additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(I18N.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(RenderArgs.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(Validation.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(JavaExtensions.class));
@@ -710,8 +722,74 @@ public class RenardeProcessor {
     @BuildStep
     @Record(ExecutionTime.STATIC_INIT)
     void configureLoginPage(RenardeRecorder recorder,
-            LoginPageBuildItem loginPageBuildItem, BeanContainerBuildItem beanContainerBuildItem) {
+            LoginPageBuildItem loginPageBuildItem,
+            BeanContainerBuildItem beanContainerBuildItem) {
         recorder.configureLoginPage(beanContainerBuildItem.getValue(),
                 loginPageBuildItem != null ? loginPageBuildItem.uri : null);
     }
+
+    @BuildStep
+    @Record(ExecutionTime.STATIC_INIT)
+    void findMessageFiles(RenardeRecorder recorder,
+            BeanContainerBuildItem beanContainerBuildItem,
+            ApplicationArchivesBuildItem applicationArchivesBuildItem,
+            LocalesBuildTimeConfig locales,
+            BuildProducer<HotDeploymentWatchedFileBuildItem> watchedFiles) throws IOException {
+
+        Map<String, Path> languageToPath = new HashMap<>();
+
+        for (ApplicationArchive archive : applicationArchivesBuildItem.getAllApplicationArchives()) {
+            archive.accept(tree -> {
+                for (Path root : tree.getRoots()) {
+                    try (Stream<Path> files = Files.list(root)) {
+                        Iterator<Path> iter = files.iterator();
+                        while (iter.hasNext()) {
+                            Path filePath = iter.next();
+                            String name = filePath.getFileName().toString();
+                            if (Files.isRegularFile(filePath)
+                                    && (name.startsWith("messages.")
+                                            || name.startsWith("messages_"))
+                                    && name.endsWith(".properties")) {
+                                String language;
+                                if (name.startsWith("messages.")) {
+                                    // default language
+                                    language = locales.defaultLocale.getLanguage();
+                                } else {
+                                    // messages_lang.properties
+                                    language = name.substring(9, name.length() - 11);
+                                }
+                                languageToPath.put(language, filePath);
+                            }
+                        }
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                }
+            });
+        }
+
+        // FIXME: should not cause a full restart
+        // Hot deployment
+        for (Path messageFileName : languageToPath.values()) {
+            // FIXME: perhaps relative path?
+            watchedFiles.produce(new HotDeploymentWatchedFileBuildItem(messageFileName.toString()));
+        }
+
+        for (Entry<String, Path> entry : languageToPath.entrySet()) {
+            recorder.addLanguageBundle(beanContainerBuildItem.getValue(), entry.getKey(), entry.getValue().toString());
+        }
+
+        for (Locale locale : locales.locales) {
+            String lang = locale.getLanguage();
+            if (!languageToPath.containsKey(lang)) {
+                logger.warnf(
+                        "Locale %s is declared in 'quarkus.locales' but no matching messages_%s.properties resource file found",
+                        lang, lang);
+            }
+        }
+        if (!languageToPath.isEmpty()) {
+            logger.infof("Supported locales with messages: %s", languageToPath.keySet());
+        }
+    }
+
 }

@@ -11,4 +11,8 @@ public class RenardeRecorder {
         config.setLoginPage(uri);
     }
 
+    public void addLanguageBundle(BeanContainer beanContainer, String language, String bundlePath) {
+        RenardeConfig config = beanContainer.beanInstance(RenardeConfig.class);
+        config.addLanguageBundle(language, bundlePath);
+    }
 }
