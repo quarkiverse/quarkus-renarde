@@ -31,7 +31,74 @@ public class QuteResolvers {
         }
     }
 
+    static class MessageKey {
+        public final String key;
+        public final boolean quoted;
+
+        public MessageKey(String key) {
+            if (key.startsWith("'") && key.endsWith("'")) {
+                this.key = key.substring(1, key.length() - 1);
+                this.quoted = true;
+            } else {
+                this.key = key;
+                this.quoted = false;
+            }
+        }
+
+        public MessageKey append(String postfix) {
+            if (quoted) {
+                return new MessageKey(key + postfix);
+            } else {
+                return new MessageKey(key + "." + postfix);
+            }
+        }
+
+        // used by Qute for the rendering without parameters
+        public String toString() {
+            return render();
+        }
+
+        public String render(Object... params) {
+            I18N i18n = Arc.container().instance(I18N.class).get();
+            String message = i18n.getMessage(key);
+            // try to be helpful if the key doesn't match
+            if (message == null) {
+                return key;
+            }
+            return String.format(message, params);
+        }
+
+        public Object renderIfParameters(EvalContext ctx) {
+            if (ctx.getParams().isEmpty()) {
+                return this;
+            } else {
+                return evaluateParameters(ctx, (ctx2, params) -> render(params.toArray()));
+            }
+        }
+    }
+
     void configureEngine(@Observes EngineBuilder builder) {
+        builder.addValueResolver(ValueResolver.builder()
+                .appliesTo(ctx -> (ctx.getBase() instanceof MessageKey))
+                .resolveSync(ctx -> {
+                    MessageKey base = ((MessageKey) ctx.getBase());
+                    if (ctx.getName().equals("+")) {
+                        return evaluateParameters(ctx, (ctx2, params) -> {
+                            if (params.size() == 1) {
+                                return base.append(params.get(0).toString());
+                            } else {
+                                throw new RuntimeException("'+' operator must have exactly one right-hand-side expressions");
+                            }
+                        });
+                    } else {
+                        MessageKey key = ((MessageKey) ctx.getBase()).append(ctx.getName());
+                        return key.renderIfParameters(ctx);
+                    }
+                })
+                .build());
+        builder.addNamespaceResolver(NamespaceResolver.builder("m")
+                .resolve(ctx -> new MessageKey(ctx.getName()).renderIfParameters(ctx))
+                .build());
         builder.addValueResolver(ValueResolver.builder()
                 .appliesTo(ctx -> ctx.getBase() instanceof BoundRouter)
                 .resolveSync(ctx -> evaluateParameters(ctx, this::findURI))
@@ -42,25 +109,6 @@ public class QuteResolvers {
         builder.addNamespaceResolver(NamespaceResolver.builder("uriabs")
                 .resolve(ctx -> new BoundRouter(ctx.getName(), true))
                 .build());
-        builder.addNamespaceResolver(new NamespaceResolver() {
-
-            @Override
-            public CompletionStage<Object> resolve(EvalContext context) {
-                I18N i18n = Arc.container().instance(I18N.class).get();
-                String message = i18n.getMessage(context.getName());
-                // try to be helpful if the key doesn't match
-                if (message == null) {
-                    return CompletedStage.of(context.getName());
-                }
-                return QuteResolvers.evaluateParameters(context, (ctx, params) -> String.format(message, params.toArray()));
-            }
-
-            @Override
-            public String getNamespace() {
-                return "m";
-            }
-        });
-
     }
 
     private URI findURI(EvalContext ctx, List<?> paramValues) {

@@ -36,16 +36,32 @@ public class LanguageTest {
     static final QuarkusUnitTest config = new QuarkusUnitTest()
             .setArchiveProducer(() -> ShrinkWrap.create(JavaArchive.class)
                     .addClasses(MyController.class, MyBundle.class)
-                    // Doesn't work yet
+                    // Type-safe
                     .addAsResource(new StringAsset("my_greeting=english message"), "messages/msg_en.properties")
                     .addAsResource(new StringAsset("my_greeting=message français"), "messages/msg_fr.properties")
                     .addAsResource(new StringAsset("{msg:my_greeting}"), "templates/MyController/qute.txt")
                     // Renarde type-unsafe
-                    .addAsResource(new StringAsset("my_greeting=english message\nparams=english %s message"),
+                    .addAsResource(new StringAsset("my_greeting=english message\n"
+                            + "params=english %s message\n"
+                            + "my.greeting=english message\n"
+                            + "my.greeting.something=english message\n"
+                            + "my.params=english %s message\n"
+                            + "my.params.something=english %s message"),
                             "messages.properties")
-                    .addAsResource(new StringAsset("my_greeting=message français\nparams=message %s français"),
+                    .addAsResource(new StringAsset("my_greeting=message français\n" +
+                            "params=message %s français\n"
+                            + "my.greeting=message français\n"
+                            + "my.greeting.something=message français\n"
+                            + "my.params=message %s français\n"
+                            + "my.params.something=message %s français"),
                             "messages_fr.properties")
-                    .addAsResource(new StringAsset("{m:my_greeting}\n{m:params('STEF')}\n{m:missing}"),
+                    .addAsResource(new StringAsset("{m:my_greeting}\n"
+                            + "{m:params('STEF')}\n"
+                            + "{m:my.greeting}\n"
+                            + "{m:'my.greeting.' + 'something'}\n"
+                            + "{m:my.params('STEF')}\n"
+                            + "{m:my_params.append('.something')('STEF')}\n"
+                            + "{m:missing}"),
                             "templates/MyController/typeUnsafe.txt")
 
                     .addAsResource(new StringAsset("quarkus.locales=en,fr\n"
@@ -160,13 +176,15 @@ public class LanguageTest {
         RestAssured
                 .get("/type-unsafe").then()
                 .statusCode(200)
-                .body(Matchers.is("english message\nenglish STEF message\nmissing"));
+                .body(Matchers.is(
+                        "english message\nenglish STEF message\nenglish message\nenglish message\nenglish STEF message\nmissing"));
         RestAssured
                 .given()
                 .cookie(I18N.LANGUAGE_COOKIE_NAME, "fr")
                 .get("/type-unsafe").then()
                 .statusCode(200)
-                .body(Matchers.is("message français\nmessage STEF français\nmissing"));
+                .body(Matchers.is(
+                        "message français\nmessage STEF français\nmessage français\nmessage français\nmessage STEF français\nmissing"));
         // now try a missing language
         RestAssured
                 .given()
