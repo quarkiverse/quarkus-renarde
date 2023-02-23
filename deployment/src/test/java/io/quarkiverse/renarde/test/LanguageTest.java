@@ -45,6 +45,7 @@ public class LanguageTest {
                             + "params=english %s message\n"
                             + "my.greeting=english message\n"
                             + "my.greeting.something=english message\n"
+                            + "my.greeting.code.something=english message with code\n"
                             + "my.params=english %s message\n"
                             + "my.params.something=english %s message"),
                             "messages.properties")
@@ -52,6 +53,7 @@ public class LanguageTest {
                             "params=message %s français\n"
                             + "my.greeting=message français\n"
                             + "my.greeting.something=message français\n"
+                            + "my.greeting.code.something=message français avec code\n"
                             + "my.params=message %s français\n"
                             + "my.params.something=message %s français"),
                             "messages_fr.properties")
@@ -59,8 +61,8 @@ public class LanguageTest {
                             + "{m:params('STEF')}\n"
                             + "{m:my.greeting}\n"
                             + "{m:'my.greeting.' + 'something'}\n"
+                            + "{m:'my.greeting.' + val + \n '.something'}\n"
                             + "{m:my.params('STEF')}\n"
-                            + "{m:my_params.append('.something')('STEF')}\n"
                             + "{m:missing}"),
                             "templates/MyController/typeUnsafe.txt")
 
@@ -177,14 +179,14 @@ public class LanguageTest {
                 .get("/type-unsafe").then()
                 .statusCode(200)
                 .body(Matchers.is(
-                        "english message\nenglish STEF message\nenglish message\nenglish message\nenglish STEF message\nmissing"));
+                        "english message\nenglish STEF message\nenglish message\nenglish message\nenglish message with code\nenglish STEF message\nmissing"));
         RestAssured
                 .given()
                 .cookie(I18N.LANGUAGE_COOKIE_NAME, "fr")
                 .get("/type-unsafe").then()
                 .statusCode(200)
                 .body(Matchers.is(
-                        "message français\nmessage STEF français\nmessage français\nmessage français\nmessage STEF français\nmissing"));
+                        "message français\nmessage STEF français\nmessage français\nmessage français\nmessage français avec code\nmessage STEF français\nmissing"));
         // now try a missing language
         RestAssured
                 .given()
@@ -200,7 +202,7 @@ public class LanguageTest {
         public static class Templates {
             public static native TemplateInstance qute();
 
-            public static native TemplateInstance typeUnsafe();
+            public static native TemplateInstance typeUnsafe(Object val);
         }
 
         @Path("/qute")
@@ -230,7 +232,7 @@ public class LanguageTest {
 
         @Path("/type-unsafe")
         public TemplateInstance typeUnsafe() {
-            return Templates.typeUnsafe();
+            return Templates.typeUnsafe("code");
         }
 
         @Path("/lang")

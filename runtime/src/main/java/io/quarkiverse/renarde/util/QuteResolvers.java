@@ -33,20 +33,17 @@ public class QuteResolvers {
 
     static class MessageKey {
         public final String key;
-        public final boolean quoted;
 
         public MessageKey(String key) {
             if (key.startsWith("'") && key.endsWith("'")) {
                 this.key = key.substring(1, key.length() - 1);
-                this.quoted = true;
             } else {
                 this.key = key;
-                this.quoted = false;
             }
         }
 
-        public MessageKey append(String postfix) {
-            if (quoted) {
+        public MessageKey append(String postfix, boolean addDot) {
+            if (!addDot) {
                 return new MessageKey(key + postfix);
             } else {
                 return new MessageKey(key + "." + postfix);
@@ -82,16 +79,18 @@ public class QuteResolvers {
                 .appliesTo(ctx -> (ctx.getBase() instanceof MessageKey))
                 .resolveSync(ctx -> {
                     MessageKey base = ((MessageKey) ctx.getBase());
-                    if (ctx.getName().equals("+")) {
+                    String name = ctx.getName().strip();
+                    System.err.println("base: " + base + " name: " + name + " params: " + ctx.getParams());
+                    if (name.equals("+")) {
                         return evaluateParameters(ctx, (ctx2, params) -> {
                             if (params.size() == 1) {
-                                return base.append(params.get(0).toString());
+                                return base.append(params.get(0).toString(), false);
                             } else {
                                 throw new RuntimeException("'+' operator must have exactly one right-hand-side expressions");
                             }
                         });
                     } else {
-                        MessageKey key = ((MessageKey) ctx.getBase()).append(ctx.getName());
+                        MessageKey key = ((MessageKey) ctx.getBase()).append(name, true);
                         return key.renderIfParameters(ctx);
                     }
                 })
