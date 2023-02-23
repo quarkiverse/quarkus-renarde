@@ -20,7 +20,10 @@ import io.quarkiverse.renarde.security.RenardeUserWithPassword;
 import io.quarkus.elytron.security.common.BcryptUtil;
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
+import io.smallrye.common.annotation.Blocking;
 
+// FIXME: for now we only support ORM which is blocking
+@Blocking
 @Path("_renarde/security")
 public class RenardeFormLoginController extends Controller {
     @CheckedTemplate(basePath = "_renarde/security")
