@@ -121,12 +121,15 @@ public class RenardeBackofficeTest {
                 .extract().body().asString();
         Document document = Jsoup.parse(html);
         Assertions.assertEquals(1, document.select("input[name='primitiveBoolean'][type='checkbox']").size());
+        Assertions.assertEquals(1, document.select("input[name='wrapperBoolean'][type='checkbox']").size());
         Assertions.assertEquals(1, document.select(
                 "input[name='primitiveByte'][type='number'][min=" + Byte.MIN_VALUE + "][max=" + Byte.MAX_VALUE + "][step=1.0]")
                 .size());
         Assertions.assertEquals(1, document.select("input[name='primitiveShort'][type='number'][min=" + Short.MIN_VALUE
                 + "][max=" + Short.MAX_VALUE + "][step=1.0]").size());
         Assertions.assertEquals(1, document.select("input[name='primitiveInt'][type='number'][min=" + Integer.MIN_VALUE
+                + "][max=" + Integer.MAX_VALUE + "][step=1.0]").size());
+        Assertions.assertEquals(1, document.select("input[name='wrapperInt'][type='number'][min=" + Integer.MIN_VALUE
                 + "][max=" + Integer.MAX_VALUE + "][step=1.0]").size());
         Assertions.assertEquals(1, document.select(
                 "input[name='primitiveLong'][type='number'][min=" + Long.MIN_VALUE + "][max=" + Long.MAX_VALUE + "][step=1.0]")
@@ -199,9 +202,11 @@ public class RenardeBackofficeTest {
         given()
                 .when()
                 .multiPart("primitiveBoolean", "on")
+                .multiPart("wrapperBoolean", "on")
                 .multiPart("primitiveByte", "1")
                 .multiPart("primitiveShort", "2")
                 .multiPart("primitiveInt", "3")
+                .multiPart("wrapperInt", "3")
                 .multiPart("primitiveLong", "4")
                 .multiPart("primitiveFloat", "5")
                 .multiPart("primitiveDouble", "6")
@@ -236,9 +241,11 @@ public class RenardeBackofficeTest {
         ExampleEntity entity = ExampleEntity.findAll().firstResult();
         Assertions.assertNotNull(entity);
         Assertions.assertEquals(true, entity.primitiveBoolean);
+        Assertions.assertEquals(true, entity.wrapperBoolean);
         Assertions.assertEquals(1, entity.primitiveByte);
         Assertions.assertEquals(2, entity.primitiveShort);
         Assertions.assertEquals(3, entity.primitiveInt);
+        Assertions.assertEquals(3, entity.wrapperInt);
         Assertions.assertEquals(4, entity.primitiveLong);
         Assertions.assertEquals(5, entity.primitiveFloat);
         Assertions.assertEquals(6, entity.primitiveDouble);
@@ -351,9 +358,11 @@ public class RenardeBackofficeTest {
 
         ExampleEntity entity = new ExampleEntity();
         entity.primitiveBoolean = true;
+        entity.wrapperBoolean = true;
         entity.primitiveByte = 1;
         entity.primitiveShort = 2;
         entity.primitiveInt = 3;
+        entity.wrapperInt = 3;
         entity.primitiveLong = 4;
         entity.primitiveFloat = 5;
         entity.primitiveDouble = 6;
@@ -404,6 +413,7 @@ public class RenardeBackofficeTest {
                 .extract().body().asString();
         Document document = Jsoup.parse(html);
         Assertions.assertEquals(1, document.select("input[name='primitiveBoolean'][type='checkbox'][checked]").size());
+        Assertions.assertEquals(1, document.select("input[name='wrapperBoolean'][type='checkbox'][checked]").size());
         Assertions.assertEquals(1, document.select(
                 "input[name='primitiveByte'][type='number'][min=" + Byte.MIN_VALUE + "][max=" + Byte.MAX_VALUE
                         + "][step=1.0][value=1]")
@@ -411,6 +421,8 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(1, document.select("input[name='primitiveShort'][type='number'][min=" + Short.MIN_VALUE
                 + "][max=" + Short.MAX_VALUE + "][step=1.0][value=2]").size());
         Assertions.assertEquals(1, document.select("input[name='primitiveInt'][type='number'][min=" + Integer.MIN_VALUE
+                + "][max=" + Integer.MAX_VALUE + "][step=1.0][value=3]").size());
+        Assertions.assertEquals(1, document.select("input[name='wrapperInt'][type='number'][min=" + Integer.MIN_VALUE
                 + "][max=" + Integer.MAX_VALUE + "][step=1.0][value=3]").size());
         Assertions.assertEquals(1, document.select(
                 "input[name='primitiveLong'][type='number'][min=" + Long.MIN_VALUE + "][max=" + Long.MAX_VALUE
@@ -502,6 +514,7 @@ public class RenardeBackofficeTest {
                 .multiPart("primitiveByte", "11")
                 .multiPart("primitiveShort", "12")
                 .multiPart("primitiveInt", "13")
+                .multiPart("wrapperInt", "13")
                 .multiPart("primitiveLong", "14")
                 .multiPart("primitiveFloat", "15")
                 .multiPart("primitiveDouble", "16")
@@ -534,9 +547,11 @@ public class RenardeBackofficeTest {
         entity = ExampleEntity.findAll().firstResult();
         Assertions.assertNotNull(entity);
         Assertions.assertEquals(false, entity.primitiveBoolean);
+        Assertions.assertEquals(false, entity.wrapperBoolean);
         Assertions.assertEquals(11, entity.primitiveByte);
         Assertions.assertEquals(12, entity.primitiveShort);
         Assertions.assertEquals(13, entity.primitiveInt);
+        Assertions.assertEquals(13, entity.wrapperInt);
         Assertions.assertEquals(14, entity.primitiveLong);
         Assertions.assertEquals(15, entity.primitiveFloat);
         Assertions.assertEquals(16, entity.primitiveDouble);

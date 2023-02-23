@@ -583,6 +583,16 @@ public class RenardeBackofficeProcessor {
                     value = m.invokeStaticMethod(
                             MethodDescriptor.ofMethod(BackUtil.class, "booleanField", boolean.class, String.class),
                             parameterValue);
+                } else if (field.entityField.descriptor.equals("Ljava/lang/Boolean;")) {
+                    value = m.invokeStaticMethod(
+                            MethodDescriptor.ofMethod(BackUtil.class, "booleanField", boolean.class, String.class),
+                            parameterValue);
+                    value = m.invokeStaticMethod(
+                            MethodDescriptor.ofMethod(Boolean.class, "valueOf", Boolean.class, boolean.class), value);
+                } else if (field.entityField.descriptor.equals("Ljava/lang/Integer;")) {
+                    value = m.invokeStaticMethod(
+                            MethodDescriptor.ofMethod(BackUtil.class, "integerWrapperField", Integer.class, String.class),
+                            parameterValue);
                 } else if (field.type == Type.Number) {
                     Class<?> primitiveClass;
                     switch (field.entityField.descriptor) {

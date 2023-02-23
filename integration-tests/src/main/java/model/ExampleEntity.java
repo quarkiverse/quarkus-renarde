@@ -24,9 +24,11 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
 public class ExampleEntity extends PanacheEntity {
     public String string;
     public boolean primitiveBoolean;
+    public Boolean wrapperBoolean;
     public byte primitiveByte;
     public short primitiveShort;
     public int primitiveInt;
+    public Integer wrapperInt;
     public long primitiveLong;
     public float primitiveFloat;
     public double primitiveDouble;

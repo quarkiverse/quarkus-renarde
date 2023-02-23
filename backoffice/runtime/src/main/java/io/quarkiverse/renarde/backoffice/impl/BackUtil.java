@@ -88,6 +88,10 @@ public class BackUtil {
         return isSet(value) ? Integer.valueOf(value) : 0;
     }
 
+    public static Integer integerWrapperField(String value) {
+        return isSet(value) ? Integer.valueOf(value) : null;
+    }
+
     public static long longField(String value) {
         return isSet(value) ? Long.valueOf(value) : 0;
     }

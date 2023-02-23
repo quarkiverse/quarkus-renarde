@@ -83,7 +83,8 @@ public class ModelField {
             min = Short.MIN_VALUE;
             max = Short.MAX_VALUE;
             step = 1;
-        } else if (entityField.descriptor.equals("I")) {
+        } else if (entityField.descriptor.equals("I")
+                || entityField.descriptor.equals("Ljava/lang/Integer;")) {
             this.type = Type.Number;
             min = Integer.MIN_VALUE;
             max = Integer.MAX_VALUE;
@@ -105,7 +106,8 @@ public class ModelField {
             this.type = Type.Number;
             // this allows floats in number fields
             step = 0.00001;
-        } else if (entityField.descriptor.equals("Z")) {
+        } else if (entityField.descriptor.equals("Z")
+                || entityField.descriptor.equals("Ljava/lang/Boolean;")) {
             this.type = Type.Checkbox;
         } else if (entityField.descriptor.equals("[B")
                 || entityField.descriptor.equals("Ljava/sql/Blob;")
@@ -191,5 +193,10 @@ public class ModelField {
 
     public String getClassName() {
         return entityField.descriptor.substring(1, entityField.descriptor.length() - 1).replace('/', '.');
+    }
+
+    @Override
+    public String toString() {
+        return "ModelField " + name + " of type " + entityField.descriptor;
     }
 }
