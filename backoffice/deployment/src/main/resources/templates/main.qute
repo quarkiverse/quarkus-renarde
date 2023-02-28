@@ -1,12 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <!-- A default main.html in case users don't override it -->
   <head>
     <title>\{#insert title/}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" media="screen" href="/webjars/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" media="screen" href="/webjars/bootstrap-icons/font/bootstrap-icons.css">
     \{#insert moreStyles /}
+    <script src="/webjars/bootstrap/js/bootstrap.min.js" type="text/javascript" charset="UTF-8"></script>
     \{#insert moreScripts /}
   </head>
   <body>
-    \{#insert /}
+    <div class="container">
+      \{#insert /}
+    </div>
   </body>
 </html>

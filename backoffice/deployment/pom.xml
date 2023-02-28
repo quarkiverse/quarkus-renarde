@@ -58,6 +58,10 @@
       <artifactId>quarkus-caffeine-deployment</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-webjars-locator-deployment</artifactId>
+    </dependency>
+    <dependency>
       <groupId>io.quarkiverse.renarde</groupId>
       <artifactId>quarkus-renarde-deployment</artifactId>
       <version>${project.version}</version>

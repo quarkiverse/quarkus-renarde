@@ -80,7 +80,6 @@ public class QuteResolvers {
                 .resolveSync(ctx -> {
                     MessageKey base = ((MessageKey) ctx.getBase());
                     String name = ctx.getName().strip();
-                    System.err.println("base: " + base + " name: " + name + " params: " + ctx.getParams());
                     if (name.equals("+")) {
                         return evaluateParameters(ctx, (ctx2, params) -> {
                             if (params.size() == 1) {

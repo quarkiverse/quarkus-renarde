@@ -53,7 +53,7 @@
    {#case Text}
     \{#crud_input name="{field.name}" value=entity.{field.name} type="text" {#if field.min}min="{field.min}"{/if} {#if field.max}max="{field.max}"{/if}/}
    {#case LargeText}
-    \{#crud_textarea name="{field.name}" value=entity.{field.name}/}
+    \{#crud_textarea name="{field.name}" value=entity.{field.name} rows="10"/}
    {#case Binary}
     \{#crud_input name="{field.name}" type="file"/}
     \{#if entity.{field.name}}
@@ -61,7 +61,14 @@
        \{#crud_input name="{field.name}$unset" id="{field.name}$unset" type="checkbox"/}
        <label class="form-check-label" for="{field.name}$unset">Delete</label>
       </div>
-      <a href="../\{entity.id}/{field.name}">Current file</a> (\{#if entity.{field.name}.name??}\{entity.{field.name}.name} \{/if}\{entity.{field.name}.length.binarySize} \{entity.{field.name}.mimeType})
+      <a href="../\{entity.id}/{field.name}">Current file</a>
+      (\{#if entity.{field.name}.name??}\{entity.{field.name}.name}\{/if}
+       {#if field.entityField.descriptor.equals('Ljava/sql/Blob;')}
+        \{{field.name}Length.binarySize}
+       {#else}
+        \{entity.{field.name}.length.binarySize}
+       {/if}
+       \{entity.{field.name}.mimeType})
     \{/if}
    {#else}
     \{#crud_input name="{field.name}" value=entity.{field.name}/}

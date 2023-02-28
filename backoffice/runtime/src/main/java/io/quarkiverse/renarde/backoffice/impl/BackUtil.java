@@ -203,7 +203,7 @@ public class BackUtil {
         }
         // FIXME: this cast may mean that we should rather return an InputStream via getBinaryStream()?
         try {
-            return blob.getBytes(0, (int) blob.length());
+            return blob.getBytes(1, (int) blob.length());
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

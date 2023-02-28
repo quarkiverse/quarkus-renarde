@@ -11,12 +11,15 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import jakarta.enterprise.context.RequestScoped;
@@ -33,6 +36,7 @@ import jakarta.ws.rs.core.Response;
 import org.jboss.jandex.AnnotationInstance;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
+import org.jboss.jandex.IndexView;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestPath;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
@@ -89,6 +93,7 @@ public class RenardeBackofficeProcessor {
     private static final DotName DOTNAME_ENTITY = DotName.createSimple(Entity.class.getName());
     private static final DotName DOTNAME_BACKOFFICE_CONTROLLER = DotName.createSimple(BackofficeController.class);
     private static final DotName DOTNAME_BACKOFFICE_INDEX_CONTROLLER = DotName.createSimple(BackofficeIndexController.class);
+    private static final DotName DOTNAME_COMPARABLE = DotName.createSimple(Comparable.class);
 
     @BuildStep
     public void processModel(HibernateMetamodelForFieldAccessBuildItem metamodel,
@@ -133,13 +138,9 @@ public class RenardeBackofficeProcessor {
                     + indexControllers);
         }
 
-        java.nio.file.Path userMainTemplate = applicationArchives.getRootArchive().getChildPath("templates/main.html");
-        String mainTemplate = "main.html";
-        if (userMainTemplate == null) {
-            TemplateInstance template = engine.getTemplate("main.qute").instance();
-            render(output, template, "main.html");
-            mainTemplate = URI_PREFIX + "/main.html";
-        }
+        String mainTemplate = URI_PREFIX + "/main.html";
+        TemplateInstance template = engine.getTemplate("main.qute").instance();
+        render(output, template, "main.html");
 
         generateAllController(jaxrsOutput, indexControllers);
 
@@ -168,7 +169,8 @@ public class RenardeBackofficeProcessor {
                 }
             }
 
-            generateEntityController(entityName.toString(), entityController, simpleName, fields, jaxrsOutput);
+            generateEntityController(classInfo, index.getIndex(), entityName.toString(), entityController, simpleName, fields,
+                    jaxrsOutput);
 
             TemplateInstance indexTemplate = engine.getTemplate("entity-index.qute").instance();
             indexTemplate.data("entity", simpleName);
@@ -188,7 +190,8 @@ public class RenardeBackofficeProcessor {
             render(output, createTemplate, simpleName + "/create.html");
         }
 
-        TemplateInstance template = engine.getTemplate("index.qute").instance();
+        Collections.sort(entities);
+        template = engine.getTemplate("index.qute").instance();
         template.data("entities", entities);
         template.data("mainTemplate", mainTemplate);
         render(output, template, "index.html");
@@ -199,7 +202,8 @@ public class RenardeBackofficeProcessor {
                 template.render().getBytes(StandardCharsets.UTF_8)));
     }
 
-    private void generateEntityController(String entityClass, ClassInfo entityController, String simpleName,
+    private void generateEntityController(ClassInfo entityClass, IndexView index, String entityClassName,
+            ClassInfo entityController, String simpleName,
             List<ModelField> fields, BuildProducer<GeneratedJaxRsResourceBuildItem> jaxrsOutput) {
         // TODO: hand it off to RenardeProcessor to generate annotations and uri methods
         // TODO: generate templateinstance native build item or what?
@@ -222,12 +226,20 @@ public class RenardeBackofficeProcessor {
                 m.addAnnotation(GET.class);
                 m.addAnnotation(Produces.class).addValue("value", new String[] { MediaType.TEXT_HTML });
 
-                //              Template template = Arc.container().instance(TemplateProducer.class).get().getInjectableTemplate("_renarde/backoffice/index");
-                //              TemplateInstance instance = template.instance();
-                //              instance = template.data("entities", Todo.listAll());
-                //              return instance;
+                // Template template = Arc.container().instance(TemplateProducer.class).get().getInjectableTemplate("_renarde/backoffice/index");
+                // TemplateInstance instance = template.instance();
+                // List entities = Todo.listAll();
+                // #if entity is comparable
+                //   Collections.sort(entities)
+                // instance = template.data("entities", entities);
+                // return instance;
 
-                ResultHandle entities = m.invokeStaticMethod(MethodDescriptor.ofMethod(entityClass, "listAll", List.class));
+                ResultHandle entities = m.invokeStaticMethod(MethodDescriptor.ofMethod(entityClassName, "listAll", List.class));
+                if (implementsInterface(entityClass, index, DOTNAME_COMPARABLE)) {
+                    System.err.println(entityClass + " implements comparable ");
+                    m.invokeStaticMethod(MethodDescriptor.ofMethod(Collections.class, "sort", void.class, List.class),
+                            entities);
+                }
 
                 ResultHandle instance = getTemplateInstance(m, URI_PREFIX + "/" + simpleName + "/index");
                 instance = m.invokeInterfaceMethod(
@@ -238,27 +250,67 @@ public class RenardeBackofficeProcessor {
             }
 
             try (MethodCreator m = c.getMethodCreator("edit", TemplateInstance.class, Long.class)) {
-                editOrCreateView(m, controllerClass, entityClass, simpleName, fields, Mode.EDIT);
+                editOrCreateView(m, controllerClass, entityClassName, simpleName, fields, Mode.EDIT);
             }
 
-            editOrCreateAction(c, controllerClass, entityClass, simpleName, fields, Mode.EDIT);
+            editOrCreateAction(c, controllerClass, entityClassName, simpleName, fields, Mode.EDIT);
 
             try (MethodCreator m = c.getMethodCreator("create", TemplateInstance.class)) {
-                editOrCreateView(m, controllerClass, entityClass, simpleName, fields, Mode.CREATE);
+                editOrCreateView(m, controllerClass, entityClassName, simpleName, fields, Mode.CREATE);
             }
 
-            editOrCreateAction(c, controllerClass, entityClass, simpleName, fields, Mode.CREATE);
+            editOrCreateAction(c, controllerClass, entityClassName, simpleName, fields, Mode.CREATE);
 
-            deleteAction(c, controllerClass, entityClass, simpleName);
+            deleteAction(c, controllerClass, entityClassName, simpleName);
 
-            addBinaryFieldGetters(c, controllerClass, entityClass, fields);
+            addBinaryFieldGetters(c, controllerClass, entityClassName, fields);
         }
+    }
+
+    private boolean implementsInterface(ClassInfo entityClass, IndexView index, DotName searchedInterface) {
+        Set<DotName> scanned = new HashSet<>();
+        return implementsInterface(entityClass, index, searchedInterface, scanned);
+    }
+
+    private boolean implementsInterface(ClassInfo entityClass, IndexView index, DotName searchedInterface,
+            Set<DotName> scanned) {
+        for (DotName interfaceName : entityClass.interfaceNames()) {
+            // skip already visited interfaces
+            if (!scanned.add(interfaceName)) {
+                continue;
+            }
+            if (interfaceName.equals(searchedInterface)) {
+                return true;
+            }
+            ClassInfo interfaceClass = index.getClassByName(interfaceName);
+            if (interfaceClass == null) {
+                continue;
+            }
+            // look in superinterfaces
+            boolean found = implementsInterface(interfaceClass, index, searchedInterface);
+            if (found) {
+                return true;
+            }
+        }
+        DotName superName = entityClass.superName();
+        if (superName != null) {
+            // skip already visited classes
+            ClassInfo superClass = index.getClassByName(superName);
+            if (!scanned.add(superName)) {
+                return false;
+            }
+            if (superClass != null) {
+                return implementsInterface(superClass, index, searchedInterface);
+            }
+        }
+        return false;
     }
 
     //
     //  @GET
     //  @Produces(MediaType.APPLICATION_OCTET_STREAM)
     //  @Path("{id}/field")
+    //  @Transactional
     //  public Response fieldForBinary(@RestPath Long id){
     //      Entity entity = Entity.findById(id);
     //      notFoundIfNull(entity);
@@ -273,6 +325,7 @@ public class RenardeBackofficeProcessor {
                     m.getParameterAnnotations(0).addAnnotation(RestPath.class).addValue("value", "id");
                     m.addAnnotation(Path.class).addValue("value", "{id}/" + field.name);
                     m.addAnnotation(GET.class);
+                    m.addAnnotation(Transactional.class);
                     m.addAnnotation(Produces.class).addValue("value", new String[] { MediaType.APPLICATION_OCTET_STREAM });
                     AssignableResultHandle entityVariable = findEntityById(m, controllerClass, entityClass);
                     ResultHandle fieldValue = m
@@ -853,6 +906,7 @@ public class RenardeBackofficeProcessor {
     }
 
     // @GET
+    // @Transactional
     // @Produces(html)
     // @Path("edit/{id}")
     // public TemplateInstance edit(@RestPath("id") Long id) {
@@ -863,6 +917,7 @@ public class RenardeBackofficeProcessor {
 
     // @GET
     // @Produces(html)
+    // @Transactional
     // @Path("create")
     // public TemplateInstance create() {
     //   return Templates.create(BackUtil.entityValues(User.listAll()));
@@ -876,6 +931,7 @@ public class RenardeBackofficeProcessor {
             m.addAnnotation(Path.class).addValue("value", "create");
         }
         m.addAnnotation(GET.class);
+        m.addAnnotation(Transactional.class);
         m.addAnnotation(Produces.class).addValue("value", new String[] { MediaType.TEXT_HTML });
 
         ResultHandle instance = getTemplateInstance(m,
@@ -926,6 +982,21 @@ public class RenardeBackofficeProcessor {
                         MethodDescriptor.ofMethod(TemplateInstance.class, "data", TemplateInstance.class, String.class,
                                 Object.class),
                         instance, m.load(field.name + "CurrentValues"), data);
+            }
+            if (mode == Mode.EDIT
+                    && field.type == ModelField.Type.Binary
+                    && field.entityField.descriptor.equals("Ljava/sql/Blob;")) {
+                ResultHandle blob = m.invokeVirtualMethod(
+                        MethodDescriptor.ofMethod(entityClass, field.entityField.getGetterName(),
+                                field.entityField.descriptor),
+                        entityVariable);
+                // call length to preload it
+                data = m.invokeInterfaceMethod(MethodDescriptor.ofMethod(Blob.class, "length", long.class), blob);
+                instance = m.invokeInterfaceMethod(
+                        MethodDescriptor.ofMethod(TemplateInstance.class, "data", TemplateInstance.class, String.class,
+                                Object.class),
+                        instance, m.load(field.name + "Length"), data);
+                // instance.data("blobLength", entity.blob.length()))
             }
         }
         m.returnValue(instance);
