@@ -986,17 +986,25 @@ public class RenardeBackofficeProcessor {
             if (mode == Mode.EDIT
                     && field.type == ModelField.Type.Binary
                     && field.entityField.descriptor.equals("Ljava/sql/Blob;")) {
+                // if(entity.blob != null) instance.data("blobLength", entity.blob.length()))
                 ResultHandle blob = m.invokeVirtualMethod(
                         MethodDescriptor.ofMethod(entityClass, field.entityField.getGetterName(),
                                 field.entityField.descriptor),
                         entityVariable);
-                // call length to preload it
-                data = m.invokeInterfaceMethod(MethodDescriptor.ofMethod(Blob.class, "length", long.class), blob);
-                instance = m.invokeInterfaceMethod(
-                        MethodDescriptor.ofMethod(TemplateInstance.class, "data", TemplateInstance.class, String.class,
-                                Object.class),
-                        instance, m.load(field.name + "Length"), data);
-                // instance.data("blobLength", entity.blob.length()))
+                BranchResult ifBranch = m.ifNotNull(blob);
+                try (BytecodeCreator trueBranch = ifBranch.trueBranch()) {
+                    // call length to preload it
+                    ResultHandle blob2 = trueBranch.invokeVirtualMethod(
+                            MethodDescriptor.ofMethod(entityClass, field.entityField.getGetterName(),
+                                    field.entityField.descriptor),
+                            entityVariable);
+                    data = trueBranch.invokeInterfaceMethod(MethodDescriptor.ofMethod(Blob.class, "length", long.class), blob2);
+                    trueBranch.invokeInterfaceMethod(
+                            MethodDescriptor.ofMethod(TemplateInstance.class, "data", TemplateInstance.class, String.class,
+                                    Object.class),
+                            instance, trueBranch.load(field.name + "Length"), data);
+                }
+                ifBranch.falseBranch().close();
             }
         }
         m.returnValue(instance);
