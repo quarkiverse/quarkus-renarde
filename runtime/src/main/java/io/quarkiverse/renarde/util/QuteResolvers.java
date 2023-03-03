@@ -33,6 +33,7 @@ public class QuteResolvers {
 
     static class MessageKey {
         public final String key;
+        public boolean isPendingAppendOperation;
 
         public MessageKey(String key) {
             if (key.startsWith("'") && key.endsWith("'")) {
@@ -81,6 +82,13 @@ public class QuteResolvers {
                     MessageKey base = ((MessageKey) ctx.getBase());
                     String name = ctx.getName().strip();
                     if (name.equals("+")) {
+                        if (ctx.getParams().isEmpty()) {
+                            // if the + is not followed by parameter, or a direct new line, for example if it is followed by a space then a new line
+                            // we will get empty parameters and get called again later with what's on the next line, so remember we wanted to append
+                            base.isPendingAppendOperation = true;
+                            return base;
+                        }
+                        base.isPendingAppendOperation = false;
                         return evaluateParameters(ctx, (ctx2, params) -> {
                             if (params.size() == 1) {
                                 return base.append(params.get(0).toString(), false);
@@ -89,7 +97,18 @@ public class QuteResolvers {
                             }
                         });
                     } else {
-                        MessageKey key = ((MessageKey) ctx.getBase()).append(name, true);
+                        if (base.isPendingAppendOperation) {
+                            // remove quoting
+                            // this one is nuts, but I've seen it
+                            if (name.endsWith(")")) {
+                                name = name.substring(0, name.length() - 1);
+                            }
+                            if (name.startsWith("'") && name.endsWith("'")) {
+                                name = name.substring(1, name.length() - 1);
+                            }
+                        }
+                        MessageKey key = base.append(name, !base.isPendingAppendOperation);
+                        base.isPendingAppendOperation = false;
                         return key.renderIfParameters(ctx);
                     }
                 })

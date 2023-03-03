@@ -62,6 +62,7 @@ public class LanguageTest {
                             + "{m:my.greeting}\n"
                             + "{m:'my.greeting.' + 'something'}\n"
                             + "{m:'my.greeting.' + val + \n '.something'}\n"
+                            + "{m:'my.greeting.' + val +\n '.something'}\n"
                             + "{m:my.params('STEF')}\n"
                             + "{m:missing}"),
                             "templates/MyController/typeUnsafe.txt")
@@ -179,14 +180,14 @@ public class LanguageTest {
                 .get("/type-unsafe").then()
                 .statusCode(200)
                 .body(Matchers.is(
-                        "english message\nenglish STEF message\nenglish message\nenglish message\nenglish message with code\nenglish STEF message\nmissing"));
+                        "english message\nenglish STEF message\nenglish message\nenglish message\nenglish message with code\nenglish message with code\nenglish STEF message\nmissing"));
         RestAssured
                 .given()
                 .cookie(I18N.LANGUAGE_COOKIE_NAME, "fr")
                 .get("/type-unsafe").then()
                 .statusCode(200)
                 .body(Matchers.is(
-                        "message français\nmessage STEF français\nmessage français\nmessage français\nmessage français avec code\nmessage STEF français\nmissing"));
+                        "message français\nmessage STEF français\nmessage français\nmessage français\nmessage français avec code\nmessage français avec code\nmessage STEF français\nmissing"));
         // now try a missing language
         RestAssured
                 .given()
