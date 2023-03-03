@@ -249,7 +249,7 @@ public class LanguageTest {
         }
     }
 
-    @MessageBundle
+    @MessageBundle(value = "msg")
     public static interface MyBundle {
         @Message
         String my_greeting();
