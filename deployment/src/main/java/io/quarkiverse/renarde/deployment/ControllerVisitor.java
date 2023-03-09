@@ -313,8 +313,8 @@ public class ControllerVisitor implements BiFunction<String, ClassVisitor, Class
             // same signature makes it easier for callers
             MethodVisitor visitor = super.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC,
                     "__redirect$" + method.name, method.descriptor, null, null);
-            // redirect(uri(false, param1, param2))
-            visitor.visitInsn(Opcodes.ICONST_0);
+            // redirect(uri(true, param1, param2))
+            visitor.visitInsn(Opcodes.ICONST_1);
             int index = 0;
             for (Type parameterType : method.parameters) {
                 visitor.visitVarInsn(AsmUtil.getLoadOpcode(parameterType), index);

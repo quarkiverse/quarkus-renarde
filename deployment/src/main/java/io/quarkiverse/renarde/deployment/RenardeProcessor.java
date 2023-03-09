@@ -497,9 +497,15 @@ public class RenardeProcessor {
                         continue;
                     }
                     String simpleControllerName = controllerClass.className;
+                    // strip package
                     int lastDot = simpleControllerName.lastIndexOf('.');
                     if (lastDot != -1) {
                         simpleControllerName = simpleControllerName.substring(lastDot + 1);
+                    }
+                    // strip outer classes
+                    int lastDollar = simpleControllerName.lastIndexOf('$');
+                    if (lastDollar != -1) {
+                        simpleControllerName = simpleControllerName.substring(lastDollar + 1);
                     }
                     // register all methods for this controller, including super methods, but on this controller name
                     for (ControllerMethod method : controllerClass.getMethods(methodsByClass).values()) {

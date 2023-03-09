@@ -812,7 +812,8 @@ public class Application extends Controller {
 
 === Obtaining a URI in endpoints
 
-If you don't want a redirect but need a URI to a given endpoint, you can use the `Router.getURI` methods, by
+If you don't want a redirect but need a URI to a given endpoint, you can use the `Router.getURI` 
+or `Router.getAbsoluteURI` methods, by
 passing them a method reference to the endpoint you want and the required parameters:
 
 [source,java]
@@ -849,6 +850,9 @@ public class Application extends Controller {
     }
 }
 ----
+
+NOTE: If you plan on using `Response.seeOther` or `Controller.seeOther`, make sure to use the `Router.getAbsoluteURI`
+variant, especially if you use the `quarkus.http.root-path` configuration, otherwise your URIs contain that prefix twice.
 
 === Obtaining a URI in Qute views
 
