@@ -32,6 +32,11 @@ public class AugmentedController extends Controller {
         Router.getURI(AugmentedController::hello, new Object[] { "foo", "bar" });
         // is replaced by
         AugmentedController.__urivarargs$hello(false, "foo", "bar");
+
+        // calling
+        Router.getAbsoluteURI(AugmentedController::hello, new Object[] { "foo", "bar" });
+        // is replaced by
+        AugmentedController.__urivarargs$hello(true, "foo", "bar");
     }
 
     // FIXME: test with path param in @Path annotation
@@ -50,7 +55,7 @@ public class AugmentedController extends Controller {
      * This triggers a redirect to the action. Does not return.
      */
     public static String __redirect$hello(String id, String param) {
-        Controller.seeOther(AugmentedController.__uri$hello(false, id, param));
+        Controller.seeOther(AugmentedController.__uri$hello(true, id, param));
         return null;
     }
 
