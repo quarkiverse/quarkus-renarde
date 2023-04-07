@@ -14,3 +14,5 @@ metadata:
     languages:
     - "java"
     artifact: "io.quarkiverse.renarde:quarkus-renarde:codestarts:jar:${project.version}"
+  cli-plugins:
+  - "${project.groupId}:quarkus-renarde-cli-debian:${project.version}"
