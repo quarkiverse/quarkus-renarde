@@ -57,6 +57,7 @@ import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.ApplicationArchivesBuildItem;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.GeneratedResourceBuildItem;
+import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.gizmo.AssignableResultHandle;
 import io.quarkus.gizmo.BranchResult;
 import io.quarkus.gizmo.BytecodeCreator;
@@ -75,6 +76,7 @@ import io.quarkus.qute.Template;
 import io.quarkus.qute.TemplateInstance;
 import io.quarkus.qute.TemplateLocator;
 import io.quarkus.qute.Variant;
+import io.quarkus.qute.deployment.TemplatePathBuildItem;
 import io.quarkus.qute.runtime.TemplateProducer;
 import io.quarkus.resteasy.reactive.spi.GeneratedJaxRsResourceBuildItem;
 import io.quarkus.resteasy.reactive.spi.GeneratedJaxRsResourceGizmoAdaptor;
@@ -82,7 +84,8 @@ import io.smallrye.common.annotation.Blocking;
 
 public class RenardeBackofficeProcessor {
 
-    public static final String URI_PREFIX = "/_renarde/backoffice";
+    public static final String URI_PREFIX_NO_SLASH = "_renarde/backoffice";
+    public static final String URI_PREFIX = "/" + URI_PREFIX_NO_SLASH;
     public static final String PACKAGE_PREFIX = "rest._renarde.backoffice";
 
     public enum Mode {
@@ -99,6 +102,8 @@ public class RenardeBackofficeProcessor {
     public void processModel(HibernateMetamodelForFieldAccessBuildItem metamodel,
             CombinedIndexBuildItem index,
             BuildProducer<GeneratedResourceBuildItem> output,
+            BuildProducer<NativeImageResourceBuildItem> nativeImageResources,
+            BuildProducer<TemplatePathBuildItem> templates,
             BuildProducer<GeneratedJaxRsResourceBuildItem> jaxrsOutput,
             ApplicationArchivesBuildItem applicationArchives) {
         Engine engine = Engine.builder()
@@ -138,9 +143,9 @@ public class RenardeBackofficeProcessor {
                     + indexControllers);
         }
 
-        String mainTemplate = URI_PREFIX + "/main.html";
+        String mainTemplate = URI_PREFIX_NO_SLASH + "/main.html";
         TemplateInstance template = engine.getTemplate("main.qute").instance();
-        render(output, template, "main.html");
+        render(output, nativeImageResources, templates, template, "main.html");
 
         generateAllController(jaxrsOutput, indexControllers);
 
@@ -175,31 +180,38 @@ public class RenardeBackofficeProcessor {
             TemplateInstance indexTemplate = engine.getTemplate("entity-index.qute").instance();
             indexTemplate.data("entity", simpleName);
             indexTemplate.data("mainTemplate", mainTemplate);
-            render(output, indexTemplate, simpleName + "/index.html");
+            render(output, nativeImageResources, templates, indexTemplate, simpleName + "/index.html");
 
             TemplateInstance editTemplate = engine.getTemplate("entity-edit.qute").instance();
             editTemplate.data("entity", simpleName);
             editTemplate.data("fields", fields);
             editTemplate.data("mainTemplate", mainTemplate);
-            render(output, editTemplate, simpleName + "/edit.html");
+            render(output, nativeImageResources, templates, editTemplate, simpleName + "/edit.html");
 
             TemplateInstance createTemplate = engine.getTemplate("entity-create.qute").instance();
             createTemplate.data("entity", simpleName);
             createTemplate.data("fields", fields);
             createTemplate.data("mainTemplate", mainTemplate);
-            render(output, createTemplate, simpleName + "/create.html");
+            render(output, nativeImageResources, templates, createTemplate, simpleName + "/create.html");
         }
 
         Collections.sort(entities);
         template = engine.getTemplate("index.qute").instance();
         template.data("entities", entities);
         template.data("mainTemplate", mainTemplate);
-        render(output, template, "index.html");
+        render(output, nativeImageResources, templates, template, "index.html");
     }
 
-    private void render(BuildProducer<GeneratedResourceBuildItem> output, TemplateInstance template, String templateId) {
-        output.produce(new GeneratedResourceBuildItem("templates/" + URI_PREFIX + "/" + templateId,
-                template.render().getBytes(StandardCharsets.UTF_8)));
+    private void render(BuildProducer<GeneratedResourceBuildItem> output,
+            BuildProducer<NativeImageResourceBuildItem> nativeImageResources,
+            BuildProducer<TemplatePathBuildItem> templates,
+            TemplateInstance template, String templateId) {
+        String path = "templates" + URI_PREFIX + "/" + templateId;
+        String rendered = template.render();
+        output.produce(new GeneratedResourceBuildItem(path,
+                rendered.getBytes(StandardCharsets.UTF_8)));
+        nativeImageResources.produce(new NativeImageResourceBuildItem(path));
+        templates.produce(new TemplatePathBuildItem(path.substring(10), java.nio.file.Path.of(path), rendered));
     }
 
     private void generateEntityController(ClassInfo entityClass, IndexView index, String entityClassName,
@@ -241,7 +253,7 @@ public class RenardeBackofficeProcessor {
                             entities);
                 }
 
-                ResultHandle instance = getTemplateInstance(m, URI_PREFIX + "/" + simpleName + "/index");
+                ResultHandle instance = getTemplateInstance(m, URI_PREFIX_NO_SLASH + "/" + simpleName + "/index");
                 instance = m.invokeInterfaceMethod(
                         MethodDescriptor.ofMethod(TemplateInstance.class, "data", TemplateInstance.class, String.class,
                                 Object.class),
@@ -935,7 +947,7 @@ public class RenardeBackofficeProcessor {
         m.addAnnotation(Produces.class).addValue("value", new String[] { MediaType.TEXT_HTML });
 
         ResultHandle instance = getTemplateInstance(m,
-                URI_PREFIX + "/" + simpleName + "/" + (mode == Mode.CREATE ? "create" : "edit"));
+                URI_PREFIX_NO_SLASH + "/" + simpleName + "/" + (mode == Mode.CREATE ? "create" : "edit"));
         AssignableResultHandle entityVariable = null;
         if (mode == Mode.EDIT) {
             entityVariable = findEntityById(m, controllerClass, entityClass);
@@ -1076,7 +1088,7 @@ public class RenardeBackofficeProcessor {
                 //              TemplateInstance instance = template.instance();
                 //              return instance;
 
-                ResultHandle instance = getTemplateInstance(m, URI_PREFIX + "/index");
+                ResultHandle instance = getTemplateInstance(m, URI_PREFIX_NO_SLASH + "/index");
                 m.returnValue(instance);
             }
         }
