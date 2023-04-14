@@ -1,3 +1,5 @@
+\{@{entityClass} entity}
+
 \{#include {mainTemplate} }
 \{#title}{entity}\{/title}
 \{#moreStyles}

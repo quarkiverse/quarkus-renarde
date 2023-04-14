@@ -1,3 +1,5 @@
+\{@{entityClass} entity}
+
 \{#include {mainTemplate} }
 \{#title}{entity} \{entity.toString()}\{/title}
 \{#moreStyles}
@@ -41,7 +43,7 @@
      <label class="form-check-label" for="{field.name}">{field.label}</label>
     </div>
    {#case Relation}
-    \{#crud_select name="{field.name}" value=entity.{field.name}.id.toString() values={field.name}PossibleValues nullable=true/}
+    \{#crud_select name="{field.name}" value=entity.{field.name}.id.toString()?? values={field.name}PossibleValues nullable=true/}
    {#case MultiRelation}
     \{#crud_select name="{field.name}" value={field.name}CurrentValues values={field.name}PossibleValues nullable=true multiple=true/}
    {#case MultiMultiRelation}
@@ -62,7 +64,7 @@
        <label class="form-check-label" for="{field.name}$unset">Delete</label>
       </div>
       <a href="../\{entity.id}/{field.name}">Current file</a>
-      (\{#if entity.{field.name}.name??}\{entity.{field.name}.name}\{/if}
+      ({#if field.entityField.descriptor.equals('Lio/quarkiverse/renarde/jpa/NamedBlob;')}\{#if entity.{field.name}.name??}\{entity.{field.name}.name}\{/if}{/if}
        {#if field.entityField.descriptor.equals('Ljava/sql/Blob;')}
         \{{field.name}Length.binarySize}
        {#else}

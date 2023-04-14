@@ -179,11 +179,13 @@ public class RenardeBackofficeProcessor {
 
             TemplateInstance indexTemplate = engine.getTemplate("entity-index.qute").instance();
             indexTemplate.data("entity", simpleName);
+            indexTemplate.data("entityClass", entityName.toString());
             indexTemplate.data("mainTemplate", mainTemplate);
             render(output, nativeImageResources, templates, indexTemplate, simpleName + "/index.html");
 
             TemplateInstance editTemplate = engine.getTemplate("entity-edit.qute").instance();
             editTemplate.data("entity", simpleName);
+            editTemplate.data("entityClass", entityName.toString());
             editTemplate.data("fields", fields);
             editTemplate.data("mainTemplate", mainTemplate);
             render(output, nativeImageResources, templates, editTemplate, simpleName + "/edit.html");
