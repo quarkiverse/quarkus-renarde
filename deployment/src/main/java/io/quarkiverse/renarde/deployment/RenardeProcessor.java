@@ -321,7 +321,8 @@ public class RenardeProcessor {
         paramConverterBuildItems.produce(new ParamConverterBuildItem(MyParamConverters.class.getName(), Priorities.USER, true));
 
         additionalIndexedClassesBuildItems.produce(
-                new AdditionalIndexedClassesBuildItem(Filters.class.getName(), RedirectExceptionMapper.class.getName()));
+                new AdditionalIndexedClassesBuildItem(Filters.class.getName(), RedirectExceptionMapper.class.getName(),
+                        Controller.class.getName()));
 
     }
 
