@@ -6,6 +6,7 @@ import jakarta.inject.Inject;
 
 import io.quarkiverse.renarde.impl.RenardeConfig;
 import io.quarkus.smallrye.jwt.runtime.auth.JWTAuthMechanism;
+import io.quarkus.smallrye.jwt.runtime.auth.SmallRyeJwtConfig;
 import io.quarkus.vertx.http.runtime.security.ChallengeData;
 import io.smallrye.mutiny.Uni;
 import io.vertx.core.http.Cookie;
@@ -26,6 +27,15 @@ public class RenardeJWTAuthMechanism extends JWTAuthMechanism {
 
     // FIXME: make it configurable
     String locationCookie = "quarkus-redirect-location";
+
+    // for CDI proxy
+    RenardeJWTAuthMechanism() {
+        this(null);
+    }
+
+    public RenardeJWTAuthMechanism(SmallRyeJwtConfig config) {
+        super(config);
+    }
 
     @Override
     public int getPriority() {
