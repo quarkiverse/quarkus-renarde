@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 
 import javax.crypto.AEADBadTagException;
+import javax.crypto.BadPaddingException;
 
 import org.jose4j.jwt.consumer.ErrorCodes;
 import org.jose4j.jwt.consumer.InvalidJwtException;
@@ -72,7 +73,8 @@ public class AuthenticationFailedExceptionMapper {
                     redirectToRoot(routingContext, "Invalid session (bad JWT), you've been logged out");
                 }
                 // This happens when the private/public keys change, like in DEV mode
-                if (throwable instanceof AEADBadTagException) {
+                if (throwable instanceof AEADBadTagException
+                        || throwable instanceof BadPaddingException) {
                     redirectToRoot(routingContext, "Invalid session (bad signature), you've been logged out");
                     return;
                 }
