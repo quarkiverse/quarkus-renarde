@@ -143,6 +143,10 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals("This field is required",
                 document.select("input[name='requiredString'] ~ small.form-text").text());
         Assertions.assertEquals(1, document.select("textarea[name='lobString']").size());
+        Assertions.assertEquals(1, document.select("textarea[name='longString1']").size());
+        Assertions.assertEquals(1, document.select("textarea[name='longString2']").size());
+        Assertions.assertEquals(1, document.select("textarea[name='longString3']").size());
+        Assertions.assertEquals(1, document.select("textarea[name='longString4']").size());
 
         Elements enumeration = document.select("select[name='enumeration']");
         Assertions.assertEquals(1, enumeration.size());
@@ -214,6 +218,10 @@ public class RenardeBackofficeTest {
                 .multiPart("string", "aString")
                 .multiPart("requiredString", "aString")
                 .multiPart("lobString", "aString")
+                .multiPart("longString1", "aString")
+                .multiPart("longString2", "aString")
+                .multiPart("longString3", "aString")
+                .multiPart("longString4", "aString")
                 .multiPart("enumeration", "B")
                 .multiPart("date", JavaExtensions.htmlNormalised(date))
                 .multiPart("localDateTime", JavaExtensions.htmlNormalised(localDateTime))
@@ -256,6 +264,10 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(localDateTime.toLocalTime(), entity.localTime);
         Assertions.assertEquals("aString", entity.string);
         Assertions.assertEquals("aString", entity.lobString);
+        Assertions.assertEquals("aString", entity.longString1);
+        Assertions.assertEquals("aString", entity.longString2);
+        Assertions.assertEquals("aString", entity.longString3);
+        Assertions.assertEquals("aString", entity.longString4);
         Assertions.assertEquals("aString", entity.requiredString);
         Assertions.assertEquals(ExampleEnum.B, entity.enumeration);
         Assertions.assertNotNull(entity.oneToOneOwning);
@@ -369,6 +381,10 @@ public class RenardeBackofficeTest {
         entity.primitiveChar = 'a';
         entity.string = "aString";
         entity.lobString = "aString";
+        entity.longString1 = "aString";
+        entity.longString2 = "aString";
+        entity.longString3 = "aString";
+        entity.longString4 = "aString";
         entity.requiredString = "aString";
         entity.date = date;
         entity.localDateTime = localDateTime;
@@ -439,6 +455,10 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals("This field is required",
                 document.select("input[name='requiredString'] ~ small.form-text").text());
         Assertions.assertEquals("aString", document.select("textarea[name='lobString']").text());
+        Assertions.assertEquals("aString", document.select("textarea[name='longString1']").text());
+        Assertions.assertEquals("aString", document.select("textarea[name='longString2']").text());
+        Assertions.assertEquals("aString", document.select("textarea[name='longString3']").text());
+        Assertions.assertEquals("aString", document.select("textarea[name='longString4']").text());
 
         Elements enumeration = document.select("select[name='enumeration']");
         Assertions.assertEquals(1, enumeration.size());
@@ -522,6 +542,10 @@ public class RenardeBackofficeTest {
                 .multiPart("string", "otherString")
                 .multiPart("requiredString", "otherString")
                 .multiPart("lobString", "otherString")
+                .multiPart("longString1", "otherString")
+                .multiPart("longString2", "otherString")
+                .multiPart("longString3", "otherString")
+                .multiPart("longString4", "otherString")
                 .multiPart("enumeration", "A")
                 .multiPart("date", JavaExtensions.htmlNormalised(otherDate))
                 .multiPart("localDateTime", JavaExtensions.htmlNormalised(otherLocalDateTime))
@@ -563,6 +587,10 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals("otherString", entity.string);
         Assertions.assertEquals("otherString", entity.requiredString);
         Assertions.assertEquals("otherString", entity.lobString);
+        Assertions.assertEquals("otherString", entity.longString1);
+        Assertions.assertEquals("otherString", entity.longString2);
+        Assertions.assertEquals("otherString", entity.longString3);
+        Assertions.assertEquals("otherString", entity.longString4);
         Assertions.assertEquals(ExampleEnum.A, entity.enumeration);
         Assertions.assertEquals(oneToOnes.get(1).id, entity.oneToOneOwning.id);
         Assertions.assertEquals(oneToManys.get(1).id, entity.manyToOne.id);

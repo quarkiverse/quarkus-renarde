@@ -1,6 +1,7 @@
 package model;
 
 import java.sql.Blob;
+import java.sql.Types;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -16,6 +17,10 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.validation.constraints.Size;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.validator.constraints.Length;
 
 import io.quarkiverse.renarde.jpa.NamedBlob;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
@@ -73,6 +78,21 @@ public class ExampleEntity extends PanacheEntity {
 
     @Lob
     public String lobString;
+
+    // jdbc length
+    @Column(length = 10000)
+    public String longString1;
+
+    // hibernate validation
+    @Length(max = 10000)
+    public String longString2;
+
+    // jakarta validation
+    @Size(max = 10000)
+    public String longString3;
+
+    @JdbcTypeCode(Types.LONGVARCHAR)
+    public String longString4;
 
     @Column(nullable = false)
     public String requiredString;

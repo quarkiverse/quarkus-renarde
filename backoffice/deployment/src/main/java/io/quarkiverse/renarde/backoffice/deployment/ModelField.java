@@ -1,6 +1,7 @@
 package io.quarkiverse.renarde.backoffice.deployment;
 
 import java.lang.annotation.Annotation;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,7 +13,10 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.validator.constraints.Length;
 import org.jboss.jandex.AnnotationInstance;
 import org.jboss.jandex.AnnotationValue;
 import org.jboss.jandex.ClassInfo;
@@ -50,6 +54,10 @@ public class ModelField {
     private static final DotName DOTNAME_ONETOONE = DotName.createSimple(OneToOne.class.getName());
     private static final DotName DOTNAME_ENUMERATED = DotName.createSimple(Enumerated.class.getName());
     private static final DotName DOTNAME_COLUMN = DotName.createSimple(Column.class.getName());
+    private static final DotName DOTNAME_LENGTH = DotName.createSimple(Length.class.getName());
+    private static final DotName DOTNAME_SIZE = DotName.createSimple(Size.class.getName());
+    private static final DotName DOTNAME_JDBC_TYPE_CODE = DotName.createSimple(JdbcTypeCode.class.getName());
+    private static final DotName DOTNAME_TYPES = DotName.createSimple(Types.class.getName());
     private static final DotName DOTNAME_LOB = DotName.createSimple(Lob.class.getName());
     public static final String NAMED_BLOB_DESCRIPTOR = "L" + NamedBlob.class.getName().replace('.', '/') + ";";
 
@@ -73,6 +81,7 @@ public class ModelField {
         ClassInfo classInfo = index.getClassByName(DotName.createSimple(entityClass));
         FieldInfo field = classInfo.field(entityField.name);
         AnnotationInstance oneToOne = field.annotation(DOTNAME_ONETOONE);
+        AnnotationInstance column = field.annotation(DOTNAME_COLUMN);
         if (entityField.descriptor.equals("B")) {
             this.type = Type.Number;
             min = Byte.MIN_VALUE;
@@ -114,7 +123,19 @@ public class ModelField {
                 || entityField.descriptor.equals(NAMED_BLOB_DESCRIPTOR)) {
             this.type = Type.Binary;
         } else if (entityField.descriptor.equals("Ljava/lang/String;")) {
-            if (field.hasAnnotation(DOTNAME_LOB)) {
+            AnnotationInstance jdbcTypeCode = field.annotation(DOTNAME_JDBC_TYPE_CODE);
+            AnnotationInstance length = field.annotation(DOTNAME_LENGTH);
+            AnnotationInstance size = field.annotation(DOTNAME_SIZE);
+            if (column != null && column.value("length") != null && column.value("length").asInt() > 255) {
+                this.type = Type.LargeText;
+            } else if (length != null && length.value("max") != null && length.value("max").asInt() > 255) {
+                this.type = Type.LargeText;
+            } else if (size != null && size.value("max") != null && size.value("max").asInt() > 255) {
+                this.type = Type.LargeText;
+            } else if (jdbcTypeCode != null && jdbcTypeCode.value() != null
+                    && jdbcTypeCode.value().asInt() == Types.LONGVARCHAR) {
+                this.type = Type.LargeText;
+            } else if (field.hasAnnotation(DOTNAME_LOB)) {
                 this.type = Type.LargeText;
             } else {
                 this.type = Type.Text;
@@ -183,7 +204,6 @@ public class ModelField {
                 }
             }
         }
-        AnnotationInstance column = field.annotation(DOTNAME_COLUMN);
         if (column != null && column.value("nullable") != null && !column.value("nullable").asBoolean()) {
             validation.add(NotEmpty.class);
             help = "This field is required";
