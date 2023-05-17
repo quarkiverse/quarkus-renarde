@@ -777,7 +777,8 @@ public class RenardeProcessor {
                                     // messages_lang.properties
                                     language = name.substring(9, name.length() - 11);
                                 }
-                                languageToPath.put(language, filePath);
+                                Path relativePath = root.relativize(filePath);
+                                languageToPath.put(language, relativePath);
                             }
                         }
                     } catch (IOException e) {
@@ -790,7 +791,6 @@ public class RenardeProcessor {
         // FIXME: should not cause a full restart
         // Hot deployment
         for (Path messageFileName : languageToPath.values()) {
-            // FIXME: perhaps relative path?
             watchedFiles.produce(new HotDeploymentWatchedFileBuildItem(messageFileName.toString()));
         }
 

@@ -1,11 +1,11 @@
 package io.quarkiverse.renarde.impl;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -37,7 +37,15 @@ public class RenardeConfig {
 
     void addLanguageBundle(String language, String bundlePath) {
         Properties bundle = new Properties();
-        try (Reader reader = Files.newBufferedReader(Path.of(bundlePath), StandardCharsets.UTF_8)) {
+        if (!bundlePath.startsWith("/")) {
+            bundlePath = "/" + bundlePath;
+        }
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        if (cl == null) {
+            cl = RenardeConfig.class.getClassLoader();
+        }
+        try (Reader reader = new BufferedReader(
+                new InputStreamReader(cl.getResourceAsStream(bundlePath), StandardCharsets.UTF_8))) {
             bundle.load(reader);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
