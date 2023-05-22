@@ -87,7 +87,7 @@ public class AuthenticationFailedExceptionMapper {
                 Map<String, Object> map = new HashMap<>();
                 // FIXME: format?
                 map.put("message", message);
-                Flash.setFlashCookie(routingContext.response(), map);
+                Flash.setFlashCookie(routingContext.request(), routingContext.response(), map);
                 // FIXME: URI, perhaps redirect to login page?
                 // Note that this calls end()
                 routingContext.response().setStatusCode(303);
