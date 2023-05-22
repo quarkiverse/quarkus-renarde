@@ -41,10 +41,10 @@ public class Flash {
     public final static String FLASH_COOKIE_NAME = "_renarde_flash";
 
     public void setFlashCookie() {
-        setFlashCookie(request.response(), futureValues);
+        setFlashCookie(request, request.response(), futureValues);
     }
 
-    public static void setFlashCookie(HttpServerResponse response, Map<String, Object> values) {
+    public static void setFlashCookie(HttpServerRequest request, HttpServerResponse response, Map<String, Object> values) {
         // FIXME: expiry, others?
         // in some cases with exception mappers, it appears the filters get invoked twice
         if (!response.headWritten())
@@ -52,7 +52,8 @@ public class Flash {
                     Cookie.cookie(FLASH_COOKIE_NAME, encodeCookieValue(values))
                             .setPath("/")
                             .setHttpOnly(true)
-                            .setSameSite(CookieSameSite.LAX));
+                            .setSameSite(CookieSameSite.LAX)
+                            .setSecure(request.isSSL()));
     }
 
     public static String encodeCookieValue(Map<String, Object> values) {

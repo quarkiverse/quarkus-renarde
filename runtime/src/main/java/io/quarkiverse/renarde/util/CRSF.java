@@ -42,7 +42,9 @@ public class CRSF {
          */
         if (!request.response().headWritten() && crsfToken != null)
             request.response().addCookie(
-                    Cookie.cookie(CRSF_COOKIE_NAME, crsfToken).setPath("/"));
+                    Cookie.cookie(CRSF_COOKIE_NAME, crsfToken)
+                            .setPath("/")
+                            .setSecure(request.isSSL()));
     }
 
     public void readCRSFCookie() {

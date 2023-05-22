@@ -89,7 +89,8 @@ public class I18N {
             response.addCookie(
                     io.vertx.core.http.Cookie.cookie(LANGUAGE_COOKIE_NAME, language)
                             .setPath("/")
-                            .setSameSite(CookieSameSite.LAX));
+                            .setSameSite(CookieSameSite.LAX)
+                            .setSecure(request.isSSL()));
         }
     }
 

@@ -152,7 +152,8 @@ public class RenardeResourceTest {
                 .cookie(Flash.FLASH_COOKIE_NAME,
                         RestAssuredMatchers.detailedCookie()
                                 .sameSite("Lax")
-                                .httpOnly(true))
+                                .httpOnly(true)
+                                .secured("https".equals(baseURI.getProtocol())))
                 .extract().header("Location");
         given()
                 .redirects().follow(false)
