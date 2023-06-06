@@ -21,6 +21,11 @@
     <module>jpa</module>
     <module>backoffice</module>
   </modules>
+  <scm>
+    <connection>:git:git@github.com:quarkiverse/quarkus-renarde.git</connection>
+    <developerConnection>scm:git:git@github.com:quarkiverse/quarkus-renarde.git</developerConnection>
+    <url>https://github.com/quarkiverse/quarkus-renarde</url>
+  </scm>
   <properties>
     <compiler-plugin.version>3.8.1</compiler-plugin.version>
     <maven.compiler.release>11</maven.compiler.release>
