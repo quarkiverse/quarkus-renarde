@@ -1100,31 +1100,42 @@ The Flash scope only lasts from one request to the next and is cleared at each r
 
 == htmx
 
-If you want to use htmx with Renarde, we added some an extra layer to make things more convenient:
+If you want to use https://htmx.org/[htmx] with Renarde, we added an extra layer to make things more convenient:
 [source,java]
 ----
 public class Application extends HxController {
+
+    @CheckedTemplate
+    public static class Templates {
+        public static native TemplateInstance foo(int a, int b);
+        public static native TemplateInstance foo$sectionA(int a); // <1>
+        public static native TemplateInstance foo$sectionB(int b); // <1>
+
+        public static native TemplateInstance bar();
+    }
+
     public TemplateInstance foo() {
-        if (isHxRequest()) { // <1>
-            return  concatTemplates( // <2>
-                    Templates.foo$a(),
-                    Templates.foo$b()
+        if (isHxRequest()) { // <2>
+            return  concatTemplates( // <3>
+                    Templates.foo$sectionA(1),
+                    Templates.foo$sectionB(2)
             );
         }
-        return Templates.foo();
+        return Templates.foo(1, 2);
     }
 
     public TemplateInstance bar() {
-        onlyHxRequest(); // <3>
-        this.hx(HxResponseHeader.TRIGGER, "refresh"); // <4>
+        onlyHxRequest(); // <4>
+        this.hx(HxResponseHeader.TRIGGER, "refresh"); // <5>
         return Templates.bar();
     }
 }
 ----
-<1> Check if this is a htmx request by looking for the `HX-Request` header or using flash data for redirects
-<2> https://htmx.org/attributes/hx-swap-oob/[Out of band swap] with different templates or https://quarkus.io/guides/qute-reference#fragments[fragments]
-<3> Only Hx requests are allowed, else it will fail with a BAD_REQUEST error
-<4> Flag the response with an https://htmx.org/reference/#response_headers[htmx response header]
+<1> https://quarkus.io/guides/qute-reference#fragments[Qute fragments] declarations
+<2> Check if this is a htmx request by looking for the `HX-Request` header or using flash data for redirects
+<3> https://htmx.org/attributes/hx-swap-oob/[Out of band swap] with different templates or https://quarkus.io/guides/qute-reference#fragments[fragments]
+<4> Only Hx requests are allowed, else it will fail with a BAD_REQUEST error
+<5> Flag the response with an https://htmx.org/reference/#response_headers[htmx response header]
 
 Some example projects with Quarkus Renarde and htmx:
 - https://github.com/ia3andy/renotes[a demo note-taking web app]
