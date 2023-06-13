@@ -16,7 +16,7 @@ import io.vertx.core.http.HttpServerResponse;
 /**
  * This is a Controller's overlay to simplify usage of Quarkus Renarde alongside {@see <a href="https://htmx.org/">htmx</a>}.
  */
-public class HxController extends Controller {
+public abstract class HxController extends Controller {
 
     public static final String HX_REQUEST_HEADER = "HX-Request";
 

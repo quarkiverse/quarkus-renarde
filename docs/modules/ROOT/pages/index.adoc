@@ -1098,6 +1098,38 @@ You can read values from the Flash scope in your Qute views using the `{flash:na
 
 The Flash scope only lasts from one request to the next and is cleared at each request.
 
+== htmx
+
+If you want to use htmx with Renarde, we added some an extra layer to make things more convenient:
+[source,java]
+----
+public class Application extends HxController {
+    public TemplateInstance foo() {
+        if (isHxRequest()) { // <1>
+            return  concatTemplates( // <2>
+                    Templates.foo$a(),
+                    Templates.foo$b()
+            );
+        }
+        return Templates.foo();
+    }
+
+    public TemplateInstance bar() {
+        onlyHxRequest(); // <3>
+        this.hx(HxResponseHeader.TRIGGER, "refresh"); // <4>
+        return Templates.bar();
+    }
+}
+----
+<1> Check if this is a htmx request by looking for the `HX-Request` header or using flash data for redirects
+<2> https://htmx.org/attributes/hx-swap-oob/[Out of band swap] with different templates or https://quarkus.io/guides/qute-reference#fragments[fragments]
+<3> Only Hx requests are allowed, else it will fail with a BAD_REQUEST error
+<4> Flag the response with an https://htmx.org/reference/#response_headers[htmx response header]
+
+Some example projects with Quarkus Renarde and htmx:
+- https://github.com/ia3andy/renotes[a demo note-taking web app]
+- https://github.com/ia3andy/quarkus-blast[a board game]
+
 == Security
 
 xref:security.adoc[Read the Renarde security guide]
