@@ -64,6 +64,7 @@ import io.quarkiverse.renarde.Controller;
 import io.quarkiverse.renarde.deployment.ControllerVisitor.ControllerClass;
 import io.quarkiverse.renarde.deployment.ControllerVisitor.ControllerMethod;
 import io.quarkiverse.renarde.deployment.ControllerVisitor.UriPart;
+import io.quarkiverse.renarde.htmx.HxController;
 import io.quarkiverse.renarde.impl.RenardeConfig;
 import io.quarkiverse.renarde.impl.RenardeRecorder;
 import io.quarkiverse.renarde.router.Router;
@@ -150,6 +151,8 @@ public class RenardeProcessor {
     public static final DotName DOTNAME_SECURITY = DotName.createSimple("io.quarkiverse.renarde.security.RenardeSecurity");
     public static final DotName DOTNAME_RENARDE_FORM_LOGIN_CONTROLLER = DotName
             .createSimple("io.quarkiverse.renarde.security.impl.RenardeFormLoginController");
+
+    public static final DotName DOTNAME_HX_CONTROLLER = DotName.createSimple(HxController.class.getName());
     public static final DotName DOTNAME_LOGIN_PAGE = DotName.createSimple("io.quarkiverse.renarde.security.LoginPage");
     public static final DotName DOTNAME_NAMED = DotName.createSimple(Named.class.getName());
     public static final DotName DOTNAME_TEMPLATE_INSTANCE = DotName.createSimple(TemplateInstance.class.getName());
@@ -322,7 +325,7 @@ public class RenardeProcessor {
 
         additionalIndexedClassesBuildItems.produce(
                 new AdditionalIndexedClassesBuildItem(Filters.class.getName(), RedirectExceptionMapper.class.getName(),
-                        Controller.class.getName()));
+                        Controller.class.getName(), HxController.class.getName()));
 
     }
 
@@ -718,6 +721,11 @@ public class RenardeProcessor {
             }
         }
         return parameterAnnotations;
+    }
+
+    @BuildStep
+    void removeHxController(BuildProducer<ExcludedControllerBuildItem> excludedControllerBuildItems) {
+        excludedControllerBuildItems.produce(new ExcludedControllerBuildItem(DOTNAME_HX_CONTROLLER));
     }
 
     @BuildStep
