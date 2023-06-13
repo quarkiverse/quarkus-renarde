@@ -21,20 +21,15 @@ public abstract class HxController extends Controller {
     public static final String HX_REQUEST_HEADER = "HX-Request";
 
     public enum HxResponseHeader {
-        // triggers client side events
-        TRIGGER("HX-Trigger"),
-        // triggers a client-side redirect to a new location
-        REDIRECT("HX-Redirect"),
-        // triggers a client-side redirect to a new location that acts as a swap
-        LOCATION("HX-Location"),
-        // if set to "true" the client side will do a full refresh of the page
-        REFRESH("HX-Location"),
-        // pushes a new URL into the browser’s address bar
-        PUSH("HX-Push"),
-        // triggers client side events after the swap step
-        TRIGGER_AFTER_SWAP("HX-Trigger-After-Swap"),
-        // triggers client side events after the settle step
-        TRIGGER_AFTER_SETTLE("HX-Trigger-After-Settle");
+        TRIGGER("HX-Trigger"), // Allows you to trigger client side events
+        REDIRECT("HX-Redirect"), // Can be used to do a client-side redirect to a new location
+        LOCATION("HX-Location"), // Allows you to do a client-side redirect that does not do a full page reload
+        REFRESH("HX-Refresh"), // If set to “true” the client side will do a a full refresh of the page
+        PUSH_URL("HX-Push-Url"), // Replaces the current URL in the location bar
+        HX_RESWAP("HX-Reswap"), // Allows you to specify how the response will be swapped. See hx-swap for possible values
+        HX_RETARGET("HX-Retarget"), // A CSS selector that updates the target of the content update to a different element on the page
+        TRIGGER_AFTER_SWAP("HX-Trigger-After-Swap"), // allows you to trigger client side events
+        TRIGGER_AFTER_SETTLE("HX-Trigger-After-Settle"); // allows you to trigger client side events
 
         private final String key;
 
