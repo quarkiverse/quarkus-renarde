@@ -19,6 +19,7 @@
     <module>oidc-tests</module>
     <module>docs</module>
     <module>jpa</module>
+    <module>barcode</module>
     <module>backoffice</module>
   </modules>
   <scm>
@@ -32,6 +33,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.version>3.0.2.Final</quarkus.version>
+    <zxing.version>3.5.1</zxing.version>
   </properties>
   <dependencyManagement>
     <dependencies>

@@ -1141,6 +1141,64 @@ Some example projects with Quarkus Renarde and htmx:
 - https://github.com/ia3andy/renotes[a demo note-taking web app]
 - https://github.com/ia3andy/quarkus-blast[a board game]
 
+== Generating barcodes
+
+If you import the optional `quarkus-renarde-barcode` module, you can generate barcodes in your views or controllers.
+
+[source,xml,subs=attributes+]
+----
+<dependency>
+  <groupId>io.quarkiverse.renarde</groupId>
+  <artifactId>quarkus-renarde-barcode</artifactId>
+  <version>{quarkus-renarde-version}</version>
+</dependency>
+----
+
+We support the following barcode types, with custom Qute tags:
+
+[cols="1,1"]
+|===
+|Tag|Description 
+
+|`{#ean13 value/}`
+|Generate an https://en.wikipedia.org/wiki/International_Article_Number[EAN 13] barcode.
+
+|`{#ean8 value/}`
+|Generate an https://en.wikipedia.org/wiki/EAN-8[EAN 8] barcode.
+
+|`{#upca value/}`
+|Generate an https://en.wikipedia.org/wiki/Universal_Product_Code[UPC A] barcode.
+
+|`{#upce value/}`
+|Generate an https://en.wikipedia.org/wiki/Universal_Product_Code#UPC-E[UPC E] barcode.
+
+|`{#code39 value/}`
+|Generate a https://en.wikipedia.org/wiki/Code_39[Code 39] barcode.
+
+|`{#code93 value/}`
+|Generate a https://en.wikipedia.org/wiki/Code_93[Code 93] barcode.
+
+|`{#code128 value/}`
+|Generate a https://en.wikipedia.org/wiki/Code_128[Code 128] barcode.
+
+|`{#qrcode value/}`
+|Generate a https://en.wikipedia.org/wiki/QR_code[QR Code] barcode.
+
+|`{#datamatrix value/}`
+|Generate a https://en.wikipedia.org/wiki/Data_Matrix[Data Matrix] barcode.
+
+|=== 
+
+All these tags accept an optional `size` parameter that sets both the width and height of the barcode
+in pixels, or `width` and `height` parameters to specify different values. These values all default
+to `200` pixels. 
+
+The generated barcodes will be inline HTML images using the https://en.wikipedia.org/wiki/Data_URI_scheme[Data URI]
+scheme as an embedded https://en.wikipedia.org/wiki/PNG[PNG] image.
+
+If you wish to generate barcode images as PNG bytes or other formats, you can use the `io.quarkiverse.renarde.barcode.Barcode`
+helper class which allows you to generate bytecodes from your controllers.
+
 == Security
 
 xref:security.adoc[Read the Renarde security guide]
