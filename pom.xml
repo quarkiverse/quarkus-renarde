@@ -19,6 +19,7 @@
     <module>oidc-tests</module>
     <module>docs</module>
     <module>jpa</module>
+    <module>pdf</module>
     <module>barcode</module>
     <module>backoffice</module>
   </modules>
@@ -33,6 +34,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.version>3.0.2.Final</quarkus.version>
+    <openhtmltopdf.version>1.0.10</openhtmltopdf.version>
     <zxing.version>3.5.1</zxing.version>
   </properties>
   <dependencyManagement>

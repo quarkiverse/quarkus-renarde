@@ -1199,6 +1199,77 @@ scheme as an embedded https://en.wikipedia.org/wiki/PNG[PNG] image.
 If you wish to generate barcode images as PNG bytes or other formats, you can use the `io.quarkiverse.renarde.barcode.Barcode`
 helper class which allows you to generate bytecodes from your controllers.
 
+== Generating PDF documents
+
+If you import the optional `quarkus-renarde-pdf` module, you can generate PDF documents in your views.
+
+[source,xml,subs=attributes+]
+----
+<dependency>
+  <groupId>io.quarkiverse.renarde</groupId>
+  <artifactId>quarkus-renarde-pdf</artifactId>
+  <version>{quarkus-renarde-version}</version>
+</dependency>
+----
+
+There are lots of complicated ways to generate PDFs, but the simplest is to use the versatility of HTML for rendering
+and its printing support. So, very much like you can print HTML files using your browser, and there are special rendering
+rules in CSS, you do the same in Renarde PDF: you render your page in HTML, and simply add `@Produces(Pdf.APPLICATION_PDF)`
+to your controller to produce a PDF file:
+
+[source,java]
+----
+public class Application extends Controller {
+    
+    @CheckedTemplate
+    public static class Templates {
+        public static native TemplateInstance page();
+    }
+
+    // This will return a PDF file to the caller
+    @Produces(Pdf.APPLICATION_PDF)
+    public TemplateInstance pdf() {
+        return Templates.page();
+    }
+
+    // This will return HTML to the caller
+    public TemplateInstance html() {
+        return Templates.page();
+    }
+}
+----
+
+This way, the http://localhost:8080/Application/pdf and http://localhost:8080/Application/html
+pages will render the same document in either PDF or HTML, which allows you to use your browser and its
+developer tools to fine-tweak your document, until you're ready to turn it into a PDF, which is
+much harder to fine-tweak.
+
+As for the `templates/Application/page.html` template, it's regular HTML, but you can also
+take advantage of the https://developer.mozilla.org/en-US/docs/Web/CSS/Paged_Media[CSS print support]
+to set things like document page size, odd/even page margins, etc…:
+
+[source,java]
+----
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>This is the PDF document title</title>
+    <style>
+/* Override page size, and set page margin */
+@page {
+  size: 15cm 9cm;
+  margin: 1cm;
+}
+    </style>
+  </head>
+  <body>
+    Some PDF text.
+  </body>
+</html>
+----
+
+Note that the default page size is https://en.wikipedia.org/wiki/ISO_216#A_series[A4].
+
 == Security
 
 xref:security.adoc[Read the Renarde security guide]

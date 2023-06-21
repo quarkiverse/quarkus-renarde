@@ -1,0 +1,9 @@
+@page {
+  size: 15cm 9cm;
+  margin: 1cm;
+  border: 1px solid black;
+}
+
+p.external:before {
+	content: "external";
+}

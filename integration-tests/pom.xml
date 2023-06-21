@@ -37,6 +37,11 @@
     </dependency>
     <dependency>
       <groupId>io.quarkiverse.renarde</groupId>
+      <artifactId>quarkus-renarde-pdf</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkiverse.renarde</groupId>
       <artifactId>quarkus-renarde-backoffice</artifactId>
       <version>${project.version}</version>
     </dependency>
