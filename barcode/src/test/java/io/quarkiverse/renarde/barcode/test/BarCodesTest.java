@@ -141,23 +141,23 @@ public class BarCodesTest {
 
         BufferedImage image = imageReader.read(0);
 
-        if(format == BarcodeFormat.CODE_39) {
-        	Assertions.assertTrue(width <= image.getWidth());
-        	Assertions.assertTrue(width +10 > image.getWidth());
-        	Assertions.assertTrue(height <= image.getHeight());
-        	Assertions.assertTrue(height +10 > image.getHeight());
+        if (format == BarcodeFormat.CODE_39) {
+            Assertions.assertTrue(width <= image.getWidth());
+            Assertions.assertTrue(width + 10 > image.getWidth());
+            Assertions.assertTrue(height <= image.getHeight());
+            Assertions.assertTrue(height + 10 > image.getHeight());
         } else {
-        	Assertions.assertEquals(width, image.getWidth());
-        	Assertions.assertEquals(height, image.getHeight());
+            Assertions.assertEquals(width, image.getWidth());
+            Assertions.assertEquals(height, image.getHeight());
         }
         BinaryBitmap binaryBitmap = new BinaryBitmap(new HybridBinarizer(new BufferedImageLuminanceSource(image)));
 
         // Try reading the barcode except for Data Matrix and UPC E
-        if(format != BarcodeFormat.DATA_MATRIX
-        		&& format != BarcodeFormat.UPC_E) {
-        	Result result = new MultiFormatReader().decode(binaryBitmap);
-        	Assertions.assertEquals(format, result.getBarcodeFormat());
-        	Assertions.assertEquals(text, result.getText());
+        if (format != BarcodeFormat.DATA_MATRIX
+                && format != BarcodeFormat.UPC_E) {
+            Result result = new MultiFormatReader().decode(binaryBitmap);
+            Assertions.assertEquals(format, result.getBarcodeFormat());
+            Assertions.assertEquals(text, result.getText());
         }
     }
 }

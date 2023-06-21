@@ -1,16 +1,18 @@
 package rest;
 
+import jakarta.ws.rs.Produces;
+
 import io.quarkiverse.renarde.Controller;
 import io.quarkiverse.renarde.pdf.Pdf;
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
-import jakarta.ws.rs.Produces;
 
 public class PdfController extends Controller {
 
     @CheckedTemplate
     static class Templates {
         public static native TemplateInstance index();
+
         public static native TemplateInstance defaultPageSize();
     }
 

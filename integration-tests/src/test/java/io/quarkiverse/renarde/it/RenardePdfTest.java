@@ -54,7 +54,7 @@ public class RenardePdfTest {
         Assertions.assertEquals(297, pointsToMm(mediaBox.getHeight()));
     }
 
-	private float pointsToMm(float points) {
-		return Math.round(points * 25.4f / 72f);
-	}
+    private float pointsToMm(float points) {
+        return Math.round(points * 25.4f / 72f);
+    }
 }
