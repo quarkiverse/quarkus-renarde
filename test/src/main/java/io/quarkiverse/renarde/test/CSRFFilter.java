@@ -5,7 +5,6 @@ import java.util.stream.Collectors;
 
 import jakarta.ws.rs.core.MediaType;
 
-import io.quarkus.arc.Arc;
 import io.restassured.RestAssured;
 import io.restassured.filter.Filter;
 import io.restassured.filter.FilterContext;
@@ -64,7 +63,6 @@ public class CSRFFilter implements OrderedFilter {
     public Response filter(FilterableRequestSpecification requestSpec, FilterableResponseSpecification responseSpec,
             FilterContext ctx) {
         if (!requestMethodIsSafe(requestSpec.getMethod())
-                && Arc.container() != null
                 && isValidPayload(requestSpec.getContentType())
                 && !isAlreadyHandled(requestSpec)) {
             Cookie previousValue = requestSpec.getCookies().get(CSRF.getTokenCookieName());
