@@ -260,7 +260,7 @@ public class Orders extends Controller {
 == Views
 
 You can place your xref:qute-reference.adoc[Qute views] in the `src/main/resources/templates` folder, 
-using the `{className}/{methodName}.html` naming convention.
+using the `pass:[{className}/{methodName}].html` naming convention.
 
 Every controller that has views should declare them with a nested static class annotated with `@CheckedTemplate`:
 
