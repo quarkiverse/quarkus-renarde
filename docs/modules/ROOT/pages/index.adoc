@@ -8,8 +8,8 @@ include::./includes/attributes.adoc[]
 --
 image::renarde.svg[alt=Renarde,width=100,float="right"]
 
-Renarde image:renarde-head.svg[width=15em] is a server-side Web Framework based on Quarkus, xref:qute-reference.adoc[Qute], 
-xref:hibernate-orm-panache.adoc[Hibernate] and xref:resteasy-reactive.adoc[RESTEasy Reactive].
+Renarde image:renarde-head.svg[width=15em] is a server-side Web Framework based on Quarkus, {quarkus-guides-url}/qute-reference[Qute],
+{quarkus-guides-url}/hibernate-orm-panache[Hibernate] and {quarkus-guides-url}/resteasy-reactive[RESTEasy Reactive].
 
 [source,xml,subs=attributes+]
 ----
@@ -49,8 +49,8 @@ public class Application extends Controller {
 }
 ----
 
-A _Controller_ is the logic class that binds URIs to actions and views. They are almost like regular 
-xref:resteasy-reactive.adoc#declaring-endpoints-uri-mapping[JAX-RS endpoints], 
+A _Controller_ is the logic class that binds URIs to actions and views. They are almost like regular
+{quarkus-guides-url}/resteasy-reactive#declaring-endpoints-uri-mapping[JAX-RS endpoints],
 but you opt-in to special magic by extending the `Controller` class, which gives you nice methods,
 but also super friendly behaviour.
 
@@ -73,7 +73,7 @@ Now if you navigate to your application at http://localhost:8080 you will see `H
 == Models
 
 By convention, you can place your model classes in the `model` package, but anywhere else works just as well. We
-recommend using xref:hibernate-orm-panache.adoc[Hibernate ORM with Panache]. Here's an example entity for our sample Todo application:
+recommend using {quarkus-guides-url}/hibernate-orm-panache[Hibernate ORM with Panache]. Here's an example entity for our sample Todo application:
 
 [source,java]
 ----
@@ -259,7 +259,7 @@ public class Orders extends Controller {
 
 == Views
 
-You can place your xref:qute-reference.adoc[Qute views] in the `src/main/resources/templates` folder, 
+You can place your {quarkus-guides-url}/qute-reference[Qute views] in the `src/main/resources/templates` folder,
 using the `pass:[{className}/{methodName}].html` naming convention.
 
 Every controller that has views should declare them with a nested static class annotated with `@CheckedTemplate`:
@@ -357,22 +357,22 @@ And then use it in our `Todos/index.html` template to list the todo items:
 |===
 |Tag|Description 
 
-|xref:qute-reference.adoc#loop_section[for/each]
+|{quarkus-guides-url}/qute-reference#loop_section[for/each]
 |Iterate over collections
 
-|xref:qute-reference.adoc#if_section[if/else]
+|{quarkus-guides-url}/qute-reference#if_section[if/else]
 |Conditional statement
 
-|xref:qute-reference.adoc#when_section[switch/case]
+|{quarkus-guides-url}/qute-reference#when_section[switch/case]
 |Switch statement
 
-|xref:qute-reference.adoc#with_section[with]
+|{quarkus-guides-url}/qute-reference#with_section[with]
 |Adds value members to the local scope
 
-|xref:qute-reference.adoc#letset_section[let]
+|{quarkus-guides-url}/qute-reference#letset_section[let]
 |Declare local variables
 
-|xref:qute-reference.adoc#include_helper[include/insert]
+|{quarkus-guides-url}/qute-reference#include_helper[include/insert]
 |Template composition
 
 |=== 
@@ -404,7 +404,7 @@ Which allows us to use it in every template:
 You can pass parameters to your template with `name=value` pairs, and the first unnamed parameter value becomes available
 as the `it` parameter.
 
-See the xref:qute-reference.adoc#user_tags[Qute documentation] for more information.
+See the {quarkus-guides-url}/qute-reference#user_tags[Qute documentation] for more information.
 
 === Renarde tags
 
@@ -653,12 +653,12 @@ public static class FormData {
 }
 ----
 
-Check out the xref:resteasy-reactive.adoc#handling-multipart-form-data[RESTEasy Reactive documentation] 
+Check out the {quarkus-guides-url}/resteasy-reactive#handling-multipart-form-data[RESTEasy Reactive documentation]
 for more information about form parameters and multi-part.
 
 === Validation
 
-You can place your usual xref:validation.adoc[Hibernate Validation] annotations on the controller methods that receive user data, but
+You can place your usual {quarkus-guides-url}/validation[Hibernate Validation] annotations on the controller methods that receive user data, but
 keep in mind that you have to check for validation errors in your method before you do any action that modifies your state.
 This allows you to check more things than you can do with just annotations, with richer logic:
 
@@ -985,7 +985,7 @@ If you want to register, complete your registration by going to the following ad
 Note that in emails you will want to use the `uriabs` namespace for absolute URIs and not relative ones,
 otherwise the links won't work for your email recipients.
 
-You can find more information in the xref:mailer.adoc[Quarkus mailer documentation].
+You can find more information in the {quarkus-guides-url}/mailer-reference[Quarkus mailer documentation].
 
 == Localisation / Internationalisation
 
@@ -1133,9 +1133,9 @@ public class Application extends HxController {
     }
 }
 ----
-<1> https://quarkus.io/guides/qute-reference#fragments[Qute fragments] declarations
+<1> {quarkus-guides-url}/qute-reference#fragments[Qute fragments] declarations
 <2> Check if this is a htmx request by looking for the `HX-Request` header or using flash data for redirects
-<3> https://htmx.org/attributes/hx-swap-oob/[Out of band swap] with different templates or https://quarkus.io/guides/qute-reference#fragments[fragments]
+<3> https://htmx.org/attributes/hx-swap-oob/[Out of band swap] with different templates or {quarkus-guides-url}/qute-reference#fragments[fragments]
 <4> Only Hx requests are allowed, else it will fail with a BAD_REQUEST error
 <5> Flag the response with an https://htmx.org/reference/#response_headers[htmx response header]
 

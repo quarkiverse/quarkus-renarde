@@ -9,7 +9,7 @@ a mix of both.
 == CSRF
 
 Renarde comes with built-in support for https://owasp.org/www-community/attacks/csrf[Cross-Site Request Forgery (CSRF)] protection,
-via the (already imported) https://quarkus.io/guides/security-csrf-prevention[`quarkus-csrf-reactive`] module dependency.
+via the (already imported) {quarkus-guides-url}/security-csrf-prevention[`quarkus-csrf-reactive`] module dependency.
 
 To be safe, make sure that all your `GET`, `HEAD` and `OPTIONS` endpoints do not alter application state, and
 always include a CSRF token to your `POST`, `PUT`, `DELETE` (and other) endpoints. On your endpoint side, you
@@ -25,7 +25,7 @@ the form element manually:
 
 === Tests when using CSRF
 
-When writing tests, if you are using https://quarkus.io/guides/getting-started-testing[`@QuarkusTest`] and 
+When writing tests, if you are using {quarkus-guides-url}/getting-started-testing[`@QuarkusTest`] and
 https://rest-assured.io/[`RestAssured`] to test endpoints secured with CSRF protection,
 you will need to make sure you obtain and pass the appropriate CSRF token to your `POST` (and similar) endpoints.
 
@@ -85,7 +85,7 @@ public void test() {
 
 == Custom authentication with JWT
 
-In order to handle your own authentication by storing users in your database, you can use xref:security-jwt.adoc[JWT tokens].
+In order to handle your own authentication by storing users in your database, you can use https://datatracker.ietf.org/doc/html/rfc7519[JWT tokens].
 Start with importing the `renarde-security` module:
 
 [source,xml,subs=attributes+]
@@ -1075,7 +1075,7 @@ Write down your `Key ID`, download your key and save it to your Quarkus applicat
 
 image::oidc-apple-22.png[role="thumb"]
 
-You can now configure your your `application.properties`:
+You can now configure your `application.properties`:
 
 [source,properties]
 ----
@@ -1117,7 +1117,7 @@ Now go to `Settings > Basic` on the left hand menu, and write down your `App ID`
 
 image::oidc-facebook-6.png[role="thumb"]
 
-You can now configure your your `application.properties`:
+You can now configure your `application.properties`:
 
 [source,properties]
 ----
@@ -1173,7 +1173,7 @@ You can now copy your `Client ID` and `Client Secret` and press `Done`:
 
 image::oidc-twitter-9.png[role="thumb"]
 
-You can now configure your your `application.properties`:
+You can now configure your `application.properties`:
 
 [source,properties]
 ----
