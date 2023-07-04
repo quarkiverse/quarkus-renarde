@@ -1143,7 +1143,7 @@ For CSRF Security, you need a form parameter with the CSRF Token. By adding this
 [source,html]
 ----
 <div hx-post"/hello" hx-vals='{"{inject:csrf.parameterName}": "{inject:csrf.token}"}'>
----
+----
 
 NOTE: There is a ongoing issue to allow using a header instead of a form parameter (https://github.com/quarkusio/quarkus/issues/34513), this way it will be possible to have a `hx-headers` on the <body> to make all hx requests secured with CSRF.
 
