@@ -1258,7 +1258,7 @@ As for the `templates/Application/page.html` template, it's regular HTML, but yo
 take advantage of the https://developer.mozilla.org/en-US/docs/Web/CSS/Paged_Media[CSS print support]
 to set things like document page size, odd/even page margins, etc…:
 
-[source,java]
+[source,html]
 ----
 <!DOCTYPE html>
 <html>

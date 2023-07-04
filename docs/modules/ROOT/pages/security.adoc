@@ -37,12 +37,12 @@ Import the `quarkus-renarde-test` module:
 
 [source,xml,subs=attributes+]
 ----
-<dependency
+<dependency>
   <groupId>io.quarkiverse.renarde</groupId>
   <artifactId>quarkus-renarde-test</artifactId>
   <version>{quarkus-renarde-version}</version>
   <scope>test</scope>
-</dependency
+</dependency>
 ----
 
 This will automatically register a https://junit.org/junit5/docs/current/user-guide/#extensions-registration-automatic[JUnit Extension]
