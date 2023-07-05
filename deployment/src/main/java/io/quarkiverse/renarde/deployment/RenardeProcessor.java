@@ -126,6 +126,7 @@ import io.quarkus.qute.TemplateInstance;
 import io.quarkus.resteasy.reactive.server.spi.AnnotationsTransformerBuildItem;
 import io.quarkus.resteasy.reactive.server.spi.MethodScannerBuildItem;
 import io.quarkus.resteasy.reactive.spi.AdditionalResourceClassBuildItem;
+import io.quarkus.resteasy.reactive.spi.CustomExceptionMapperBuildItem;
 import io.quarkus.resteasy.reactive.spi.ParamConverterBuildItem;
 import io.quarkus.runtime.LocalesBuildTimeConfig;
 import io.quarkus.runtime.StartupEvent;
@@ -326,12 +327,11 @@ public class RenardeProcessor {
 
     }
 
-    // Doesn't work yet
-    //    @BuildStep
-    //    void registerCustomExceptionMappers(BuildProducer<CustomExceptionMapperBuildItem> customExceptionMapper) {
-    //        customExceptionMapper.produce(new CustomExceptionMapperBuildItem(AuthenticationFailedExceptionMapper.class.getName()));
-    //    }
-    //
+    @BuildStep
+    void registerCustomExceptionMappers(BuildProducer<CustomExceptionMapperBuildItem> customExceptionMapper) {
+        customExceptionMapper.produce(new CustomExceptionMapperBuildItem(AuthenticationFailedExceptionMapper.class.getName()));
+    }
+
     @BuildStep
     ExcludedTypeBuildItem removeOriginalValidatorInterceptor() {
         return new ExcludedTypeBuildItem(ResteasyReactiveEndPointValidationInterceptor.class.getName());
