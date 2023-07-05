@@ -214,8 +214,7 @@ public class RenardeResourceTest {
                 .statusCode(303)
                 .cookie("QuarkusUser",
                         RestAssuredMatchers.detailedCookie()
-                                // requires https://github.com/quarkusio/quarkus/pull/31124
-                                //                		.sameSite("Lax")
+                                .sameSite("LAX")
                                 .httpOnly(true))
                 .header("Location", baseURI + "SecureController/hello");
         given()
