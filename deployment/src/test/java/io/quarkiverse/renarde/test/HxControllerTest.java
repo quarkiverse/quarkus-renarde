@@ -47,7 +47,7 @@ public class HxControllerTest {
                 .get("/hxHeader").then()
                 .statusCode(200)
                 .body(Matchers.is("header"))
-                .header(HxController.HxResponseHeader.PUSH.key(), "push");
+                .header(HxController.HxResponseHeader.PUSH_URL.key(), "push");
     }
 
     @Test
@@ -105,7 +105,7 @@ public class HxControllerTest {
         }
 
         public String hxHeader() {
-            hx(HxResponseHeader.PUSH, "push");
+            hx(HxResponseHeader.PUSH_URL, "push");
             return "header";
         }
 
