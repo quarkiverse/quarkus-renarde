@@ -6,6 +6,7 @@ include::./includes/attributes.adoc[]
 Renarde image:renarde-head.svg[width=15em] can help you deal with security and user registration, either manually, using OIDC, or
 a mix of both.
 
+[#csrf]
 == CSRF
 
 Renarde comes with built-in support for https://owasp.org/www-community/attacks/csrf[Cross-Site Request Forgery (CSRF)] protection,
@@ -83,6 +84,7 @@ public void test() {
 }
 ----
 
+[#custom_authentication_with_jwt]
 == Custom authentication with JWT
 
 In order to handle your own authentication by storing users in your database, you can use https://datatracker.ietf.org/doc/html/rfc7519[JWT tokens].
@@ -97,7 +99,7 @@ Start with importing the `renarde-security` module:
 </dependency>
 ----
 
-And set those configuration values: 
+And set those configuration values:
 
 [source,properties]
 ----
@@ -495,6 +497,7 @@ quarkus.native.resources.includes=publicKey.pem
 quarkus.native.resources.includes=privateKey.pem
 ----
 
+[[oidc]]
 == Using OIDC for login
 
 OIDC (Open ID Connect) is a way to delegate user login to external services, such as:

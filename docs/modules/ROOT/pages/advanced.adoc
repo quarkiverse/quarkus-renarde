@@ -1,0 +1,755 @@
+= Renarde image:renarde-head.svg[width=25em] Web Framework - Advanced
+:favicon: _images/renarde-head.svg
+
+include::./includes/attributes.adoc[]
+:config-file: application.properties
+
+
+[#forms]
+== Forms
+
+A lot of the time, you need to send data from the browser to your endpoints, which is often done with forms.
+
+=== The HTML form
+
+Creating forms in Renarde is easy: let's see an example of how to do it in Qute:
+
+[source,html]
+----
+{#form uri:Login.complete(newUser.confirmationCode)}
+
+<fieldset>
+    <legend>Complete registration for {newUser.email}</legend>
+    {#formElement name="userName" label="User Name"}
+        {#input name="userName"/}
+    {/formElement}
+    {#formElement name="password" label="Password"}
+        {#input name="password" type="password"/}
+    {/formElement}
+    {#formElement name="password2" label="Password Confirmation"}
+        {#input name="password2" type="password"/}
+    {/formElement}
+    {#formElement name="firstName" label="First Name"}
+        {#input name="firstName"/}
+    {/formElement}
+    {#formElement name="lastName" label="Last Name"}
+        {#input name="lastName"/}
+    {/formElement}
+    <button type="submit" class="btn btn-primary">Complete registration</button>
+</fieldset>
+
+{/form}
+----
+
+Here we're defining a form whose action will go to `Register.complete(newUser.confirmationCode)` and
+which contains several form elements, which are just tags to make composition easier. For example `formElement` is
+a custom Qute tag for Bootstrap which defines layout for the form element and displays any associated error:
+
+[source,html]
+----
+<div class="mb-3">
+    <label class="form-label" for="{name}">{label}</label>
+    {nested-content}
+    {#ifError name}
+        <span class="invalid-feedback">​{#error name/}</span>​
+    {/ifError}
+</div>
+----
+
+The `input` user tag is also designed for Bootstrap as an abstraction:
+
+[source,html]
+----
+<input name="{name}"
+ type="{type ?: 'text'}"
+ placeholder="{placeholder ?: ''}"
+ class="form-control {#ifError name}is-invalid{/ifError}"
+ maxlength="{global:VARCHAR_SIZE}"
+ value="{inject:flash.get(name)}"/>
+----
+
+As you can see, we have default values for certain attributes, a special error class if there is a validation
+error, and we default the value to the one preserved in the flash scope, which is filled whenever validation
+fails, so that the user can see the validation error without losing their form values.
+
+As for the `form` Renarde tag, it is also fairly simple, and only includes an authenticity token for CSRF protection.
+
+[source,html]
+----
+<form action="{it}" method="{method ?: 'POST'}" class="{klass ?: ''}">
+ {#authenticityToken/}
+ {nested-content}
+</form>
+----
+
+=== The endpoint
+
+Most forms will be a `@POST` endpoint, with each form element having a corresponding parameter annotated with `@RestForm`.
+
+[source,java]
+----
+@POST
+public void complete(@RestQuery String confirmationCode,
+        @RestForm String userName,
+        @RestForm String password,
+        @RestForm String password2,
+        @RestForm String firstName,
+        @RestForm String lastName) {
+    // do something with the form parameters
+}
+----
+
+You can also group parameters in a POJO, but for now you have to add a special
+`@Consumes(MediaType.MULTIPART_FORM_DATA)` annotation:
+
+[source,java]
+----
+@Consumes(MediaType.MULTIPART_FORM_DATA)
+@POST
+public void complete(@RestQuery String confirmationCode,
+        FormData form) {
+    // do something with the form parameters
+}
+
+public static class FormData {
+    @RestForm String userName;
+    @RestForm String password;
+    @RestForm String password2;
+    @RestForm String firstName;
+    @RestForm String lastName;
+}
+----
+
+Check out the {quarkus-guides-url}/resteasy-reactive#handling-multipart-form-data[RESTEasy Reactive documentation]
+for more information about form parameters and multi-part.
+
+=== Validation
+
+You can place your usual {quarkus-guides-url}/validation[Hibernate Validation] annotations on the controller methods that receive user data, but
+keep in mind that you have to check for validation errors in your method before you do any action that modifies your state.
+This allows you to check more things than you can do with just annotations, with richer logic:
+
+[source,java]
+----
+@POST
+public Response complete(@RestQuery String confirmationCode,
+        @RestForm @NotBlank @Length(max = Util.VARCHAR_SIZE) String userName,
+        @RestForm @NotBlank @Length(min = 8, max = Util.VARCHAR_SIZE) String password,
+        @RestForm @NotBlank @Length(max = Util.VARCHAR_SIZE) String password2,
+        @RestForm @NotBlank @Length(max = Util.VARCHAR_SIZE) String firstName,
+        @RestForm @NotBlank @Length(max = Util.VARCHAR_SIZE) String lastName) {
+    // Find the user for this confirmation code
+    User user = User.findForContirmation(confirmationCode);
+    if(user == null){
+        validation.addError("confirmationCode", "Invalid confirmation code");
+    }
+
+    // Make sure the passwords match
+    validation.equals("password", password, password2);
+
+    // Make sure the username is free
+    if(User.findByUserName(userName) != null){
+        validation.addError("userName", "User name already taken");
+    }
+
+    // If validation failed, redirect to the confirm page
+    if(validationFailed()){
+        confirm(confirmationCode);
+    }
+
+    // Now proceed to complete user registration
+    ...
+}
+----
+
+You can use the `validation` object to trigger additional validation logic and collect errors.
+
+Those errors are then placed in the _flash_ scope by a call to `validationFailed()` if there
+are any errors, and thus preserved when you redirect from your action method to the `@GET` method
+that holds the submitted form, which you can then access in your views using the `{#ifError field}{/ifError}`
+conditional tag, or the `{#error field/}` tag which accesses the error message for the given field.
+
+[#routing]
+== Routing, URI mapping, redirects
+
+We have seen how to declare endpoints and how URIs map to them, but very often we need to map from endpoints to
+URIs, which Renarde makes easy.
+
+=== Redirects after POST
+
+When handling a `@POST`, `@PUT` or `@DELETE` endpoint, it's good form to redirect to a `@GET` endpoint after
+the action has been done, in order to allow the user to reload the page without triggering the action a second
+time, and such redirects are simply done by calling the corresponding `@GET` endpoint. In reality, the endpoint
+will not be called and will be replaced by a redirect that points to the endpoint in question.
+
+[source,java]
+----
+package rest;
+
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+
+import io.quarkus.qute.CheckedTemplate;
+import io.quarkus.qute.TemplateInstance;
+import io.quarkiverse.renarde.Controller;
+
+public class Application extends Controller {
+
+    @CheckedTemplate
+    static class Templates {
+        public static native TemplateInstance index();
+    }
+
+    @Path("/")
+    public TemplateInstance index() {
+        return Templates.index();
+    }
+
+    @POST
+    public void someAction() {
+        // do something
+        ...
+        // redirect to the index page
+        index();
+    }
+}
+----
+
+If there are any parameters that form the URI, you must pass them along:
+
+[source,java]
+----
+package rest;
+
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+
+import org.jboss.resteasy.reactive.RestPath;
+import org.jboss.resteasy.reactive.RestQuery;
+
+import io.quarkus.qute.CheckedTemplate;
+import io.quarkus.qute.TemplateInstance;
+import io.quarkiverse.renarde.Controller;
+
+public class Application extends Controller {
+
+    @CheckedTemplate
+    static class Templates {
+        public static native TemplateInstance index();
+    }
+
+    @Path("/")
+    public TemplateInstance index() {
+        return Templates.index();
+    }
+
+    public TemplateInstance somePage(@RestPath String id, @RestQuery String q) {
+        // do something with the id and q
+        return Templates.index();
+    }
+
+    @POST
+    public void someAction() {
+        // do something
+        ...
+        // redirect to the somePage page
+        somePage("foo", "bar");
+    }
+}
+----
+
+If you want to redirect to another controller, you can use the `redirect(Class)` method:
+
+[source,java]
+----
+package rest;
+
+import jakarta.ws.rs.POST;
+
+import io.quarkiverse.renarde.Controller;
+
+public class Application extends Controller {
+
+    @POST
+    public void someAction() {
+        // do something
+        ...
+        // redirect to the Todos.index() endpoint
+        redirect(Todos.class).index();
+    }
+}
+----
+
+=== Obtaining a URI in endpoints
+
+If you don't want a redirect but need a URI to a given endpoint, you can use the `Router.getURI`
+or `Router.getAbsoluteURI` methods, by
+passing them a method reference to the endpoint you want and the required parameters:
+
+[source,java]
+----
+package rest;
+
+import java.net.URI;
+
+import org.jboss.resteasy.reactive.RestPath;
+import org.jboss.resteasy.reactive.RestQuery;
+
+import io.quarkus.qute.CheckedTemplate;
+import io.quarkus.qute.TemplateInstance;
+import io.quarkiverse.renarde.Controller;
+import io.quarkiverse.renarde.router.Router;
+
+public class Application extends Controller {
+
+    @CheckedTemplate
+    public static class Templates {
+        public static native TemplateInstance somePage();
+        public static native TemplateInstance otherPage(URI uri);
+    }
+
+    public TemplateInstance somePage(@RestPath String foo, @RestQuery Long bar) {
+        return Templates.somePage();
+    }
+
+    public TemplateInstance otherPage() {
+        // Obtain a URI to somePage
+        URI uri = Router.getURI(Login::somePage, "something", 23l);
+        // pass it on to our view
+        return Templates.otherPage(uri);
+    }
+}
+----
+
+NOTE: If you plan on using `Response.seeOther` or `Controller.seeOther`, make sure to use the `Router.getAbsoluteURI`
+variant, especially if you use the `quarkus.http.root-path` configuration, otherwise your URIs contain that prefix twice.
+
+=== Obtaining a URI in Qute views
+
+If you want a URI to an endpoint in a Qute view, you can use the `uri` and `uriabs` namespace with a
+call to the endpoint you want to point to:
+
+[source,html]
+----
+<a class="navbar-brand" href="{uri:Application.index()}">Todo</a>
+----
+
+Naturally, you can also pass any required parameters.
+
+[#emails]
+== Emails
+
+[source,xml]
+----
+<dependency>
+  <groupId>io.quarkus</groupId>
+  <artifactId>quarkus-mailer</artifactId>
+</dependency>
+----
+
+Often you will need your actions to send email notifications.You can use Qute for this too, by declaring your
+emails in an `Emails` class:
+
+[source,java]
+----
+package email;
+
+import io.quarkus.mailer.MailTemplate.MailTemplateInstance;
+import io.quarkus.qute.CheckedTemplate;
+import model.User;
+
+public class Emails {
+
+    private static final String FROM = "Todos <todos@example.com>";
+    private static final String SUBJECT_PREFIX = "[Todos] ";
+
+    @CheckedTemplate
+    static class Templates {
+        public static native MailTemplateInstance confirm(User user);
+    }
+
+    public static void confirm(User user) {
+        Templates.confirm(user)
+        .subject(SUBJECT_PREFIX + "Please confirm your email address")
+        .to(user.email)
+        .from(FROM)
+        .send().await().indefinitely();
+    }
+}
+----
+
+You can then send the email from your endpoint by calling `Emails.confirm(user)`.
+
+You can use composition for emails too, by having a pair of base templates for HTML in
+`src/main/resources/templates/email.html`:
+
+[source,html]
+----
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <body>
+        {#insert /}
+        <p>
+            This is an automated email, you should not reply to it: your mail will be ignored.
+        </p>
+    </body>
+</html>
+----
+
+And for text in `src/main/resources/templates/email.txt`:
+
+[source,txt]
+----
+{#insert /}
+
+This is an automated email, you should not reply to it: your mail will be ignored.
+----
+
+You can then use those templates in your emails in `src/main/resources/templates/Emails/confirm.html`:
+
+[source,html]
+----
+{#include email.html }
+
+<p>
+ Welcome to Todos.
+</p>
+
+<p>
+ You received this email because someone (hopefully you) wants to register on Todos.
+</p>
+
+<p>
+ If you don't want to register, you can safely ignore this email.
+</p>
+
+<p>
+ If you want to register, <a href="{uriabs:Login.confirm(user.confirmationCode)}">complete your registration</a>.
+</p>
+{/include}
+----
+
+And for text in `src/main/resources/templates/Emails/confirm.txt`:
+
+[source,txt]
+----
+{#include email.txt}
+
+Welcome to Todos.
+
+You received this email because someone (hopefully you) wants to register on Todos.
+
+If you don't want to register, you can safely ignore this email.
+
+If you want to register, complete your registration by going to the following address:
+
+{uriabs:Login.confirm(user.confirmationCode)}
+{/include}
+----
+
+Note that in emails you will want to use the `uriabs` namespace for absolute URIs and not relative ones,
+otherwise the links won't work for your email recipients.
+
+You can find more information in the {quarkus-guides-url}/mailer-reference[Quarkus mailer documentation].
+
+[#localisation]
+== Localisation / Internationalisation
+
+You can declare your default language and supported languages in `src/main/resources/application.properties`:
+
+[source,properties]
+----
+# This is the default locale for your application
+quarkus.default-locale=en
+# These are the supported locales (should include the default locale, but order is not important)
+quarkus.locales=en,fr
+----
+
+Next, you can declare your default language messages in the `src/main/resources/message.properties` file:
+
+[source,properties]
+----
+# A simple message
+hello=Hello World
+# A parameterised message for your view
+views_Application_index_greet=Hello %s
+----
+
+Declare your other language translations in the `src/main/resources/message_fr.properties` file:
+
+[source,properties]
+----
+hello=Bonjour Monde
+views_Application_index_greet=Salut %s
+----
+
+Now you can use these translated messages in your controller:
+
+[source,java]
+----
+public static class Application extends Controller {
+
+    @CheckedTemplate
+    public static class Templates {
+        public static native TemplateInstance index(String name);
+    }
+
+    public TemplateInstance index() {
+        return Templates.index("Stef");
+    }
+
+    public String hello() {
+		return i18n.formatMessage("hello");
+    }
+}
+----
+
+Or in your template:
+
+[source,txt]
+----
+With no parameter:
+{m:hello}
+With parameters:
+{m:views_Application_index_greet(name)}
+----
+
+=== Selecting the language
+
+The current language for a request will depend on the following (in order):
+
+. The `_renarde_language` cookie, if set
+. The https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language[`Accept-Language`] HTTP header, if set,
+which defines an ordered list of languages by user preference. We will select a best matching language from the set
+of `quarkus.locales`.
+. If nothing else, we default to the default language as set by `quarkus.default-locale`, which defaults to `en_US`.
+
+You can override the user's language with a cookie by calling `i18n.set(language)`:
+
+[source,java]
+----
+public static class Application extends Controller {
+
+    @CheckedTemplate
+    public static class Templates {
+        public static native TemplateInstance index();
+    }
+
+    public void index() {
+        return Templates.index();
+    }
+
+    @POST
+    public void french() {
+        i18n.set("fr");
+        index();
+    }
+
+    @POST
+    public void english() {
+        i18n.set("en");
+        index();
+    }
+}
+----
+
+[#flash_scope]
+== Flash scope
+
+If you need to pass values from one endpoint to another request after a redirect, you can use the Flash scope.
+Usually this is done in a `@POST` endpoint, by filling the Flash scope with either errors or messages,
+before trigerring a redirect to the right `@GET` endpoint.
+
+You can push values in the Flash scope in an endpoint using the `flash(name, value)` method, or using the
+`Flash` injectable component.
+
+You can read values from the Flash scope in your Qute views using the `{flash:name}` namespace.
+
+The Flash scope only lasts from one request to the next and is cleared at each request.
+
+[#htmx]
+== htmx
+
+If you want to use https://htmx.org/[htmx] with Renarde, we added an extra layer to make things more convenient:
+[source,java]
+----
+public class Application extends HxController {
+
+    @CheckedTemplate
+    public static class Templates {
+        public static native TemplateInstance foo(int a, int b);
+        public static native TemplateInstance foo$sectionA(int a); // <1>
+        public static native TemplateInstance foo$sectionB(int b); // <1>
+
+        public static native TemplateInstance bar();
+    }
+
+    public TemplateInstance foo() {
+        if (isHxRequest()) { // <2>
+            return  concatTemplates( // <3>
+                    Templates.foo$sectionA(1),
+                    Templates.foo$sectionB(2)
+            );
+        }
+        return Templates.foo(1, 2);
+    }
+
+    public TemplateInstance bar() {
+        onlyHxRequest(); // <4>
+        this.hx(HxResponseHeader.TRIGGER, "refresh"); // <5>
+        return Templates.bar();
+    }
+}
+----
+<1> {quarkus-guides-url}/qute-reference#fragments[Qute fragments] declarations
+<2> Check if this is a htmx request by looking for the `HX-Request` header or using flash data for redirects
+<3> https://htmx.org/attributes/hx-swap-oob/[Out of band swap] with different templates or {quarkus-guides-url}/qute-reference#fragments[fragments]
+<4> Only Hx requests are allowed, else it will fail with a BAD_REQUEST error
+<5> Flag the response with an https://htmx.org/reference/#response_headers[htmx response header]
+
+For CSRF Security, you need a form parameter with the CSRF Token. By adding this 👇 when doing a hx-post/put/delete, The Hx requests will be sent with the CSRF parameter:
+[source,html]
+----
+<div hx-post"/hello" hx-vals='{"{inject:csrf.parameterName}": "{inject:csrf.token}"}'>
+----
+
+NOTE: There is a ongoing issue to allow using a header instead of a form parameter (https://github.com/quarkusio/quarkus/issues/34513), this way it will be possible to have a `hx-headers` on the <body> to make all hx requests secured with CSRF.
+
+Some example projects with Quarkus Renarde and htmx:
+- https://github.com/ia3andy/renotes[a demo note-taking web app]
+- https://github.com/ia3andy/quarkus-blast[a board game]
+
+[#generating_barcodes]
+== Generating barcodes
+
+If you import the optional `quarkus-renarde-barcode` module, you can generate barcodes in your views or controllers.
+
+[source,xml,subs=attributes+]
+----
+<dependency>
+  <groupId>io.quarkiverse.renarde</groupId>
+  <artifactId>quarkus-renarde-barcode</artifactId>
+  <version>{quarkus-renarde-version}</version>
+</dependency>
+----
+
+We support the following barcode types, with custom Qute tags:
+
+[cols="1,1"]
+|===
+|Tag|Description
+
+|`{#ean13 value/}`
+|Generate an https://en.wikipedia.org/wiki/International_Article_Number[EAN 13] barcode.
+
+|`{#ean8 value/}`
+|Generate an https://en.wikipedia.org/wiki/EAN-8[EAN 8] barcode.
+
+|`{#upca value/}`
+|Generate an https://en.wikipedia.org/wiki/Universal_Product_Code[UPC A] barcode.
+
+|`{#upce value/}`
+|Generate an https://en.wikipedia.org/wiki/Universal_Product_Code#UPC-E[UPC E] barcode.
+
+|`{#code39 value/}`
+|Generate a https://en.wikipedia.org/wiki/Code_39[Code 39] barcode.
+
+|`{#code93 value/}`
+|Generate a https://en.wikipedia.org/wiki/Code_93[Code 93] barcode.
+
+|`{#code128 value/}`
+|Generate a https://en.wikipedia.org/wiki/Code_128[Code 128] barcode.
+
+|`{#qrcode value/}`
+|Generate a https://en.wikipedia.org/wiki/QR_code[QR Code] barcode.
+
+|`{#datamatrix value/}`
+|Generate a https://en.wikipedia.org/wiki/Data_Matrix[Data Matrix] barcode.
+
+|===
+
+All these tags accept an optional `size` parameter that sets both the width and height of the barcode
+in pixels, or `width` and `height` parameters to specify different values.These values all default
+to `200` pixels.
+
+The generated barcodes will be inline HTML images using the https://en.wikipedia.org/wiki/Data_URI_scheme[Data URI]
+scheme as an embedded https://en.wikipedia.org/wiki/PNG[PNG] image.
+
+If you wish to generate barcode images as PNG bytes or other formats, you can use the `io.quarkiverse.renarde.barcode.Barcode`
+helper class which allows you to generate bytecodes from your controllers.
+
+[#generating_pdf_documents]
+== Generating PDF documents
+
+If you import the optional `quarkus-renarde-pdf` module, you can generate PDF documents in your views.
+
+[source,xml,subs=attributes+]
+----
+<dependency>
+  <groupId>io.quarkiverse.renarde</groupId>
+  <artifactId>quarkus-renarde-pdf</artifactId>
+  <version>{quarkus-renarde-version}</version>
+</dependency>
+----
+
+There are lots of complicated ways to generate PDFs, but the simplest is to use the versatility of HTML for rendering
+and its printing support. So, very much like you can print HTML files using your browser, and there are special rendering
+rules in CSS, you do the same in Renarde PDF: you render your page in HTML, and simply add `@Produces(Pdf.APPLICATION_PDF)`
+to your controller to produce a PDF file:
+
+[source,java]
+----
+public class Application extends Controller {
+
+    @CheckedTemplate
+    public static class Templates {
+        public static native TemplateInstance page();
+    }
+
+    // This will return a PDF file to the caller
+    @Produces(Pdf.APPLICATION_PDF)
+    public TemplateInstance pdf() {
+        return Templates.page();
+    }
+
+    // This will return HTML to the caller
+    public TemplateInstance html() {
+        return Templates.page();
+    }
+}
+----
+
+This way, the http://localhost:8080/Application/pdf and http://localhost:8080/Application/html
+pages will render the same document in either PDF or HTML, which allows you to use your browser and its
+developer tools to fine-tweak your document, until you're ready to turn it into a PDF, which is
+much harder to fine-tweak.
+
+As for the `templates/Application/page.html` template, it's regular HTML, but you can also
+take advantage of the https://developer.mozilla.org/en-US/docs/Web/CSS/Paged_Media[CSS print support]
+to set things like document page size, odd/even page margins, etc…:
+
+[source,html]
+----
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>This is the PDF document title</title>
+    <style>
+/* Override page size, and set page margin */
+@page {
+  size: 15cm 9cm;
+  margin: 1cm;
+}
+    </style>
+  </head>
+  <body>
+    Some PDF text.
+  </body>
+</html>
+----
+
+Note that the default page size is https://en.wikipedia.org/wiki/ISO_216#A_series[A4].
