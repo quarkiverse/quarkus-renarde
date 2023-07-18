@@ -21,6 +21,7 @@ import io.vertx.mutiny.ext.web.handler.BodyHandler;
 public class MockMicrosoftOidcTestResource extends MockOidcTestResource<MockMicrosoftOidc> {
 
     private KeyPair kp;
+    private String clientId;
 
     public MockMicrosoftOidcTestResource() {
         super("microsoft", 50002);
@@ -127,7 +128,8 @@ public class MockMicrosoftOidcTestResource extends MockOidcTestResource<MockMicr
      */
     private void authorize(RoutingContext rc) {
         String response_type = rc.request().params().get("response_type");
-        String client_id = rc.request().params().get("client_id");
+        // save the client id for later
+        clientId = rc.request().params().get("client_id");
         String scope = rc.request().params().get("scope");
         String state = rc.request().params().get("state");
         String redirect_uri = rc.request().params().get("redirect_uri");
@@ -163,7 +165,7 @@ public class MockMicrosoftOidcTestResource extends MockOidcTestResource<MockMicr
      * "ver": "2.0",
      * "iss": "https://login.microsoftonline.com/TENANTID/v2.0",
      * "sub": "USERID",
-     * "aud": "OPAQUE",
+     * "aud": "CLIENTID",
      * "exp": 1641906214,
      * "iat": 1641819514,
      * "nbf": 1641819514,
@@ -184,11 +186,10 @@ public class MockMicrosoftOidcTestResource extends MockOidcTestResource<MockMicr
         UUID tenant = UUID.randomUUID();
         String hashedToken = hashAccessToken(token.toString());
         String idToken = Jwt.issuer("https://accounts.google.com")
-                .audience("SOMETHING")
                 .claim("ver", "2.0")
                 .issuer(baseURI + "/" + tenant + "/v2.0")
                 .subject("USERID")
-                .audience(UUID.randomUUID().toString())
+                .audience(clientId)
                 .expiresIn(Duration.ofDays(1))
                 .issuedAt(Instant.now())
                 .claim(Claims.nbf, Instant.now())

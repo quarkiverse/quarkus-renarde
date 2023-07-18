@@ -12,6 +12,7 @@ import model.User;
 public class Startup {
     @Transactional
     public void start(@Observes StartupEvent evt) {
+        User.deleteAll();
         User user = new User();
         user.username = "FroMage";
         user.password = BcryptUtil.bcryptHash("1q2w3e");

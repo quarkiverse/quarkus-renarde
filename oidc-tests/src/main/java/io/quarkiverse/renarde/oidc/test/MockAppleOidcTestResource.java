@@ -189,7 +189,7 @@ public class MockAppleOidcTestResource extends MockOidcTestResource<MockAppleOid
         UUID token2 = UUID.randomUUID();
         String hashedToken = hashAccessToken(token.toString());
         String idToken = Jwt.issuer("https://appleid.apple.com")
-                .audience(UUID.randomUUID().toString())
+                .audience("APLCLIENT")
                 .expiresIn(Duration.ofDays(1))
                 .issuedAt(Instant.now())
                 .subject("USERID")

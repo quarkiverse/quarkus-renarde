@@ -175,7 +175,7 @@ public class MockGoogleOidcTestResource extends MockOidcTestResource<MockGoogleO
         UUID token = UUID.randomUUID();
         String hashedToken = hashAccessToken(token.toString());
         String idToken = Jwt.issuer("https://accounts.google.com")
-                .audience("SOMETHING")
+                .audience("GGLCLIENT")
                 .claim(Claims.azp, "SOMETHING")
                 .subject("USERID")
                 .claim(Claims.email, "google@example.com")

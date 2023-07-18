@@ -168,7 +168,7 @@ public class MockFacebookOidcTestResource extends MockOidcTestResource<MockFaceb
         UUID token = UUID.randomUUID();
         String hashedToken = hashAccessToken(token.toString());
         String idToken = Jwt.issuer("https://www.facebook.com")
-                .audience(UUID.randomUUID().toString())
+                .audience("FBCLIENT")
                 .subject("USERID")
                 .issuedAt(Instant.now())
                 .expiresIn(Duration.ofDays(1))

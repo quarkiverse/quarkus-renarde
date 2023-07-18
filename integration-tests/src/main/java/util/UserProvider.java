@@ -11,7 +11,11 @@ public class UserProvider implements RenardeUserProvider {
 
     @Override
     public RenardeUser findUser(String tenantId, String authId) {
-        return User.findByUsername(authId);
+        if (tenantId == null || tenantId.equals("manual")) {
+            return User.findByUsername(authId);
+        } else {
+            return User.findByOidc(tenantId, authId);
+        }
     }
 
 }

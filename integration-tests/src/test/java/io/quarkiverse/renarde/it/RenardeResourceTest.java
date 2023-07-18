@@ -191,10 +191,6 @@ public class RenardeResourceTest {
 
     @Test
     public void testAuthentication() {
-        given()
-                .post("/Application/setupUser")
-                .then()
-                .statusCode(204);
         // the redirect cookie is indirectly tested via a success redirection
         RenardeCookieFilter cookieFilter = new RenardeCookieFilter();
         given()
