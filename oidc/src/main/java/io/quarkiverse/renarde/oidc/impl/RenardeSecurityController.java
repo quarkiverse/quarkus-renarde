@@ -10,6 +10,7 @@ import org.jboss.resteasy.reactive.RestPath;
 import io.quarkiverse.renarde.Controller;
 import io.quarkiverse.renarde.oidc.RenardeOidcHandler;
 import io.quarkiverse.renarde.oidc.RenardeOidcSecurity;
+import io.quarkiverse.renarde.security.RenardeSecurity;
 import io.quarkus.oidc.IdToken;
 import io.quarkus.oidc.OidcSession;
 import io.quarkus.oidc.UserInfo;
@@ -34,7 +35,7 @@ public class RenardeSecurityController extends Controller {
         if (tenantId == null) {
             tenantId = "manual";
         }
-        oidcHandler.loginWithOidcSession(tenantId, principal.getName());
+        oidcHandler.loginWithOidcSession(tenantId, RenardeSecurity.getUserId(principal));
     }
 
     @Inject
@@ -83,7 +84,7 @@ public class RenardeSecurityController extends Controller {
     }
 
     private void oidcLoginSuccess() {
-        String authId = idToken.getName();
+        String authId = RenardeSecurity.getUserId(idToken);
         oidcHandler.oidcSuccess(oidcSession.getTenantId(), authId);
     }
 }

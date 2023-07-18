@@ -25,7 +25,6 @@ public class OidcHandler implements RenardeOidcHandler {
     @Transactional
     @Override
     public void oidcSuccess(String tenantId, String authId) {
-        System.err.println("OIDC success " + tenantId + "/" + authId);
         flash.flash("message", "Welcome from OIDC for tenant " + tenantId + ", authId: " + authId
                 + ", firstname: " + oidcSecurity.getOidcFirstName()
                 + ", lastname: " + oidcSecurity.getOidcLastName()
@@ -36,14 +35,13 @@ public class OidcHandler implements RenardeOidcHandler {
         user.authId = authId;
         user.username = oidcSecurity.getOidcUserName();
         user.persist();
-        System.err.println("Redirecting to " + Router.getAbsoluteURI(Application::oidcWelcome));
         throw new RedirectException(Response.seeOther(Router.getAbsoluteURI(Application::oidcWelcome)).build());
 
     }
 
     @Override
     public void loginWithOidcSession(String tenantId, String authId) {
-        System.err.println("OIDC login " + tenantId + "/" + authId);
+        // not tested
     }
 
 }

@@ -111,9 +111,9 @@ public class MockTwitterOidcTestResource extends MockOidcTestResource<MockTwitte
      * {
      * "data":
      * {
-     * "id":"ID",
-     * "name":"Stéphane Épardaud",
-     * "username":"UnFroMage"
+     * "id":"USERID",
+     * "name":"Foo Bar",
+     * "username":"TwitterUser"
      * }
      * }
      */
@@ -123,7 +123,7 @@ public class MockTwitterOidcTestResource extends MockOidcTestResource<MockTwitte
                 .endAndForget("{\n"
                         + "  \"data\":\n"
                         + "  {\n"
-                        + "   \"id\":\"ID\",\n"
+                        + "   \"id\":\"USERID\",\n"
                         + "   \"name\":\"Foo Bar\",\n"
                         + "   \"username\":\"TwitterUser\"\n"
                         + "  }\n"

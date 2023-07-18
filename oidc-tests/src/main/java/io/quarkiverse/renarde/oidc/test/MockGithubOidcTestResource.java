@@ -97,8 +97,8 @@ public class MockGithubOidcTestResource extends MockOidcTestResource<MockGithubO
         rc.response()
                 .putHeader("Content-Type", "application/json")
                 .endAndForget("{\n"
-                        + "  \"login\": \"octocat\",\n"
-                        + "  \"id\": 1,\n"
+                        + "  \"login\": \"GithubUser\",\n"
+                        + "  \"id\": 1234,\n"
                         + "  \"node_id\": \"MDQ6VXNlcjE=\",\n"
                         + "  \"avatar_url\": \"https://github.com/images/error/octocat_happy.gif\",\n"
                         + "  \"gravatar_id\": \"\",\n"
@@ -115,7 +115,7 @@ public class MockGithubOidcTestResource extends MockOidcTestResource<MockGithubO
                         + "  \"received_events_url\": \"https://api.github.com/users/octocat/received_events\",\n"
                         + "  \"type\": \"User\",\n"
                         + "  \"site_admin\": false,\n"
-                        + "  \"name\": \"monalisa octocat\",\n"
+                        + "  \"name\": \"Foo Bar\",\n"
                         + "  \"company\": \"GitHub\",\n"
                         + "  \"blog\": \"https://github.com/blog\",\n"
                         + "  \"location\": \"San Francisco\",\n"
@@ -155,7 +155,7 @@ public class MockGithubOidcTestResource extends MockOidcTestResource<MockGithubO
                 .putHeader("Content-Type", "application/json")
                 .endAndForget("[\n"
                         + "  {\n"
-                        + "    \"email\": \"octocat@github.com\",\n"
+                        + "    \"email\": \"github@example.com\",\n"
                         + "    \"verified\": true,\n"
                         + "    \"primary\": true,\n"
                         + "    \"visibility\": \"public\"\n"

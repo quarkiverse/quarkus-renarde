@@ -52,26 +52,26 @@ public class RenardeOidcTest {
 
     @Test
     public void githubLoginTest() {
-        oidcTest("github", "1", "octocat@github.com", "monalisa", "octocat", "octocat");
+        // this ID is numeric, and we want to keep it that way to test that it works
+        oidcTest("github", "1234", "github@example.com", "Foo", "Bar", "GithubUser");
     }
 
     @Test
     public void twitterLoginTest() {
         // twitter has no email
-        oidcTest("twitter", "ID", null, "Foo", "Bar", "TwitterUser");
+        oidcTest("twitter", "USERID", null, "Foo", "Bar", "TwitterUser");
     }
 
     @Test
     public void googleLoginTest() {
-        // FIXME: authId is suspicious
         // google has no username
-        oidcTest("google", "Foo Bar", "google@example.com", "Foo", "Bar", null);
+        oidcTest("google", "USERID", "google@example.com", "Foo", "Bar", null);
     }
 
     @Test
     public void microsoftLoginTest() {
-        // MS does not set the UPN, defaults to the email as preferred username, and authid
-        oidcTest("microsoft", "microsoft@example.com", "microsoft@example.com", "Foo", "Bar", "microsoft@example.com");
+        // MS does not set the UPN, defaults to the email as preferred username
+        oidcTest("microsoft", "USERID", "microsoft@example.com", "Foo", "Bar", "microsoft@example.com");
     }
 
     @Test
