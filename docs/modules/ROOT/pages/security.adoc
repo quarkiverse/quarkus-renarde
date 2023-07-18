@@ -1184,3 +1184,106 @@ quarkus.oidc.twitter.provider=twitter
 quarkus.oidc.twitter.client-id=<Client ID>
 quarkus.oidc.twitter.credentials.secret=<Client Secret>
 ----
+
+=== Testing OIDC providers
+
+As soon as you integrate OIDC providers in your application, testing them becomes problematic,
+because you probably don't want to hit those external OIDC systems from your tests. But you still
+want to test that your integration works well, and make it as fast as possible.
+
+Renarde provides you with https://quarkus.io/guides/getting-started-testing#annotation-based-test-resources[custom test resources]
+that will start mock OIDC providers that you can use in place of the real online OIDC providers. All you need to
+do is import this module:
+
+[source,xml,subs=attributes+]
+----
+<dependency>
+  <groupId>io.quarkiverse.renarde</groupId>
+  <artifactId>quarkus-renarde-oidc-tests</artifactId>
+  <version>{quarkus-renarde-version}</version>
+  <scope>test</scope>
+</dependency>
+----
+
+And place one of these annotations on your test resource:
+
+[cols="1,1"]
+|===
+|Annotation|Role
+
+|`@MockAppleOidc`
+|Starts a mock Apple OIDC provider
+
+|`@MockFacebookOidc`
+|Starts a mock Facebook OIDC provider
+
+|`@MockGithubOidc`
+|Starts a mock Github OIDC provider
+
+|`@MockGoogleOidc`
+|Starts a mock Google OIDC provider
+
+|`@MockMicrosoftOidc`
+|Starts a mock Microsoft OIDC provider
+
+|`@MockTwitterOidc`
+|Starts a mock Twitter OIDC provider
+
+|===
+
+All these mock OIDC providers will automatically log you in for a single fixed user with the following
+properties:
+
+[cols="1,1,1,1,1,1,1"]
+|===
+|Provider|TenantId|AuthId|Username|First name|Last name|Email
+
+|Apple
+|`apple`
+|`USERID`
+|`null` (Not provided by Apple)
+|`null` (Not provided by Apple)
+|`null` (Not provided by Apple)
+|`apple@example.com`
+
+|Facebook
+|`facebook`
+|`USERID`
+|`null` (Not provided by Facebook)
+|`Foo`
+|`Bar`
+|`facebook@example.com`
+
+|Github
+|`github`
+|`1234`
+|`GithubUser`
+|`Foo`
+|`Bar`
+|`github@example.com`
+
+|Google
+|`google`
+|`USERID`
+|`null` (Not provided by Google)
+|`Foo`
+|`Bar`
+|`google@example.com`
+
+|Microsoft
+|`microsoft`
+|`USERID`
+|`microsoft@example.com` (Microsoft uses the email)
+|`Foo`
+|`Bar`
+|`microsoft@example.com`
+
+|Twitter
+|`twitter`
+|`USERID`
+|`null` (Not provided by Twitter)
+|`Foo`
+|`Bar`
+|`twitter@example.com`
+
+|===
