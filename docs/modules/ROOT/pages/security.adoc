@@ -1252,6 +1252,9 @@ And place one of these annotations on your test resource:
 |`@MockMicrosoftOidc`
 |Starts a mock Microsoft OIDC provider
 
+|`@MockSpotifyOidc`
+|Starts a mock Spotify OIDC provider
+
 |`@MockTwitterOidc`
 |Starts a mock Twitter OIDC provider
 
@@ -1303,6 +1306,14 @@ properties:
 |`Foo`
 |`Bar`
 |`microsoft@example.com`
+
+|Spotify
+|`spotify`
+|`USERID`
+|`null` (Not provided by Spotify)
+|`Foo`
+|`Bar`
+|`spotify@example.com`
 
 |Twitter
 |`twitter`
