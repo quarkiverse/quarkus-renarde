@@ -24,7 +24,7 @@ public class MockFacebookOidcTestResource extends MockOidcTestResource<MockFaceb
     private KeyPair kp;
 
     public MockFacebookOidcTestResource() {
-        super("facebook", 50004);
+        super("facebook");
     }
 
     @Override

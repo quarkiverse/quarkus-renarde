@@ -25,7 +25,7 @@ public class MockAppleOidcTestResource extends MockOidcTestResource<MockAppleOid
     private KeyPair kp;
 
     public MockAppleOidcTestResource() {
-        super("apple", 50003);
+        super("apple");
     }
 
     @Override

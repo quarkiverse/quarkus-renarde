@@ -13,6 +13,7 @@ import io.quarkiverse.renarde.oidc.test.MockFacebookOidc;
 import io.quarkiverse.renarde.oidc.test.MockGithubOidc;
 import io.quarkiverse.renarde.oidc.test.MockGoogleOidc;
 import io.quarkiverse.renarde.oidc.test.MockMicrosoftOidc;
+import io.quarkiverse.renarde.oidc.test.MockSpotifyOidc;
 import io.quarkiverse.renarde.oidc.test.MockTwitterOidc;
 import io.quarkiverse.renarde.oidc.test.RenardeCookieFilter;
 import io.quarkus.test.common.http.TestHTTPResource;
@@ -22,6 +23,7 @@ import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import io.restassured.response.ValidatableResponse;
 
+@MockSpotifyOidc
 @MockFacebookOidc
 @MockGoogleOidc
 @MockAppleOidc
@@ -66,6 +68,12 @@ public class RenardeOidcTest {
     public void googleLoginTest() {
         // google has no username
         oidcTest("google", "USERID", "google@example.com", "Foo", "Bar", null);
+    }
+
+    @Test
+    public void spotifyLoginTest() {
+        // spotify has no username
+        oidcTest("spotify", "USERID", "spotify@example.com", "Foo", "Bar", null);
     }
 
     @Test

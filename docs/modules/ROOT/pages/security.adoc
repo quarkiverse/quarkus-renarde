@@ -507,6 +507,7 @@ OIDC (Open ID Connect) is a way to delegate user login to external services, suc
 - xref:setting-up-oidc-for-google[Google]
 - xref:setting-up-oidc-for-facebook[Facebook]
 - xref:setting-up-oidc-for-microsoft[Microsoft]
+- xref:setting-up-oidc-for-spotify[Spotify]
 - xref:setting-up-oidc-for-twitter[Twitter]
 
 If you use OIDC, you can skip the email validation phase, and avoid storing passwords for your users, but you may
@@ -871,7 +872,7 @@ In order to set up OIDC for Github you need to create a new OAuth application in
 
 image::oidc-github-1.png[role="thumb"]
 
-Make sure to fill in the appropriate details, but more importantly the Authorization Callback URL, set to `http://localhost:8080/_renarde/security/github-success`
+Make sure to fill in the appropriate details, but more importantly the Authorization Callback URL, set to `http://localhost:8080/_renarde/security/oidc-success`
 (if you intend to test this using the Quarkus DEV mode).
 
 Now click on `Register application` and you'll be shown your application page:
@@ -1129,6 +1130,31 @@ quarkus.oidc.facebook.client-id=<App ID>
 quarkus.oidc.facebook.credentials.secret=<App secret>
 ----
 
+=== Setting up OIDC for Spotify
+
+In order to set up OIDC for Spotify start by https://developer.spotify.com/dashboard/create[Creating an app], enter an app name, 
+and `http://localhost:8080/_renarde/security/oidc-success` as `Redirect URI`, check the checkbox accepting the terms,
+and press `Save`:
+
+image::oidc-spotify-1.png[role="thumb"]
+
+Now click on `Settings`:
+
+image::oidc-spotify-2.png[role="thumb"]
+
+And click on `View client secret` in order to reveal your secret:
+
+image::oidc-spotify-3.png[role="thumb"]
+
+Now copy your `Client ID` and `Client secret` into your `application.properties`:
+
+[source,properties]
+----
+quarkus.oidc.spotify.provider=spotify
+quarkus.oidc.spotify.client-id=<Client ID>
+quarkus.oidc.spotify.credentials.secret=<Client Secret>
+----
+
 === Setting up OIDC for Twitter
 
 You can use Twitter for OIDC login, but at the moment, it restricts access to the user's email, which means you
@@ -1162,7 +1188,7 @@ Check the `OAuth 2.0` check box:
 
 image::oidc-twitter-7.png[role="thumb"]
 
-Select `Web App` as application type, then fill in your application details (use `<host>/_renarde/security/twitter-success`
+Select `Web App` as application type, then fill in your application details (use `<host>/_renarde/security/oidc-success`
 for the `Callback URI`).
 
 NOTE: Twitter doesn't require https usage in practice, but won't accept your `Website URL` without it, so

@@ -199,19 +199,15 @@ public class RenardeProcessor {
             defineUnlessPresent("mp.jwt.token.cookie", "QuarkusUser", config, runtimeConfigurationBuildItem);
         }
         // Apparently, no OIDC capability to check
-        for (String provider : Arrays.asList("facebook", "apple", "github", "microsoft", "google", "twitter")) {
+        for (String provider : Arrays.asList("facebook", "apple", "github", "microsoft", "google", "twitter", "spotify")) {
             if ((config.getOptionalValue("quarkus.oidc." + provider + ".provider", String.class).isPresent()
                     || config.getOptionalValue("quarkus.oidc." + provider + ".client-id", String.class).isPresent())
                     && !config.getOptionalValue("quarkus.oidc." + provider + ".authentication.redirect-path", String.class)
                             .isPresent()) {
-                String target = "oidc-success";
-                if (provider.equals("github") || provider.equals("twitter")) {
-                    target = provider + "-success";
-                }
                 runtimeConfigurationBuildItem
                         .produce(new RunTimeConfigurationDefaultBuildItem(
                                 "quarkus.oidc." + provider + ".authentication.redirect-path",
-                                "/_renarde/security/" + target));
+                                "/_renarde/security/oidc-success"));
             }
         }
     }

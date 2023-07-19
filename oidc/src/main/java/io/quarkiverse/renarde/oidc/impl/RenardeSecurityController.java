@@ -54,18 +54,18 @@ public class RenardeSecurityController extends Controller {
     @Inject
     OidcSession oidcSession;
 
+    // kept for backwards compat, but oidc-success works now
     @Authenticated
     @Path("github-success")
     public void githubSuccess() {
-        String authId = userInfo.getLong("id").toString();
-        oidcHandler.oidcSuccess(oidcSession.getTenantId(), authId);
+        oidcLoginSuccess();
     }
 
+    // kept for backwards compat, but oidc-success works now
     @Authenticated
     @Path("twitter-success")
     public void twitterSuccess() {
-        String authId = userInfo.getObject("data").getString("id");
-        oidcHandler.oidcSuccess(oidcSession.getTenantId(), authId);
+        oidcLoginSuccess();
     }
 
     // for every provider
@@ -84,7 +84,22 @@ public class RenardeSecurityController extends Controller {
     }
 
     private void oidcLoginSuccess() {
-        String authId = RenardeSecurity.getUserId(idToken);
-        oidcHandler.oidcSuccess(oidcSession.getTenantId(), authId);
+        String tenantId = oidcSession.getTenantId();
+        String authId;
+        switch (tenantId) {
+            case "github":
+                authId = userInfo.getLong("id").toString();
+                break;
+            case "spotify":
+                authId = userInfo.getString("id");
+                break;
+            case "twitter":
+                authId = userInfo.getObject("data").getString("id");
+                break;
+            default:
+                authId = RenardeSecurity.getUserId(idToken);
+                break;
+        }
+        oidcHandler.oidcSuccess(tenantId, authId);
     }
 }

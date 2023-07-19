@@ -24,7 +24,7 @@ public class MockMicrosoftOidcTestResource extends MockOidcTestResource<MockMicr
     private String clientId;
 
     public MockMicrosoftOidcTestResource() {
-        super("microsoft", 50002);
+        super("microsoft");
     }
 
     @Override

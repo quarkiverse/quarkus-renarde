@@ -12,7 +12,7 @@ import io.vertx.mutiny.ext.web.handler.BodyHandler;
 public class MockTwitterOidcTestResource extends MockOidcTestResource<MockTwitterOidc> {
 
     public MockTwitterOidcTestResource() {
-        super("twitter", 50005);
+        super("twitter");
     }
 
     @Override

@@ -18,7 +18,7 @@ import io.smallrye.jwt.auth.principal.DefaultJWTCallerPrincipal;
 import io.smallrye.mutiny.Uni;
 
 /**
- * GitHub and Facebook don't send a upn so we must extract it from the UserInfo.id
+ * GitHub, Spotify and Twitter don't send a JWT ID Token so we must extract it from the UserInfo.id
  */
 @ApplicationScoped
 public class RenardeSecurityIdentityAugmentor implements SecurityIdentityAugmentor {
@@ -29,8 +29,8 @@ public class RenardeSecurityIdentityAugmentor implements SecurityIdentityAugment
             return Uni.createFrom().item(identity);
         DefaultJWTCallerPrincipal oldPrincipal = (DefaultJWTCallerPrincipal) identity.getPrincipal();
         String tenantId = identity.getAttribute(OidcUtils.TENANT_ID_ATTRIBUTE);
-        // only do this for github and twitter
-        if ("github".equals(tenantId) || "twitter".equals(tenantId)) {
+        // only do this for github, twitter and spotify
+        if ("github".equals(tenantId) || "twitter".equals(tenantId) || "spotify".equals(tenantId)) {
             String rawToken = oldPrincipal.getClaim(Claims.raw_token);
             JwtClaims claims;
             claims = new JwtClaims();
@@ -39,7 +39,7 @@ public class RenardeSecurityIdentityAugmentor implements SecurityIdentityAugment
             }
             UserInfo userInfo = identity.getAttribute(OidcUtils.USER_INFO_ATTRIBUTE);
             JsonValue id;
-            if ("github".equals(tenantId)) {
+            if ("github".equals(tenantId) || "spotify".equals(tenantId)) {
                 id = (JsonValue) userInfo.get("id");
             } else {
                 id = userInfo.getObject("data").get("id");

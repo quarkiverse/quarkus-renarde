@@ -19,33 +19,30 @@ public abstract class MockOidcTestResource<ConfigAnnotation extends Annotation>
     private HttpServer httpServer;
     protected String baseURI;
     private String name;
-    private int port;
 
-    MockOidcTestResource(String name, int port) {
+    MockOidcTestResource(String name) {
         this.name = name;
-        this.port = port;
     }
 
     @Override
     public Map<String, String> start() {
-        System.err.println("Starting OIDC Mock: " + name);
         Vertx vertx = Vertx.vertx();
         HttpServerOptions options = new HttpServerOptions();
-        options.setPort(port);
+        options.setPort(0);
         httpServer = vertx.createHttpServer(options);
 
         Router router = Router.router(vertx);
         httpServer.requestHandler(router);
         registerRoutes(router);
 
-        System.err.println("Going to listen");
         httpServer.listenAndAwait();
         int port = httpServer.actualPort();
-        System.err.println("Listening on port " + port);
 
         Map<String, String> ret = new HashMap<>();
         baseURI = "http://localhost:" + port;
         ret.put("quarkus.oidc." + name + ".auth-server-url", baseURI);
+
+        System.err.println("Started OIDC Mock for " + name + " on " + baseURI);
         return ret;
     }
 

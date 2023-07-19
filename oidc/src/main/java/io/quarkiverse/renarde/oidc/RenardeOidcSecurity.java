@@ -47,6 +47,8 @@ public class RenardeOidcSecurity {
                 return null;
             case "twitter":
                 return null;
+            case "spotify":
+                return userInfo.getString("email");
             default:
                 return idToken.getClaim(Claims.email);
         }
@@ -55,6 +57,8 @@ public class RenardeOidcSecurity {
     public String getOidcFirstName() {
         String tenantId = oidcSession.getTenantId();
         switch (tenantId) {
+            case "spotify":
+                return firstPart(userInfo.getString("display_name"));
             case "github":
                 return firstPart(userInfo.getString("name"));
             case "twitter":
@@ -91,6 +95,8 @@ public class RenardeOidcSecurity {
     public String getOidcLastName() {
         String tenantId = oidcSession.getTenantId();
         switch (tenantId) {
+            case "spotify":
+                return secondPart(userInfo.getString("display_name"));
             case "github":
                 return secondPart(userInfo.getString("name"));
             case "twitter":
@@ -109,6 +115,7 @@ public class RenardeOidcSecurity {
                 return userInfo.getString("login");
             case "twitter":
                 return firstPart(userInfo.getObject("data").getString("username"));
+            case "spotify":
             case "facebook":
                 return null;
             default:

@@ -12,7 +12,7 @@ import io.vertx.mutiny.ext.web.handler.BodyHandler;
 public class MockGithubOidcTestResource extends MockOidcTestResource<MockGithubOidc> {
 
     public MockGithubOidcTestResource() {
-        super("github", 50001);
+        super("github");
     }
 
     @Override

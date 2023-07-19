@@ -23,7 +23,7 @@ public class MockGoogleOidcTestResource extends MockOidcTestResource<MockGoogleO
     private KeyPair kp;
 
     public MockGoogleOidcTestResource() {
-        super("google", 50000);
+        super("google");
     }
 
     @Override
