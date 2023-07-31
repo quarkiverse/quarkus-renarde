@@ -37,7 +37,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.version>3.1.2.Final</quarkus.version>
     <openhtmltopdf.version>1.0.10</openhtmltopdf.version>
-    <zxing.version>3.5.1</zxing.version>
+    <zxing.version>3.5.2</zxing.version>
   </properties>
   <dependencyManagement>
     <dependencies>
