@@ -851,12 +851,12 @@ And finally we can add the OIDC login options to the login page:
     <fieldset>
         <legend>Login/Register</legend>
         <div class="d-grid gap-2">
-          <a class="btn btn-block btn-light" href="{uri:RenardeSecurityController.loginUsingOidc('github')}" role="button"><img src="/images/signin-github.svg" height="16px" style="vertical-align: text-top"/> GitHub</a>
-          <a class="btn btn-block btn-light" href="{uri:RenardeSecurityController.loginUsingOidc('google')}" role="button"><img src="/images/signin-google.svg" height="16px" style="vertical-align: text-top"/> Google</a>
-          <a class="btn btn-block btn-light" href="{uri:RenardeSecurityController.loginUsingOidc('microsoft')}" role="button"><img src="/images/signin-microsoft.svg" height="16px" style="vertical-align: text-top"/> Microsoft</a>
-          <a class="btn btn-block btn-light" href="{uri:RenardeSecurityController.loginUsingOidc('facebook')}" role="button"><img src="/images/signin-facebook.svg" height="16px" style="vertical-align: text-top"/> Facebook</a>
-          <a class="btn btn-block btn-light" href="{uri:RenardeSecurityController.loginUsingOidc('apple')}" role="button"><img src="/images/signin-apple.svg" height="16px" style="vertical-align: text-top"/> Apple</a>
-          <a class="btn btn-block btn-light" href="{uri:RenardeSecurityController.loginUsingOidc('twitter')}" role="button"><img src="/images/signin-twitter.svg" height="16px" style="vertical-align: text-top"/> Twitter</a>
+          <a class="btn btn-block btn-light" href="{uri:RenardeOidcController.loginUsingOidc('github')}" role="button"><img src="/images/signin-github.svg" height="16px" style="vertical-align: text-top"/> GitHub</a>
+          <a class="btn btn-block btn-light" href="{uri:RenardeOidcController.loginUsingOidc('google')}" role="button"><img src="/images/signin-google.svg" height="16px" style="vertical-align: text-top"/> Google</a>
+          <a class="btn btn-block btn-light" href="{uri:RenardeOidcController.loginUsingOidc('microsoft')}" role="button"><img src="/images/signin-microsoft.svg" height="16px" style="vertical-align: text-top"/> Microsoft</a>
+          <a class="btn btn-block btn-light" href="{uri:RenardeOidcController.loginUsingOidc('facebook')}" role="button"><img src="/images/signin-facebook.svg" height="16px" style="vertical-align: text-top"/> Facebook</a>
+          <a class="btn btn-block btn-light" href="{uri:RenardeOidcController.loginUsingOidc('apple')}" role="button"><img src="/images/signin-apple.svg" height="16px" style="vertical-align: text-top"/> Apple</a>
+          <a class="btn btn-block btn-light" href="{uri:RenardeOidcController.loginUsingOidc('twitter')}" role="button"><img src="/images/signin-twitter.svg" height="16px" style="vertical-align: text-top"/> Twitter</a>
         </div>
      </fieldset>
   </div>

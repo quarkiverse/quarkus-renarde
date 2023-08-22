@@ -20,7 +20,7 @@ import io.smallrye.jwt.auth.principal.JWTCallerPrincipal;
 // Note that we're using _renarde because MS doesn't allow @renarde, so
 // don't try to be smart here
 @Path("_renarde/security")
-public class RenardeSecurityController extends Controller {
+public class RenardeOidcController extends Controller {
 
     /**
      * Auth trigger for OIDC
