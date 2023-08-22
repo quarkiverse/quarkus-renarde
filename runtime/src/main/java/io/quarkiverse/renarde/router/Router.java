@@ -3,6 +3,7 @@ package io.quarkiverse.renarde.router;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
@@ -305,5 +306,13 @@ public class Router {
         UriBuilder ret = absolute ? uriInfo.getBaseUriBuilder()
                 : uriInfo.getBaseUriBuilder().host(null).port(-1).scheme(null);
         return ret;
+    }
+
+    // Called by the URI-generating methods of controllers, for Optional parameters
+    public static Optional ofNullable(Object o) {
+        if (o instanceof Optional) {
+            return (Optional) o;
+        }
+        return Optional.ofNullable(o);
     }
 }

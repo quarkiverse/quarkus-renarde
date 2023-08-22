@@ -87,7 +87,30 @@ public class RenardeResourceTest {
                 .body(is("/absolute"
                         + "\n/Application/index"
                         + "\n/Application/params/first/42?q=search"
-                        + "\n/Application/primitiveParams?b=true&c=a&bite=2&s=3&i=4&l=5&f=6.0&d=7.0"));
+                        + "\n/Application/primitiveParams?b=true&c=a&bite=2&s=3&i=4&l=5&f=6.0&d=7.0"
+                        + "\n/Application/optionalParams?id=42"));
+    }
+
+    @Test
+    public void testRouterRedirectEndpoint() {
+        given()
+                .when().get("/Application/routerRedirect")
+                .then()
+                .statusCode(200)
+                .body(is("http://localhost:8081/absolute"
+                        + "\nhttp://localhost:8081/Application/index"
+                        + "\nhttp://localhost:8081/Application/params/first/42?q=search"
+                        + "\nhttp://localhost:8081/Application/primitiveParams?b=true&c=a&bite=2&s=3&i=4&l=5&f=6.0&d=7.0"
+                        + "\nhttp://localhost:8081/Application/optionalParams?id=42"));
+        given()
+                .when().get("/Application/routerRedirect2")
+                .then()
+                .statusCode(200)
+                .body(is("http://localhost:8081/absolute"
+                        + "\nhttp://localhost:8081/Application/index"
+                        + "\nhttp://localhost:8081/Application/params/first/42?q=search"
+                        + "\nhttp://localhost:8081/Application/primitiveParams?b=true&c=a&bite=2&s=3&i=4&l=5&f=6.0&d=7.0"
+                        + "\nhttp://localhost:8081/Application/optionalParams?id=42"));
     }
 
     @Test
@@ -103,7 +126,9 @@ public class RenardeResourceTest {
                         + "\n/Application/params/first/42?q=search"
                         + "\nhttp://localhost:8081/Application/params/first/42?q=search"
                         + "\n/Application/primitiveParams?b=true&c=a&bite=2&s=3&i=4&l=5&f=6.0&d=7.0"
-                        + "\nhttp://localhost:8081/Application/primitiveParams?b=true&c=a&bite=2&s=3&i=4&l=5&f=6.0&d=7.0"));
+                        + "\nhttp://localhost:8081/Application/primitiveParams?b=true&c=a&bite=2&s=3&i=4&l=5&f=6.0&d=7.0"
+                        + "\n/Application/optionalParams?id=42"
+                        + "\nhttp://localhost:8081/Application/optionalParams?id=42"));
     }
 
     @Test

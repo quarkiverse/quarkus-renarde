@@ -3,6 +3,7 @@ package io.quarkiverse.renarde.deployment;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiFunction;
 
 import org.jboss.jandex.DotName;
@@ -26,6 +27,7 @@ import io.quarkus.runtime.util.HashUtil;
 public class ControllerVisitor implements BiFunction<String, ClassVisitor, ClassVisitor> {
 
     public static final DotName DOTNAME_LONG = DotName.createSimple(Long.class.getName());
+    public static final DotName DOTNAME_OPTIONAL = DotName.createSimple(Optional.class.getName());
 
     public static final String ROUTER_BINARY_NAME = Router.class.getName().replace('.', '/');
     public static final String CONTROLLER_BINARY_NAME = Controller.class.getName().replace('.', '/');
@@ -227,6 +229,11 @@ public class ControllerVisitor implements BiFunction<String, ClassVisitor, Class
                 visitor.visitInsn(Opcodes.AALOAD);
                 if (parameterType.kind() == Kind.PRIMITIVE) {
                     unboxOrWidenIfRequired(visitor, parameterType);
+                } else if (parameterType.name().equals(DOTNAME_OPTIONAL)) {
+                    // wrap into an optional, unless already optional,
+                    // because this is called from both Router.getURI with optional values, and Qute which does not have optional values
+                    visitor.visitMethodInsn(Opcodes.INVOKESTATIC, Router.class.getName().replace('.', '/'), "ofNullable",
+                            "(Ljava/lang/Object;)Ljava/util/Optional;", false);
                 } else {
                     visitor.visitTypeInsn(Opcodes.CHECKCAST, parameterType.name().toString('/'));
                 }
@@ -253,6 +260,9 @@ public class ControllerVisitor implements BiFunction<String, ClassVisitor, Class
                             visitor.visitInsn(Opcodes.LCONST_0);
                             break;
                     }
+                } else if (parameterType.name().equals(DOTNAME_OPTIONAL)) {
+                    visitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Optional", "empty",
+                            "()Ljava/util/Optional;", false);
                 } else {
                     visitor.visitInsn(Opcodes.ACONST_NULL);
                 }
@@ -401,16 +411,20 @@ public class ControllerVisitor implements BiFunction<String, ClassVisitor, Class
                     visitor.visitInsn(Opcodes.POP);
                 } else if (part instanceof QueryParamUriPart) {
                     /*
-                     * if(queryParam != null){
+                     * if(queryParam != null){ // or queryParam.isPresent() for Optional
                      * Object[] params = new Object[1];
-                     * params[0] = queryParam;
+                     * params[0] = queryParam; // or queryParam.get() for Optional
                      * uri.queryParam("queryParam", params);
                      * }
                      */
                     QueryParamUriPart queryPart = (QueryParamUriPart) part;
                     Type paramType = method.parameters.get(queryPart.paramIndex);
                     Label end = new Label();
-                    if (paramType.kind() != Kind.PRIMITIVE) {
+                    if (paramType.name().equals(DOTNAME_OPTIONAL)) {
+                        visitor.visitVarInsn(Opcodes.ALOAD, queryPart.asmParamIndex);
+                        visitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "isPresent", "()Z", false);
+                        visitor.visitJumpInsn(Opcodes.IFEQ, end);
+                    } else if (paramType.kind() != Kind.PRIMITIVE) {
                         visitor.visitVarInsn(Opcodes.ALOAD, queryPart.asmParamIndex);
                         visitor.visitJumpInsn(Opcodes.IFNULL, end);
                     }
@@ -422,6 +436,11 @@ public class ControllerVisitor implements BiFunction<String, ClassVisitor, Class
                     visitor.visitInsn(Opcodes.ICONST_0);
                     visitor.visitVarInsn(AsmUtil.getLoadOpcode(paramType), queryPart.asmParamIndex);
                     AsmUtil.boxIfRequired(visitor, paramType);
+                    // un-box from optional if required
+                    if (paramType.name().equals(DOTNAME_OPTIONAL)) {
+                        visitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/util/Optional", "get", "()Ljava/lang/Object;",
+                                false);
+                    }
                     visitor.visitInsn(Opcodes.AASTORE);
                     visitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "jakarta/ws/rs/core/UriBuilder", "queryParam",
                             "(Ljava/lang/String;[Ljava/lang/Object;)Ljakarta/ws/rs/core/UriBuilder;", false);

@@ -3,6 +3,7 @@ package rest;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Optional;
 
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -21,6 +22,7 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import io.quarkiverse.renarde.Controller;
 import io.quarkiverse.renarde.router.Router;
+import io.quarkiverse.renarde.util.RedirectException;
 import io.quarkus.csrf.reactive.runtime.CsrfTokenParameterProvider;
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
@@ -115,11 +117,43 @@ public class Application extends Controller {
         return "Got params: " + b + "/" + c + "/" + bite + "/" + s + "/" + i + "/" + l + "/" + f + "/" + d;
     }
 
+    public String optionalParams(@RestQuery Optional<Long> id, @RestQuery Optional<Long> number) {
+        return "Got params: " + id + "/" + number;
+    }
+
+    public String routerRedirect() {
+        return extractRedirect(() -> absolutePath())
+                + "\n" + extractRedirect(() -> index())
+                + "\n" + extractRedirect(() -> params("first", 42l, "search"))
+                + "\n" + extractRedirect(() -> primitiveParams(true, 'a', (byte) 2, (short) 3, 4, 5l, 6.0f, 7.0d))
+                + "\n" + extractRedirect(() -> optionalParams(Optional.of(42l), Optional.empty()));
+    }
+
+    public String routerRedirect2() {
+        return extractRedirect(() -> absolutePath())
+                + "\n" + extractRedirect(() -> redirect(Application.class).index())
+                + "\n" + extractRedirect(() -> redirect(Application.class).params("first", 42l, "search"))
+                + "\n"
+                + extractRedirect(
+                        () -> redirect(Application.class).primitiveParams(true, 'a', (byte) 2, (short) 3, 4, 5l, 6.0f, 7.0d))
+                + "\n" + extractRedirect(() -> redirect(Application.class).optionalParams(Optional.of(42l), Optional.empty()));
+    }
+
+    private String extractRedirect(Runnable run) {
+        try {
+            run.run();
+        } catch (RedirectException x) {
+            return x.response.getHeaderString("Location");
+        }
+        return null;
+    }
+
     public String router() {
         return Router.getURI(Application::absolutePath)
                 + "\n" + Router.getURI(Application::index)
                 + "\n" + Router.getURI(Application::params, "first", 42l, "search")
-                + "\n" + Router.getURI(Application::primitiveParams, true, 'a', (byte) 2, (short) 3, 4, 5l, 6.0f, 7.0d);
+                + "\n" + Router.getURI(Application::primitiveParams, true, 'a', (byte) 2, (short) 3, 4, 5l, 6.0f, 7.0d)
+                + "\n" + Router.getURI(Application::optionalParams, Optional.of(42l), Optional.empty());
     }
 
     public TemplateInstance csrf() {
