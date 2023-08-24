@@ -1,5 +1,5 @@
 :quarkus-version: 3.3.0
-:quarkus-renarde-version: 3.0.3
+:quarkus-renarde-version: 3.0.4
 :maven-version: 3.8.1+
 
 :quarkus-org-url: https://github.com/quarkusio
