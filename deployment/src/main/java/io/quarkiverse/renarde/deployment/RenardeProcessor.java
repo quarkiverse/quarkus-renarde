@@ -159,14 +159,26 @@ public class RenardeProcessor {
 
     private static final String FEATURE = "renarde";
 
+    private static final String PDFBOX_PROBLEMATIC_CLASS = "org.apache.pdfbox.pdmodel.encryption.PublicKeySecurityHandler";
+
     @BuildStep
     FeatureBuildItem feature() {
         return new FeatureBuildItem(FEATURE);
     }
 
     @BuildStep
-    RuntimeInitializedClassBuildItem setupPdfBox() {
-        return new RuntimeInitializedClassBuildItem("org.apache.pdfbox.pdmodel.encryption.PublicKeySecurityHandler");
+    void setupPdfBox(BuildProducer<RuntimeInitializedClassBuildItem> runtimeInitializedClassBuildItem) {
+        // only if the PDF extension is present
+        try {
+            Class.forName(PDFBOX_PROBLEMATIC_CLASS);
+            runtimeInitializedClassBuildItem.produce(new RuntimeInitializedClassBuildItem(PDFBOX_PROBLEMATIC_CLASS));
+        } catch (ClassNotFoundException x) {
+            // ignore
+        } catch (NoClassDefFoundError x) {
+            // honestly this is weird, I'm getting this error when trying to load the other class, due to org/bouncycastle/cms/CMSException
+            // missing, even for projects where pdfbox is imported
+            runtimeInitializedClassBuildItem.produce(new RuntimeInitializedClassBuildItem(PDFBOX_PROBLEMATIC_CLASS));
+        }
     }
 
     @BuildStep
