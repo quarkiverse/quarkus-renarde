@@ -108,6 +108,7 @@ import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.HotDeploymentWatchedFileBuildItem;
 import io.quarkus.deployment.builditem.LaunchModeBuildItem;
 import io.quarkus.deployment.builditem.RunTimeConfigurationDefaultBuildItem;
+import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
 import io.quarkus.deployment.logging.LogCleanupFilterBuildItem;
 import io.quarkus.deployment.pkg.builditem.CurateOutcomeBuildItem;
@@ -754,6 +755,7 @@ public class RenardeProcessor {
             BeanContainerBuildItem beanContainerBuildItem,
             ApplicationArchivesBuildItem applicationArchivesBuildItem,
             LocalesBuildTimeConfig locales,
+            BuildProducer<NativeImageResourceBuildItem> nativeImageResources,
             BuildProducer<HotDeploymentWatchedFileBuildItem> watchedFiles) throws IOException {
 
         Map<String, Path> languageToPath = new HashMap<>();
@@ -790,9 +792,10 @@ public class RenardeProcessor {
         }
 
         // FIXME: should not cause a full restart
-        // Hot deployment
+        // Hot deployment and native-image
         for (Path messageFileName : languageToPath.values()) {
             watchedFiles.produce(new HotDeploymentWatchedFileBuildItem(messageFileName.toString()));
+            nativeImageResources.produce(new NativeImageResourceBuildItem(messageFileName.toString()));
         }
 
         for (Entry<String, Path> entry : languageToPath.entrySet()) {

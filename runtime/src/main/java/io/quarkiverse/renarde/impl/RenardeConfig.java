@@ -37,9 +37,7 @@ public class RenardeConfig {
 
     void addLanguageBundle(String language, String bundlePath) {
         Properties bundle = new Properties();
-        if (!bundlePath.startsWith("/")) {
-            bundlePath = "/" + bundlePath;
-        }
+        // let's not add a leading slash because this fails in native-image
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         if (cl == null) {
             cl = RenardeConfig.class.getClassLoader();
