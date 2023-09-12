@@ -522,13 +522,13 @@ With parameters:
 
 The current language for a request will depend on the following (in order):
 
-. The `_renarde_language` cookie, if set
+. The `_renarde_locale` cookie, if set
 . The https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language[`Accept-Language`] HTTP header, if set,
 which defines an ordered list of languages by user preference. We will select a best matching language from the set
 of `quarkus.locales`.
 . If nothing else, we default to the default language as set by `quarkus.default-locale`, which defaults to `en_US`.
 
-You can override the user's language with a cookie by calling `i18n.set(language)`:
+You can override the user's language with a cookie by calling `i18n.set(locale)`:
 
 [source,java]
 ----

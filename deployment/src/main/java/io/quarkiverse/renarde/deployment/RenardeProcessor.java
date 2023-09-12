@@ -79,6 +79,7 @@ import io.quarkiverse.renarde.util.MyValidationInterceptor;
 import io.quarkiverse.renarde.util.QuteResolvers;
 import io.quarkiverse.renarde.util.RedirectExceptionMapper;
 import io.quarkiverse.renarde.util.RenardeJWTAuthMechanism;
+import io.quarkiverse.renarde.util.RenardeValidationLocaleResolver;
 import io.quarkiverse.renarde.util.RenderArgs;
 import io.quarkiverse.renarde.util.TemplateResponseHandler;
 import io.quarkiverse.renarde.util.Validation;
@@ -322,6 +323,7 @@ public class RenardeProcessor {
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(I18N.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(RenderArgs.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(Validation.class));
+        additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(RenardeValidationLocaleResolver.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(JavaExtensions.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(MyValidationInterceptor.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(AuthenticationFailedExceptionMapper.class));
