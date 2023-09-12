@@ -79,6 +79,7 @@ import io.quarkiverse.renarde.util.MyValidationInterceptor;
 import io.quarkiverse.renarde.util.QuteResolvers;
 import io.quarkiverse.renarde.util.RedirectExceptionMapper;
 import io.quarkiverse.renarde.util.RenardeJWTAuthMechanism;
+import io.quarkiverse.renarde.util.RenardeValidationLocaleResolver;
 import io.quarkiverse.renarde.util.RenderArgs;
 import io.quarkiverse.renarde.util.TemplateResponseHandler;
 import io.quarkiverse.renarde.util.Validation;
@@ -108,6 +109,7 @@ import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.HotDeploymentWatchedFileBuildItem;
 import io.quarkus.deployment.builditem.LaunchModeBuildItem;
 import io.quarkus.deployment.builditem.RunTimeConfigurationDefaultBuildItem;
+import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
 import io.quarkus.deployment.logging.LogCleanupFilterBuildItem;
 import io.quarkus.deployment.pkg.builditem.CurateOutcomeBuildItem;
@@ -158,14 +160,26 @@ public class RenardeProcessor {
 
     private static final String FEATURE = "renarde";
 
+    private static final String PDFBOX_PROBLEMATIC_CLASS = "org.apache.pdfbox.pdmodel.encryption.PublicKeySecurityHandler";
+
     @BuildStep
     FeatureBuildItem feature() {
         return new FeatureBuildItem(FEATURE);
     }
 
     @BuildStep
-    RuntimeInitializedClassBuildItem setupPdfBox() {
-        return new RuntimeInitializedClassBuildItem("org.apache.pdfbox.pdmodel.encryption.PublicKeySecurityHandler");
+    void setupPdfBox(BuildProducer<RuntimeInitializedClassBuildItem> runtimeInitializedClassBuildItem) {
+        // only if the PDF extension is present
+        try {
+            Class.forName(PDFBOX_PROBLEMATIC_CLASS);
+            runtimeInitializedClassBuildItem.produce(new RuntimeInitializedClassBuildItem(PDFBOX_PROBLEMATIC_CLASS));
+        } catch (ClassNotFoundException x) {
+            // ignore
+        } catch (NoClassDefFoundError x) {
+            // honestly this is weird, I'm getting this error when trying to load the other class, due to org/bouncycastle/cms/CMSException
+            // missing, even for projects where pdfbox is imported
+            runtimeInitializedClassBuildItem.produce(new RuntimeInitializedClassBuildItem(PDFBOX_PROBLEMATIC_CLASS));
+        }
     }
 
     @BuildStep
@@ -309,6 +323,7 @@ public class RenardeProcessor {
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(I18N.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(RenderArgs.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(Validation.class));
+        additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(RenardeValidationLocaleResolver.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(JavaExtensions.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(MyValidationInterceptor.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(AuthenticationFailedExceptionMapper.class));
@@ -754,6 +769,7 @@ public class RenardeProcessor {
             BeanContainerBuildItem beanContainerBuildItem,
             ApplicationArchivesBuildItem applicationArchivesBuildItem,
             LocalesBuildTimeConfig locales,
+            BuildProducer<NativeImageResourceBuildItem> nativeImageResources,
             BuildProducer<HotDeploymentWatchedFileBuildItem> watchedFiles) throws IOException {
 
         Map<String, Path> languageToPath = new HashMap<>();
@@ -790,9 +806,10 @@ public class RenardeProcessor {
         }
 
         // FIXME: should not cause a full restart
-        // Hot deployment
+        // Hot deployment and native-image
         for (Path messageFileName : languageToPath.values()) {
             watchedFiles.produce(new HotDeploymentWatchedFileBuildItem(messageFileName.toString()));
+            nativeImageResources.produce(new NativeImageResourceBuildItem(messageFileName.toString()));
         }
 
         for (Entry<String, Path> entry : languageToPath.entrySet()) {

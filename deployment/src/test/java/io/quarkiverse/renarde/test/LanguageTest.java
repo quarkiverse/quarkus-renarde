@@ -4,6 +4,7 @@ import java.net.URL;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
@@ -197,6 +198,22 @@ public class LanguageTest {
 
     }
 
+    @Test
+    public void testValidationLanguage() {
+        RestAssured
+                .post("/validation").then()
+                .statusCode(200)
+                .body(Matchers.is(
+                        "must not be empty"));
+        RestAssured
+                .given()
+                .cookie(I18N.LOCALE_COOKIE_NAME, "fr")
+                .post("/validation").then()
+                .statusCode(200)
+                .body(Matchers.is(
+                        "ne doit pas être vide"));
+    }
+
     public static class MyController extends Controller {
 
         @CheckedTemplate
@@ -234,6 +251,12 @@ public class LanguageTest {
         @Path("/type-unsafe")
         public TemplateInstance typeUnsafe() {
             return Templates.typeUnsafe("code");
+        }
+
+        @POST
+        @Path("/validation")
+        public String validation(@NotEmpty @RestForm String param) {
+            return validation.getError("param");
         }
 
         @Path("/lang")

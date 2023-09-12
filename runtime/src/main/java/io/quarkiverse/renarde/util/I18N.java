@@ -22,7 +22,12 @@ import io.vertx.core.http.HttpServerResponse;
 @RequestScoped
 public class I18N {
 
-    public final static String LANGUAGE_COOKIE_NAME = "_renarde_language";
+    public final static String LOCALE_COOKIE_NAME = "_renarde_locale";
+    /**
+     * @deprecated use {@link I18N#LOCALE_COOKIE_NAME}
+     */
+    @Deprecated
+    public final static String LANGUAGE_COOKIE_NAME = LOCALE_COOKIE_NAME;
 
     @Inject
     HttpServerRequest request;
@@ -33,37 +38,70 @@ public class I18N {
     @Inject
     RenardeConfig renardeConfig;
 
-    private String language = null;
-    private boolean languageOverridden = false;
+    private Locale locale = null;
+    private boolean localeOverridden = false;
 
     public void set(String language) {
         Objects.requireNonNull(language);
         // check that we support it
-        boolean found = false;
-        for (Locale locale : localesConfig.locales) {
-            if (locale.getLanguage().equals(language)) {
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
+        Locale found = findSupportedLocale(language);
+        if (locale == null) {
             throw new IllegalArgumentException(
                     "Language " + language + " not supported, please add it to the 'quarkus.locales' configuration");
         }
-        languageOverridden = true;
-        this.language = language;
+        localeOverridden = true;
+        this.locale = found;
     }
 
+    private Locale findSupportedLocale(String language) {
+        // FIXME: simplistic
+        for (Locale locale : localesConfig.locales) {
+            if (locale.getLanguage().equals(language)) {
+                return locale;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns the language part of the current locale
+     *
+     * @return the language part of the current locale
+     * @deprecated use {@link #getLanguage()}
+     */
+    @Deprecated
     public String get() {
-        return language;
+        return getLanguage();
+    }
+
+    /**
+     * Returns the language part of the current locale
+     *
+     * @return the language part of the current locale
+     */
+    public String getLanguage() {
+        return locale.getLanguage();
+    }
+
+    /**
+     * The current locale, as obtained via a cookie override, or HTTP headers, or the default.
+     *
+     * @return the current locale, as obtained via a cookie override, or HTTP headers, or the default.
+     */
+    public Locale getLocale() {
+        return locale;
     }
 
     void readLanguageCookie(ResteasyReactiveContainerRequestContext requestContext) {
         // first try from our cookie
-        Cookie cookie = requestContext.getCookies().get(LANGUAGE_COOKIE_NAME);
+        Cookie cookie = requestContext.getCookies().get(LOCALE_COOKIE_NAME);
         if (cookie != null) {
-            language = cookie.getValue();
-            return;
+            // use the cookie if it's valid
+            locale = findSupportedLocale(cookie.getValue());
+            if (locale != null) {
+                return;
+            }
+            // invalid cookie locale, fallback to use headers
         }
         // if not, use the accept header
         List<Locale> acceptableLanguages = HeaderUtil.getAcceptableLanguages(requestContext.getHeaders());
@@ -75,19 +113,19 @@ public class I18N {
             // do we support it?
             // FIXME: perhaps only look at the primary language?
             if (localesConfig.locales.contains(acceptableLanguage)) {
-                language = acceptableLanguage.getLanguage();
+                locale = acceptableLanguage;
                 return;
             }
         }
         // we didn't find any match between our locales and the user's so → default value
-        language = localesConfig.defaultLocale.getLanguage();
+        locale = localesConfig.defaultLocale;
     }
 
     void setLanguageCookie() {
         HttpServerResponse response = request.response();
-        if (languageOverridden && !response.headWritten()) {
+        if (localeOverridden && !response.headWritten()) {
             response.addCookie(
-                    io.vertx.core.http.Cookie.cookie(LANGUAGE_COOKIE_NAME, language)
+                    io.vertx.core.http.Cookie.cookie(LANGUAGE_COOKIE_NAME, locale.toString())
                             .setPath("/")
                             .setSameSite(CookieSameSite.LAX)
                             .setSecure(request.isSSL()));
