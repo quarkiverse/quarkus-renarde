@@ -29,7 +29,9 @@ public abstract class HxController extends Controller {
         HX_RESWAP("HX-Reswap"), // Allows you to specify how the response will be swapped. See hx-swap for possible values
         HX_RETARGET("HX-Retarget"), // A CSS selector that updates the target of the content update to a different element on the page
         TRIGGER_AFTER_SWAP("HX-Trigger-After-Swap"), // allows you to trigger client side events
-        TRIGGER_AFTER_SETTLE("HX-Trigger-After-Settle"); // allows you to trigger client side events
+        TRIGGER_AFTER_SETTLE("HX-Trigger-After-Settle"), // allows you to trigger client side events
+        REPLACE_URL("HX-Replace-Url"), // Replaces the current URL in the location bar
+        RESELECT("HX-Reselect"); // A CSS selector that allows you to choose which part of the response is used to be swapped in. Overrides an existing hx-select on the triggering element
 
         private final String key;
 
@@ -39,6 +41,27 @@ public abstract class HxController extends Controller {
 
         public String key() {
             return key;
+        }
+    }
+
+    public enum HxRequestHeader {
+        BOOSTED("HX-Boosted"), // Indicates that the request is via an element using hx-boost
+        CURRENT_URL("HX-Current-URL"), // The current URL of the browser
+        HISTORY_RESTORE_REQUEST("HX-History-Restore-Request"), // true if the request is for history restoration after a miss in the local history cache
+        PROMPT("HX-Prompt"), // The user response to an hx-prompt
+        REQUEST("HX-Request"), // Always true
+        TARGET("HX-Target"), // The id of the target element if it exists
+        TRIGGER_NAME("HX-Trigger-Name"), // The name of the triggered element if it exists
+        TRIGGER("HX-Trigger"); // The id of the triggered element if it exists
+
+        private final String key;
+
+        HxRequestHeader(String key) {
+            this.key = key;
+        }
+
+        public String key() {
+            return this.key;
         }
     }
 
@@ -84,6 +107,10 @@ public abstract class HxController extends Controller {
      */
     protected void hx(HxResponseHeader hxHeader, String value) {
         response.headers().set(hxHeader.key(), value);
+    }
+
+    protected String hx(HxRequestHeader header) {
+        return this.httpHeaders.getHeaderString(header.key);
     }
 
     /**
