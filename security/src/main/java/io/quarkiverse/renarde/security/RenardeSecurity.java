@@ -103,6 +103,15 @@ public class RenardeSecurity {
     }
 
     public Response makeLogoutResponse() {
+        try {
+            return this.makeLogoutResponse(new URI("/"));
+        } catch (URISyntaxException e) {
+            // can't happen
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Response makeLogoutResponse(URI redirectUri) {
         Set<String> tenants = tenantProvider.getTenants();
         List<NewCookie> cookies = new ArrayList<>(tenants.size() + 1);
         // Default tenant
@@ -113,11 +122,6 @@ public class RenardeSecurity {
         }
         // Manual
         cookies.add(new NewCookie(jwtCookie, null, "/", null, null, 0, false, true));
-        try {
-            return Response.seeOther(new URI("/")).cookie(cookies.toArray(new NewCookie[0])).build();
-        } catch (URISyntaxException e) {
-            // can't happen
-            throw new RuntimeException(e);
-        }
+        return Response.seeOther(redirectUri).cookie(cookies.toArray(new NewCookie[0])).build();
     }
 }
