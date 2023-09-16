@@ -1,6 +1,7 @@
 package io.quarkiverse.renarde.util;
 
 import java.net.URI;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -56,8 +57,7 @@ public class AuthenticationFailedExceptionMapper {
         // FIXME: URI, perhaps redirect to login page?
         ResponseBuilder builder = Response.seeOther(URI.create("/"));
         // FIXME: constant
-        NewCookie logoutCookie = new NewCookie("QuarkusUser", "", "/", null, NewCookie.DEFAULT_VERSION, null,
-                NewCookie.DEFAULT_MAX_AGE, null, false, false);
+        NewCookie logoutCookie = new NewCookie.Builder("QuarkusUser").expiry(new Date(0)).build();
         builder.cookie(logoutCookie);
         Map<String, Object> map = new HashMap<>();
         // FIXME: format?
