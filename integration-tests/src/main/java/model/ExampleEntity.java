@@ -1,6 +1,7 @@
 package model;
 
 import java.sql.Blob;
+import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -20,6 +21,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.Size;
 
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.hibernate.validator.constraints.Length;
 
 import io.quarkiverse.renarde.jpa.NamedBlob;
@@ -46,6 +48,7 @@ public class ExampleEntity extends PanacheEntity {
     @Column(name = "somethingLocalTime")
     public LocalTime localTime;
     public LocalDateTime localDateTime;
+    public Timestamp timestamp;
 
     @Lob
     public byte[] arrayBlob;
@@ -96,4 +99,29 @@ public class ExampleEntity extends PanacheEntity {
 
     @Column(nullable = false)
     public String requiredString;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    public List<JsonRecord> jsonRecords;
+
+    public static class JsonRecord {
+
+        private ExampleEnum exampleEnum;
+        private int something;
+
+        public JsonRecord() {
+        }
+
+        public JsonRecord(ExampleEnum exampleEnum, int something) {
+            this.exampleEnum = exampleEnum;
+            this.something = something;
+        }
+
+        public ExampleEnum getExampleEnum() {
+            return exampleEnum;
+        }
+
+        public int getSomething() {
+            return something;
+        }
+    }
 }

@@ -52,6 +52,7 @@ import io.quarkiverse.renarde.jpa.NamedBlob;
 import io.quarkus.arc.Arc;
 import io.quarkus.arc.ArcContainer;
 import io.quarkus.arc.InstanceHandle;
+import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.ApplicationArchivesBuildItem;
@@ -97,6 +98,11 @@ public class RenardeBackofficeProcessor {
     private static final DotName DOTNAME_BACKOFFICE_CONTROLLER = DotName.createSimple(BackofficeController.class);
     private static final DotName DOTNAME_BACKOFFICE_INDEX_CONTROLLER = DotName.createSimple(BackofficeIndexController.class);
     private static final DotName DOTNAME_COMPARABLE = DotName.createSimple(Comparable.class);
+
+    @BuildStep
+    void produceBeans(BuildProducer<AdditionalBeanBuildItem> additionalBeanBuildItems) {
+        additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(BackUtil.class));
+    }
 
     @BuildStep
     public void processModel(HibernateMetamodelForFieldAccessBuildItem metamodel,
@@ -693,6 +699,11 @@ public class RenardeBackofficeProcessor {
                     value = m.invokeStaticMethod(
                             MethodDescriptor.ofMethod(BackUtil.class, "dateField", Date.class, String.class),
                             parameterValue);
+                } else if (field.entityField.descriptor.equals("Ljava/sql/Timestamp;")) {
+                    value = m.invokeStaticMethod(
+                            MethodDescriptor.ofMethod(BackUtil.class, "sqlTimestampField", java.sql.Timestamp.class,
+                                    String.class),
+                            parameterValue);
                 } else if (field.entityField.descriptor.equals("Ljava/time/LocalDateTime;")) {
                     value = m.invokeStaticMethod(
                             MethodDescriptor.ofMethod(BackUtil.class, "localDateTimeField", LocalDateTime.class, String.class),
@@ -709,6 +720,12 @@ public class RenardeBackofficeProcessor {
                     value = m.invokeStaticMethod(
                             MethodDescriptor.ofMethod(BackUtil.class, "enumField", Enum.class, Class.class, String.class),
                             m.loadClass(field.getClassName()),
+                            parameterValue);
+                    value = m.checkCast(value, field.entityField.descriptor);
+                } else if (field.type == ModelField.Type.JSON) {
+                    value = m.invokeStaticMethod(
+                            MethodDescriptor.ofMethod(BackUtil.class, "jsonField", Object.class, String.class, String.class),
+                            m.load(field.signature),
                             parameterValue);
                     value = m.checkCast(value, field.entityField.descriptor);
                 } else if (field.type == ModelField.Type.MultiRelation

@@ -16,6 +16,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.hibernate.validator.constraints.Length;
 import org.jboss.jandex.AnnotationInstance;
 import org.jboss.jandex.AnnotationValue;
@@ -40,12 +41,15 @@ public class ModelField {
         DateTimeLocal,
         Date,
         Time,
+        Timestamp,
         Enum,
         Relation,
         MultiRelation,
         Ignore,
         MultiMultiRelation,
-        Binary;
+        Binary,
+        JSON,
+        ;
     }
 
     private static final DotName DOTNAME_MANYTOMANY = DotName.createSimple(ManyToMany.class.getName());
@@ -74,15 +78,22 @@ public class ModelField {
     public EntityField entityField;
     public EntityField inverseField;
     public List<Class<? extends Annotation>> validation = new ArrayList<>();
+    // use this rather than EntitiField.signature which is set later (why?)
+    public String signature;
 
     public ModelField(EntityField entityField, String entityClass, MetamodelInfo metamodelInfo, IndexView index) {
         this.name = entityField.name;
         this.label = JavaExtensions.capitalised(this.name);
         ClassInfo classInfo = index.getClassByName(DotName.createSimple(entityClass));
         FieldInfo field = classInfo.field(entityField.name);
+        this.signature = field.genericSignature();
         AnnotationInstance oneToOne = field.annotation(DOTNAME_ONETOONE);
         AnnotationInstance column = field.annotation(DOTNAME_COLUMN);
-        if (entityField.descriptor.equals("B")) {
+        AnnotationInstance jdbcTypeCode = field.annotation(DOTNAME_JDBC_TYPE_CODE);
+        if (jdbcTypeCode != null
+                && jdbcTypeCode.value().asInt() == SqlTypes.JSON) {
+            this.type = Type.JSON;
+        } else if (entityField.descriptor.equals("B")) {
             this.type = Type.Number;
             min = Byte.MIN_VALUE;
             max = Byte.MAX_VALUE;
@@ -123,7 +134,6 @@ public class ModelField {
                 || entityField.descriptor.equals(NAMED_BLOB_DESCRIPTOR)) {
             this.type = Type.Binary;
         } else if (entityField.descriptor.equals("Ljava/lang/String;")) {
-            AnnotationInstance jdbcTypeCode = field.annotation(DOTNAME_JDBC_TYPE_CODE);
             AnnotationInstance length = field.annotation(DOTNAME_LENGTH);
             AnnotationInstance size = field.annotation(DOTNAME_SIZE);
             if (column != null && column.value("length") != null && column.value("length").asInt() > 255) {
@@ -147,6 +157,8 @@ public class ModelField {
             this.type = Type.Date;
         } else if (entityField.descriptor.equals("Ljava/time/LocalTime;")) {
             this.type = Type.Time;
+        } else if (entityField.descriptor.equals("Ljava/sql/Timestamp;")) {
+            this.type = Type.Timestamp;
         } else if (field.hasAnnotation(DOTNAME_ENUMERATED)) {
             this.type = Type.Enum;
         } else if (field.hasAnnotation(DOTNAME_ONETOMANY)) {
