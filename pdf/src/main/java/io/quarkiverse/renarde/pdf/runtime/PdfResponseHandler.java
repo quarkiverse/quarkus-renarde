@@ -32,13 +32,20 @@ public class PdfResponseHandler {
         XRLog.setLoggerImpl(new XRLogger() {
             @Override
             public void log(String where, Level level, String msg) {
-                logger.log(where, translate(level), msg, null, null);
+                // FIXME: dropped where because if I set it, it appears as <unknown>" in the logs and I can't even enable the logs
+                logger.log(translate(level), msg);
+            }
+
+            @Override
+            public void log(String where, Level level, String msg, Throwable th) {
+                // FIXME: dropped where because if I set it, it appears as <unknown>" in the logs and I can't even enable the logs
+                logger.log(translate(level), msg, th);
             }
 
             private org.jboss.logging.Logger.Level translate(Level level) {
                 // downgrade INFO which is too verbose
                 if (level == Level.INFO)
-                    return Logger.Level.TRACE;
+                    return Logger.Level.DEBUG;
                 // the rest is a best guess
                 if (level == Level.WARNING)
                     return Logger.Level.WARN;
@@ -50,11 +57,6 @@ public class PdfResponseHandler {
                 if (level == Level.FINEST)
                     return Logger.Level.DEBUG;
                 return Logger.Level.INFO;
-            }
-
-            @Override
-            public void log(String where, Level level, String msg, Throwable th) {
-                logger.log(where, translate(level), msg, null, th);
             }
 
             @Override
