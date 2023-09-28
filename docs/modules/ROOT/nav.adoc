@@ -1,4 +1,4 @@
-include::./includes/attributes.adoc[]
+include::./pages/includes/attributes.adoc[]
 :config-file: application.properties
 
 * xref:index.adoc[Getting started]

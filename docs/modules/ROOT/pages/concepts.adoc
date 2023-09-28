@@ -1,6 +1,7 @@
 = Renarde image:renarde-head.svg[width=25em] Web Framework - Main Concepts
 :favicon: _images/renarde-head.svg
 
+include::./includes/attributes.adoc[]
 
 [#models]
 == Models
