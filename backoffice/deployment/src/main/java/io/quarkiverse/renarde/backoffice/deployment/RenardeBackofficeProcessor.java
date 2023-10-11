@@ -17,10 +17,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.persistence.Entity;
@@ -44,11 +44,11 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 import io.quarkiverse.renarde.Controller;
 import io.quarkiverse.renarde.backoffice.BackofficeController;
 import io.quarkiverse.renarde.backoffice.BackofficeIndexController;
-import io.quarkiverse.renarde.backoffice.deployment.ModelField.Type;
 import io.quarkiverse.renarde.backoffice.impl.BackUtil;
 import io.quarkiverse.renarde.backoffice.impl.CreateAction;
 import io.quarkiverse.renarde.backoffice.impl.EditAction;
 import io.quarkiverse.renarde.jpa.NamedBlob;
+import io.quarkiverse.renarde.jpa.deployment.ModelField;
 import io.quarkus.arc.Arc;
 import io.quarkus.arc.ArcContainer;
 import io.quarkus.arc.InstanceHandle;
@@ -171,14 +171,9 @@ public class RenardeBackofficeProcessor {
             entities.add(simpleName);
 
             // collect fields
-            List<ModelField> fields = new ArrayList<>();
-            for (Entry<String, EntityField> entry : entityModel.fields.entrySet()) {
-                ModelField mf = new ModelField(entry.getValue(), entityName.toString(), metamodel.getMetamodelInfo(),
-                        index.getIndex());
-                if (mf.type != Type.Ignore) {
-                    fields.add(mf);
-                }
-            }
+            List<ModelField> fields = ModelField.loadModelFields(entityModel, metamodel.getMetamodelInfo(), index.getIndex());
+            // remove ID fields
+            fields = fields.stream().filter(modelField -> !modelField.id).collect(Collectors.toList());
 
             generateEntityController(classInfo, index.getIndex(), entityName.toString(), entityController, simpleName, fields,
                     jaxrsOutput);
@@ -339,7 +334,7 @@ public class RenardeBackofficeProcessor {
     //
     private void addBinaryFieldGetters(ClassCreator c, String controllerClass, String entityClass, List<ModelField> fields) {
         for (ModelField field : fields) {
-            if (field.type == Type.Binary) {
+            if (field.type == ModelField.Type.Binary) {
                 // Add a method to read the binary field data
                 try (MethodCreator m = c.getMethodCreator(field.name + "ForBinary", Response.class, Long.class)) {
                     m.getParameterAnnotations(0).addAnnotation(RestPath.class).addValue("value", "id");
@@ -592,7 +587,7 @@ public class RenardeBackofficeProcessor {
                 ResultHandle value = null;
                 ResultHandle parameterValue = m.getMethodParam(i + offset);
                 i++;
-                if (field.type == Type.Text || field.type == Type.LargeText) {
+                if (field.type == ModelField.Type.Text || field.type == ModelField.Type.LargeText) {
                     if (field.entityField.descriptor.equals("Ljava/lang/String;")) {
                         value = m.invokeStaticMethod(
                                 MethodDescriptor.ofMethod(BackUtil.class, "stringField", String.class, String.class),
@@ -605,7 +600,7 @@ public class RenardeBackofficeProcessor {
                         throw new RuntimeException(
                                 "Unknown text field " + field + " descriptor: " + field.entityField.descriptor);
                     }
-                } else if (field.type == Type.Binary) {
+                } else if (field.type == ModelField.Type.Binary) {
                     // binary fields consume two parameters
                     ResultHandle parameterUnsetValue = parameterValue;
                     parameterValue = m.getMethodParam(i + offset);
@@ -666,7 +661,7 @@ public class RenardeBackofficeProcessor {
                     value = m.invokeStaticMethod(
                             MethodDescriptor.ofMethod(BackUtil.class, "integerWrapperField", Integer.class, String.class),
                             parameterValue);
-                } else if (field.type == Type.Number) {
+                } else if (field.type == ModelField.Type.Number) {
                     Class<?> primitiveClass;
                     switch (field.entityField.descriptor) {
                         case "B":

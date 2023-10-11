@@ -1,0 +1,13 @@
+name: "Renarde Transporter"
+description: "Transporter module for Quarkus Renarde."
+metadata:
+  keywords:
+  - "renarde"
+  - "web"
+  - "rest"
+  - "jpa"
+  - "database"
+  guide: "https://quarkiverse.github.io/quarkiverse-docs/quarkus-renarde/dev/index.html"
+  categories:
+  - "web"
+  status: "preview"

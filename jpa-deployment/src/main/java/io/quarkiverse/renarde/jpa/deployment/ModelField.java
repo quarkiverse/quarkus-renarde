@@ -1,12 +1,14 @@
-package io.quarkiverse.renarde.backoffice.deployment;
+package io.quarkiverse.renarde.jpa.deployment;
 
 import java.lang.annotation.Annotation;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
@@ -48,8 +50,7 @@ public class ModelField {
         Ignore,
         MultiMultiRelation,
         Binary,
-        JSON,
-        ;
+        JSON;
     }
 
     private static final DotName DOTNAME_MANYTOMANY = DotName.createSimple(ManyToMany.class.getName());
@@ -63,6 +64,7 @@ public class ModelField {
     private static final DotName DOTNAME_JDBC_TYPE_CODE = DotName.createSimple(JdbcTypeCode.class.getName());
     private static final DotName DOTNAME_TYPES = DotName.createSimple(Types.class.getName());
     private static final DotName DOTNAME_LOB = DotName.createSimple(Lob.class.getName());
+    private static final DotName DOTNAME_ID = DotName.createSimple(Id.class.getName());
     public static final String NAMED_BLOB_DESCRIPTOR = "L" + NamedBlob.class.getName().replace('.', '/') + ";";
 
     // For views
@@ -80,6 +82,8 @@ public class ModelField {
     public List<Class<? extends Annotation>> validation = new ArrayList<>();
     // use this rather than EntitiField.signature which is set later (why?)
     public String signature;
+    public boolean relationOwner;
+    public boolean id;
 
     public ModelField(EntityField entityField, String entityClass, MetamodelInfo metamodelInfo, IndexView index) {
         this.name = entityField.name;
@@ -90,6 +94,7 @@ public class ModelField {
         AnnotationInstance oneToOne = field.annotation(DOTNAME_ONETOONE);
         AnnotationInstance column = field.annotation(DOTNAME_COLUMN);
         AnnotationInstance jdbcTypeCode = field.annotation(DOTNAME_JDBC_TYPE_CODE);
+        this.id = field.annotation(DOTNAME_ID) != null;
         if (jdbcTypeCode != null
                 && jdbcTypeCode.value().asInt() == SqlTypes.JSON) {
             this.type = Type.JSON;
@@ -109,7 +114,8 @@ public class ModelField {
             min = Integer.MIN_VALUE;
             max = Integer.MAX_VALUE;
             step = 1;
-        } else if (entityField.descriptor.equals("J")) {
+        } else if (entityField.descriptor.equals("J")
+                || entityField.descriptor.equals("Ljava/lang/Long;")) {
             this.type = Type.Number;
             min = Long.MIN_VALUE;
             max = Long.MAX_VALUE;
@@ -169,6 +175,7 @@ public class ModelField {
             String inverseField = mappedBy.asString();
             // FIXME: inheritance
             this.inverseField = relationModel.fields.get(inverseField);
+            this.relationOwner = false;
         } else if (field.hasAnnotation(DOTNAME_MANYTOMANY)) {
             this.type = Type.MultiMultiRelation;
             this.relationClass = field.type().asParameterizedType().arguments().get(0).name().toString();
@@ -179,6 +186,7 @@ public class ModelField {
                 String inverseField = mappedBy.asString();
                 // FIXME: inheritance
                 this.inverseField = relationModel.fields.get(inverseField);
+                this.relationOwner = false;
             } else {
                 ClassInfo relationClassInfo = index.getClassByName(DotName.createSimple(relationClass));
                 for (FieldInfo relationField : relationClassInfo.fields()) {
@@ -196,16 +204,19 @@ public class ModelField {
                     throw new RuntimeException(
                             "Failed to find owning side of @ManyToMany from " + field + " in relation type " + relationClass);
                 }
+                this.relationOwner = true;
             }
         } else if (oneToOne != null
                 && oneToOne.value("mappedBy") != null) {
             // actually we may want to support this in the future too?
             this.type = Type.Ignore;
+            this.relationOwner = false;
         } else if (field.hasAnnotation(DOTNAME_MANYTOONE)
                 || (oneToOne != null
                         && oneToOne.value("mappedBy") == null)) {
             this.type = Type.Relation;
             this.relationClass = entityField.descriptor.substring(1, entityField.descriptor.length() - 1).replace('/', '.');
+            this.relationOwner = true;
         } else {
             // see if we can find what to do with it
             ClassInfo fieldClassInfo = index.getClassByName(field.type().name());
@@ -230,5 +241,29 @@ public class ModelField {
     @Override
     public String toString() {
         return "ModelField " + name + " of type " + entityField.descriptor;
+    }
+
+    public static List<ModelField> loadModelFields(EntityModel entityModel, MetamodelInfo metamodelInfo,
+            IndexView index) {
+        List<ModelField> fields = new ArrayList<>();
+        addFields(fields, entityModel, metamodelInfo, index);
+        return fields;
+    }
+
+    private static void addFields(List<ModelField> fields, EntityModel entityModel, MetamodelInfo metamodelInfo,
+            IndexView index) {
+        for (Entry<String, EntityField> entry : entityModel.fields.entrySet()) {
+            ModelField mf = new ModelField(entry.getValue(), entityModel.name, metamodelInfo,
+                    index);
+            if (mf.type != Type.Ignore) {
+                fields.add(mf);
+            }
+        }
+        if (entityModel.superClassName != null) {
+            EntityModel superModel = metamodelInfo.getEntityModel(entityModel.superClassName);
+            if (superModel != null) {
+                addFields(fields, superModel, metamodelInfo, index);
+            }
+        }
     }
 }
