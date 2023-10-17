@@ -551,20 +551,8 @@ public class RenardeProcessor {
                 continue;
             List<UriPart> parts = new ArrayList<>();
 
-            AnnotationInstance classPath = method.declaringClass().classAnnotation(ResteasyReactiveDotNames.PATH);
-            String className = method.declaringClass().simpleName();
-            String classPathValue = classPath != null ? classPath.value().value().toString() : className;
-
-            AnnotationInstance methodPath = method.annotation(ResteasyReactiveDotNames.PATH);
-            String methodPathValue = methodPath != null ? methodPath.value().value().toString() : method.name();
-
-            String path = classPathValue + (methodPathValue.startsWith("/") ? "" : "/") + methodPathValue;
-
-            // path annotations
-            if (!methodPathValue.startsWith("/")) {
-                parts.add(new ControllerVisitor.StaticUriPart(classPathValue));
-            }
-            parts.add(new ControllerVisitor.StaticUriPart(methodPathValue));
+            String path = getMethodPath(controllerInfo, method);
+            parts.add(new ControllerVisitor.StaticUriPart(path));
 
             // collect declared path params
             Set<String> pathParameters = new HashSet<>();
@@ -614,13 +602,43 @@ public class RenardeProcessor {
                 loginPageBuildItem.produce(new LoginPageBuildItem(parts));
             }
 
-            String descriptor = AsmUtil.getDescriptor(method, v -> v);
+            String descriptor = method.descriptor();
             String key = method.name() + "/" + descriptor;
             methods.put(key, new ControllerMethod(method.name(), descriptor, parts,
                     method.parameterTypes()));
         }
         return new ControllerVisitor.ControllerClass(controllerInfo.name().toString(), controllerInfo.superName().toString(),
                 Modifier.isAbstract(controllerInfo.flags()), methods);
+    }
+
+    private String getMethodPath(ClassInfo controllerInfo, MethodInfo method) {
+        AnnotationInstance classPath = method.declaringClass().declaredAnnotation(ResteasyReactiveDotNames.PATH);
+        String className = method.declaringClass().simpleName();
+        String classPathValue = classPath != null ? classPath.value().value().toString() : null;
+
+        AnnotationInstance methodPath = method.annotation(ResteasyReactiveDotNames.PATH);
+        String methodPathValue = methodPath != null ? methodPath.value().value().toString() : method.name();
+
+        if (classPathValue == null) {
+            // defaults to className, unless method part is absolute
+            if (methodPathValue.startsWith("/")) {
+                return methodPathValue;
+            }
+            classPathValue = className;
+        }
+
+        if (classPathValue.equals("/")) {
+            classPathValue = "";
+        } else if (!classPathValue.isEmpty() && !classPathValue.startsWith("/")) {
+            classPathValue = "/" + classPathValue;
+        }
+        boolean needsSeparator = !classPathValue.endsWith("/") && !methodPathValue.startsWith("/");
+        String ret = classPathValue + (needsSeparator ? "/" : "") + methodPathValue;
+        // strip last / if it's not the root uri
+        if (ret.length() > 1 && ret.endsWith("/")) {
+            ret = ret.substring(0, ret.length() - 1);
+        }
+        return ret;
     }
 
     private boolean isControllerMethod(MethodInfo method) {
@@ -635,8 +653,14 @@ public class RenardeProcessor {
     private void transformController(TransformationContext ti, Set<DotName> controllers) {
         ClassInfo klass = ti.getTarget().asClass();
         if (controllers.contains(klass.name()) && !Modifier.isAbstract(klass.flags())) {
-            if (klass.classAnnotation(ResteasyReactiveDotNames.PATH) == null) {
-                ti.transform().add(ResteasyReactiveDotNames.PATH, AnnotationValue.createStringValue("value", "")).done();
+            /*
+             * Note that we can't change the class @Path annotation, since RR doesn't use AnnotationTransformer for class path
+             * scanning.
+             */
+            if (klass.declaredAnnotation(ResteasyReactiveDotNames.PATH) == null) {
+                ti.transform()
+                        .add(ResteasyReactiveDotNames.PATH, AnnotationValue.createStringValue("value", ""))
+                        .done();
             }
         }
     }
@@ -648,35 +672,23 @@ public class RenardeProcessor {
         }
         if (controllers.contains(method.declaringClass().name())) {
             /*
-             * @Path("foo") class Class { @Path("bar") method(); } -> no change
-             *
-             * @Path("foo") class Class { method(); } -> @Path("foo") class Class { @Path("method") method(); }
-             * class Class { @Path("/bar") method(); } -> @Path("") class Class { @Path("/bar") method(); }
-             * class Class { @Path("bar") method(); } -> @Path("") class Class { @Path("Class/bar") method(); }
-             * class Class { method(); } -> @Path("") class Class { @Path("Class/method") method(); }
+             * If the class path is not specified, collect both class path and method path and convert to a method path alone
+             * Note that we can't change the class @Path annotation, since RR doesn't use AnnotationTransformer for class path
+             * scanning.
              */
-            // class @Path or class name first
-            AnnotationInstance classPath = method.declaringClass().classAnnotation(ResteasyReactiveDotNames.PATH);
-            String className = method.declaringClass().simpleName();
-            String classPathValue = classPath != null ? classPath.value().value().toString() : className;
-
-            AnnotationInstance methodPath = method.annotation(ResteasyReactiveDotNames.PATH);
-            String methodPathValue = methodPath != null ? methodPath.value().value().toString() : method.name();
-
-            String path = classPathValue + (methodPathValue.startsWith("/") ? "" : "/") + methodPathValue;
-
-            String newMethodPathValue = methodPathValue;
+            AnnotationInstance classPath = method.declaringClass().declaredAnnotation(ResteasyReactiveDotNames.PATH);
+            String path = getMethodPath(method.declaringClass(), method);
+            AnnotationInstance methodPath = method.declaredAnnotation(ResteasyReactiveDotNames.PATH);
+            String methodPathValue;
             boolean setMethodPath = false;
-
-            if (classPath != null && methodPath == null) {
-                // can remain the method name
+            if (classPath == null) {
+                methodPathValue = path;
                 setMethodPath = true;
-            } else if (classPath == null) {
-                if (methodPath == null || !methodPathValue.startsWith("/")) {
-                    // prepend the class name
-                    setMethodPath = true;
-                    newMethodPathValue = className + "/" + methodPathValue;
-                }
+            } else if (methodPath != null) {
+                methodPathValue = methodPath.value().value().toString();
+            } else {
+                methodPathValue = method.name();
+                setMethodPath = true;
             }
 
             // collect declared path params
@@ -692,17 +704,18 @@ public class RenardeProcessor {
                         || parameterAnnotations[paramPos].get(ResteasyReactiveDotNames.REST_PATH_PARAM) != null)
                         && !pathParameters.contains(method.parameterName(paramPos))) {
                     // add them to the method path
+                    methodPathValue += "/{" + method.parameterName(paramPos) + "}";
                     setMethodPath = true;
-                    newMethodPathValue += "/{" + method.parameterName(paramPos) + "}";
                 }
             }
 
             if (setMethodPath) {
                 Transformation transform = ti.transform();
-                if (methodPathValue != null)
+                if (methodPath != null) {
                     transform.remove(ai -> ai.name().equals(ResteasyReactiveDotNames.PATH));
-                transform.add(ResteasyReactiveDotNames.PATH, AnnotationValue.createStringValue("value", newMethodPathValue))
-                        .done();
+                }
+                transform.add(ResteasyReactiveDotNames.PATH, AnnotationValue.createStringValue("value", methodPathValue));
+                transform.done();
             }
 
             // FIXME: doesn't work for custom Http methods, whatever
@@ -719,6 +732,7 @@ public class RenardeProcessor {
 
     private Map<DotName, AnnotationInstance>[] getParameterAnnotations(MethodInfo method) {
         // collect param annotations
+        @SuppressWarnings("unchecked")
         Map<DotName, AnnotationInstance>[] parameterAnnotations = new Map[method.parametersCount()];
         for (int paramPos = 0; paramPos < method.parametersCount(); ++paramPos) {
             parameterAnnotations[paramPos] = new HashMap<>();
