@@ -72,6 +72,7 @@ import io.quarkiverse.renarde.router.RouterMethod;
 import io.quarkiverse.renarde.util.AuthenticationFailedExceptionMapper;
 import io.quarkiverse.renarde.util.Filters;
 import io.quarkiverse.renarde.util.Flash;
+import io.quarkiverse.renarde.util.Globals;
 import io.quarkiverse.renarde.util.I18N;
 import io.quarkiverse.renarde.util.JavaExtensions;
 import io.quarkiverse.renarde.util.MyParamConverters;
@@ -317,6 +318,7 @@ public class RenardeProcessor {
     void produceBeans(BuildProducer<AdditionalBeanBuildItem> additionalBeanBuildItems,
             BuildProducer<ParamConverterBuildItem> paramConverterBuildItems,
             BuildProducer<AdditionalIndexedClassesBuildItem> additionalIndexedClassesBuildItems) {
+        additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(Globals.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(Filters.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(QuteResolvers.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(Flash.class));
