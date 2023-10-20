@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import jakarta.enterprise.context.RequestScoped;
@@ -103,6 +104,7 @@ import io.quarkus.deployment.annotations.ExecutionTime;
 import io.quarkus.deployment.annotations.Record;
 import io.quarkus.deployment.builditem.AdditionalIndexedClassesBuildItem;
 import io.quarkus.deployment.builditem.ApplicationArchivesBuildItem;
+import io.quarkus.deployment.builditem.ApplicationClassPredicateBuildItem;
 import io.quarkus.deployment.builditem.ApplicationIndexBuildItem;
 import io.quarkus.deployment.builditem.BytecodeTransformerBuildItem;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
@@ -153,6 +155,8 @@ public class RenardeProcessor {
     public static final DotName DOTNAME_SECURITY = DotName.createSimple("io.quarkiverse.renarde.security.RenardeSecurity");
     public static final DotName DOTNAME_RENARDE_FORM_LOGIN_CONTROLLER = DotName
             .createSimple("io.quarkiverse.renarde.security.impl.RenardeFormLoginController");
+    public static final DotName DOTNAME_RENARDE_SECURITY_CONTROLLER = DotName
+            .createSimple("io.quarkiverse.renarde.security.impl.RenardeSecurityController");
 
     public static final DotName DOTNAME_HX_CONTROLLER = DotName.createSimple(HxController.class.getName());
     public static final DotName DOTNAME_LOGIN_PAGE = DotName.createSimple("io.quarkiverse.renarde.security.LoginPage");
@@ -317,7 +321,8 @@ public class RenardeProcessor {
     @BuildStep
     void produceBeans(BuildProducer<AdditionalBeanBuildItem> additionalBeanBuildItems,
             BuildProducer<ParamConverterBuildItem> paramConverterBuildItems,
-            BuildProducer<AdditionalIndexedClassesBuildItem> additionalIndexedClassesBuildItems) {
+            BuildProducer<AdditionalIndexedClassesBuildItem> additionalIndexedClassesBuildItems,
+            BuildProducer<ApplicationClassPredicateBuildItem> applicationClassPredicateBuildItems) {
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(Globals.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(Filters.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(QuteResolvers.class));
@@ -338,6 +343,19 @@ public class RenardeProcessor {
                 new AdditionalIndexedClassesBuildItem(Filters.class.getName(), RedirectExceptionMapper.class.getName(),
                         Controller.class.getName(), HxController.class.getName()));
 
+        /*
+         * We don't have these beans, but they are endpoints, and they can't be declared FWK classes, otherwise
+         * config changes will not reload them. And config changes may affect the number of interceptors declared
+         * on beans, thus causing NoSuchMethodError because we generate bean proxy/client methods that take one
+         * parameter per interceptor.
+         */
+        applicationClassPredicateBuildItems.produce(new ApplicationClassPredicateBuildItem(new Predicate<String>() {
+            @Override
+            public boolean test(String t) {
+                return DOTNAME_RENARDE_SECURITY_CONTROLLER.toString('.').equals(t)
+                        || DOTNAME_RENARDE_FORM_LOGIN_CONTROLLER.toString('.').equals(t);
+            }
+        }));
     }
 
     @BuildStep
