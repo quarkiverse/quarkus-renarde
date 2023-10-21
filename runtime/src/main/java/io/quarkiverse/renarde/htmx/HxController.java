@@ -24,12 +24,12 @@ public abstract class HxController extends Controller {
         TRIGGER("HX-Trigger"), // Allows you to trigger client side events
         REDIRECT("HX-Redirect"), // Can be used to do a client-side redirect to a new location
         LOCATION("HX-Location"), // Allows you to do a client-side redirect that does not do a full page reload
-        REFRESH("HX-Refresh"), // If set to “true” the client side will do a a full refresh of the page
-        PUSH_URL("HX-Push-Url"), // Replaces the current URL in the location bar
+        REFRESH("HX-Refresh"), // If set to “true” the client side will do a full refresh of the page
+        PUSH_URL("HX-Push-Url"), // Pushes a new url into the history stack
         HX_RESWAP("HX-Reswap"), // Allows you to specify how the response will be swapped. See hx-swap for possible values
         HX_RETARGET("HX-Retarget"), // A CSS selector that updates the target of the content update to a different element on the page
-        TRIGGER_AFTER_SWAP("HX-Trigger-After-Swap"), // allows you to trigger client side events
-        TRIGGER_AFTER_SETTLE("HX-Trigger-After-Settle"), // allows you to trigger client side events
+        TRIGGER_AFTER_SWAP("HX-Trigger-After-Swap"), // Allows you to trigger client side events
+        TRIGGER_AFTER_SETTLE("HX-Trigger-After-Settle"), // Allows you to trigger client side events
         REPLACE_URL("HX-Replace-Url"), // Replaces the current URL in the location bar
         RESELECT("HX-Reselect"); // A CSS selector that allows you to choose which part of the response is used to be swapped in. Overrides an existing hx-select on the triggering element
 
