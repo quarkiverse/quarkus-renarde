@@ -4,6 +4,8 @@ import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+import org.jboss.logging.Logger;
+
 import io.quarkiverse.renarde.impl.RenardeConfig;
 import io.quarkus.smallrye.jwt.runtime.auth.JWTAuthMechanism;
 import io.quarkus.smallrye.jwt.runtime.auth.SmallRyeJwtConfig;
@@ -21,6 +23,8 @@ import io.vertx.ext.web.RoutingContext;
 @Priority(2000)
 @ApplicationScoped
 public class RenardeJWTAuthMechanism extends JWTAuthMechanism {
+
+    private static final Logger log = Logger.getLogger(RenardeJWTAuthMechanism.class);
 
     @Inject
     RenardeConfig config;
@@ -55,9 +59,16 @@ public class RenardeJWTAuthMechanism extends JWTAuthMechanism {
     @Override
     public Uni<ChallengeData> getChallenge(RoutingContext context) {
         if (config.getLoginPage() != null) {
-            // we need to store the URL
-            storeInitialLocation(context);
-            return getRedirect(context, config.getLoginPage());
+            if (context.request().uri().equals(config.getLoginPage())) {
+                log.errorf(
+                        "Avoiding redirect loop, make sure that your endpoint annotated with @LoginPage is accessible without being authenticated: %s",
+                        config.getLoginPage());
+                return super.getChallenge(context);
+            } else {
+                // we need to store the URL
+                storeInitialLocation(context);
+                return getRedirect(context, config.getLoginPage());
+            }
         } else {
             return super.getChallenge(context);
         }

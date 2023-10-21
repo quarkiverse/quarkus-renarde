@@ -6,11 +6,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -148,6 +150,8 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(1, document.select("textarea[name='longString3']").size());
         Assertions.assertEquals(1, document.select("textarea[name='longString4']").size());
 
+        Assertions.assertEquals(1, document.select("textarea[name='jsonRecords']").size());
+
         Elements enumeration = document.select("select[name='enumeration']");
         Assertions.assertEquals(1, enumeration.size());
         Assertions.assertEquals("A", enumeration.select("option[value='A']").text());
@@ -157,6 +161,7 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(1, document.select("input[name='localDateTime'][type='datetime-local']").size());
         Assertions.assertEquals(1, document.select("input[name='localDate'][type='date']").size());
         Assertions.assertEquals(1, document.select("input[name='localTime'][type='time']").size());
+        Assertions.assertEquals(1, document.select("input[name='timestamp'][type='datetime-local']").size());
 
         Elements oneToOneOwning = document.select("select[name='oneToOneOwning']");
         Assertions.assertEquals(1, oneToOneOwning.size());
@@ -224,6 +229,7 @@ public class RenardeBackofficeTest {
                 .multiPart("longString4", "aString")
                 .multiPart("enumeration", "B")
                 .multiPart("date", JavaExtensions.htmlNormalised(date))
+                .multiPart("timestamp", JavaExtensions.htmlNormalised(localDateTime))
                 .multiPart("localDateTime", JavaExtensions.htmlNormalised(localDateTime))
                 .multiPart("localDate", JavaExtensions.htmlNormalised(localDateTime.toLocalDate()))
                 .multiPart("localTime", JavaExtensions.htmlNormalised(localDateTime.toLocalTime()))
@@ -238,6 +244,8 @@ public class RenardeBackofficeTest {
                 .multiPart("arrayBlob", "array.txt", "array contents".getBytes(), MediaType.TEXT_PLAIN)
                 .multiPart("sqlBlob", "sql.txt", LOREM_1500b.getBytes(), MediaType.TEXT_PLAIN)
                 .multiPart("namedBlob", "named.pdf", LOREM_1500b.getBytes(), "application/pdf")
+                .multiPart("jsonRecords",
+                        "[{\"exampleEnum\": \"A\", \"something\": 1}, {\"exampleEnum\": \"B\", \"something\": 2}]")
                 .multiPart("action", "CreateAndCreateAnother")
                 .redirects().follow(false)
                 .post("/_renarde/backoffice/ExampleEntity/create")
@@ -262,6 +270,7 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(localDateTime, entity.localDateTime);
         Assertions.assertEquals(localDateTime.toLocalDate(), entity.localDate);
         Assertions.assertEquals(localDateTime.toLocalTime(), entity.localTime);
+        Assertions.assertEquals(Timestamp.valueOf(localDateTime), entity.timestamp);
         Assertions.assertEquals("aString", entity.string);
         Assertions.assertEquals("aString", entity.lobString);
         Assertions.assertEquals("aString", entity.longString1);
@@ -292,6 +301,12 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(entity.namedBlob.mimeType, "application/pdf");
         Assertions.assertArrayEquals(entity.namedBlob.contents.getBytes(0, (int) entity.sqlBlob.length()),
                 LOREM_1500b.getBytes());
+        Assertions.assertNotNull(entity.jsonRecords);
+        Assertions.assertEquals(2, entity.jsonRecords.size());
+        Assertions.assertEquals(ExampleEnum.A, entity.jsonRecords.get(0).getExampleEnum());
+        Assertions.assertEquals(1, entity.jsonRecords.get(0).getSomething());
+        Assertions.assertEquals(ExampleEnum.B, entity.jsonRecords.get(1).getExampleEnum());
+        Assertions.assertEquals(2, entity.jsonRecords.get(1).getSomething());
     }
 
     @Test
@@ -390,6 +405,7 @@ public class RenardeBackofficeTest {
         entity.localDateTime = localDateTime;
         entity.localDate = localDateTime.toLocalDate();
         entity.localTime = localDateTime.toLocalTime();
+        entity.timestamp = Timestamp.valueOf(localDateTime);
         entity.enumeration = ExampleEnum.B;
         entity.oneToOneOwning = oneToOnes.get(0);
         entity.manyToOne = oneToManys.get(0);
@@ -405,6 +421,7 @@ public class RenardeBackofficeTest {
         entity.namedBlob.name = "named.pdf";
         entity.namedBlob.contents = BlobProxy.generateProxy("to update as well".getBytes());
         entity.namedBlob.mimeType = "application/pdf";
+        entity.jsonRecords = Arrays.asList(new ExampleEntity.JsonRecord(ExampleEnum.A, 2));
         // oneToMany is not owning
         ExampleEntity damnit = entity;
         transact(() -> {
@@ -460,6 +477,9 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals("aString", document.select("textarea[name='longString3']").text());
         Assertions.assertEquals("aString", document.select("textarea[name='longString4']").text());
 
+        Assertions.assertEquals("[{\"exampleEnum\":\"A\",\"something\":2}]",
+                document.select("textarea[name='jsonRecords']").text());
+
         Elements enumeration = document.select("select[name='enumeration']");
         Assertions.assertEquals(1, enumeration.size());
         Assertions.assertEquals("A", enumeration.select("option[value='A']").text());
@@ -475,6 +495,8 @@ public class RenardeBackofficeTest {
                 + JavaExtensions.htmlNormalised(localDateTime.toLocalDate()) + "']").size());
         Assertions.assertEquals(1, document.select("input[name='localTime'][type='time'][value='"
                 + JavaExtensions.htmlNormalised(localDateTime.toLocalTime()) + "']").size());
+        Assertions.assertEquals(1, document.select("input[name='timestamp'][type='datetime-local'][value='"
+                + JavaExtensions.htmlNormalised(localDateTime) + "']").size());
 
         Elements oneToOneOwning = document.select("select[name='oneToOneOwning']");
         Assertions.assertEquals(1, oneToOneOwning.size());
@@ -551,6 +573,7 @@ public class RenardeBackofficeTest {
                 .multiPart("localDateTime", JavaExtensions.htmlNormalised(otherLocalDateTime))
                 .multiPart("localDate", JavaExtensions.htmlNormalised(otherLocalDateTime.toLocalDate()))
                 .multiPart("localTime", JavaExtensions.htmlNormalised(otherLocalDateTime.toLocalTime()))
+                .multiPart("timestamp", JavaExtensions.htmlNormalised(otherLocalDateTime))
                 .multiPart("oneToOneOwning", oneToOnes.get(1).id)
                 .multiPart("manyToOne", oneToManys.get(1).id)
                 .multiPart("oneToMany", manyToOnes.get(0).id)
@@ -559,6 +582,8 @@ public class RenardeBackofficeTest {
                 // do not send arrayBlob to make sure it's not updated
                 .multiPart("sqlBlob", "sql.txt", LOREM_1500b.getBytes(), MediaType.TEXT_PLAIN)
                 .multiPart("namedBlob", "named.txt", LOREM_1500b.getBytes(), MediaType.TEXT_PLAIN)
+                .multiPart("jsonRecords",
+                        "[{\"exampleEnum\": \"A\", \"something\": 1}, {\"exampleEnum\": \"B\", \"something\": 2}]")
                 .multiPart("action", "SaveAndContinueEditing")
                 .redirects().follow(false)
                 .post("/_renarde/backoffice/ExampleEntity/edit/" + entity.id)
@@ -584,6 +609,7 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(otherLocalDateTime, entity.localDateTime);
         Assertions.assertEquals(otherLocalDateTime.toLocalDate(), entity.localDate);
         Assertions.assertEquals(otherLocalDateTime.toLocalTime(), entity.localTime);
+        Assertions.assertEquals(Timestamp.valueOf(otherLocalDateTime), entity.timestamp);
         Assertions.assertEquals("otherString", entity.string);
         Assertions.assertEquals("otherString", entity.requiredString);
         Assertions.assertEquals("otherString", entity.lobString);
@@ -612,6 +638,13 @@ public class RenardeBackofficeTest {
                 LOREM_1500b.getBytes());
         Assertions.assertEquals(entity.namedBlob.name, "named.txt");
         Assertions.assertEquals(entity.namedBlob.mimeType, "text/plain");
+
+        Assertions.assertNotNull(entity.jsonRecords);
+        Assertions.assertEquals(2, entity.jsonRecords.size());
+        Assertions.assertEquals(ExampleEnum.A, entity.jsonRecords.get(0).getExampleEnum());
+        Assertions.assertEquals(1, entity.jsonRecords.get(0).getSomething());
+        Assertions.assertEquals(ExampleEnum.B, entity.jsonRecords.get(1).getExampleEnum());
+        Assertions.assertEquals(2, entity.jsonRecords.get(1).getSomething());
 
         // last round to test unsetting binary fields
         given()

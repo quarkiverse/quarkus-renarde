@@ -42,7 +42,7 @@ public class Application extends Controller {
     static class Templates {
         public static native TemplateInstance index();
     }
-    
+
     @Path("/")
     public TemplateInstance index() {
         return Templates.index();

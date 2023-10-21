@@ -31,6 +31,8 @@
  {#for field in fields}
  \{#crud_field name="{field.name}" label="{field.label}" help="{field.help}"}
   {#switch field.type}
+   {#case Timestamp}
+    \{#crud_input name="{field.name}" type="datetime-local" value=entity.{field.name}.htmlNormalised??/}
    {#case DateTimeLocal}
     \{#crud_input name="{field.name}" type="datetime-local" value=entity.{field.name}.htmlNormalised??/}
    {#case Date}
@@ -56,6 +58,8 @@
     \{#crud_input name="{field.name}" value=entity.{field.name} type="text" {#if field.min}min="{field.min}"{/if} {#if field.max}max="{field.max}"{/if}/}
    {#case LargeText}
     \{#crud_textarea name="{field.name}" value=entity.{field.name} rows="10"/}
+   {#case JSON}
+    \{#crud_textarea name="{field.name}" value=io_quarkiverse_renarde_backoffice_impl_BackUtil:toJson(entity.{field.name}) rows="10"/}
    {#case Binary}
     \{#crud_input name="{field.name}" type="file"/}
     \{#if entity.{field.name}}

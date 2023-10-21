@@ -1,7 +1,9 @@
 package io.quarkiverse.renarde.backoffice.impl;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.io.UncheckedIOException;
+import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.sql.Blob;
 import java.sql.SQLException;
@@ -20,13 +22,19 @@ import java.util.TreeMap;
 import jakarta.ws.rs.core.Response;
 
 import org.hibernate.engine.jdbc.BlobProxy;
+import org.jboss.resteasy.reactive.common.util.types.TypeSignatureParser;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.quarkiverse.renarde.jpa.NamedBlob;
 import io.quarkiverse.renarde.util.FileUtils;
 import io.quarkiverse.renarde.util.JavaExtensions;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import io.quarkus.qute.TemplateData;
 
+@TemplateData
 public class BackUtil {
 
     public static Date dateField(String value) {
@@ -53,6 +61,13 @@ public class BackUtil {
         } catch (DateTimeParseException e) {
             return LocalDateTime.parse(value, JavaExtensions.HTML_NORMALISED_WITHOUT_SECONDS);
         }
+    }
+
+    public static java.sql.Timestamp sqlTimestampField(String value) {
+        if (!isSet(value))
+            return null;
+        // FIXME: support nanoseconds later
+        return java.sql.Timestamp.valueOf(localDateTimeField(value));
     }
 
     public static LocalDate localDateField(String value) {
@@ -126,6 +141,34 @@ public class BackUtil {
         if (!isSet(value))
             return null;
         return Enum.valueOf(klass, value);
+    }
+
+    public static <T> T jsonField(String typeSignature, String value) {
+        if (!isSet(value))
+            return null;
+        ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+        Type type = TypeSignatureParser.parse(typeSignature);
+        try {
+            return mapper.readValue(value, mapper.constructType(type));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static String toJson(Object value) {
+        if (value == null) {
+            return "";
+        }
+        ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+        try {
+            StringWriter w = new StringWriter();
+            mapper.writeValue(w, value);
+            return w.toString();
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static Map<String, String> enumPossibleValues(Enum<?>[] values) {
