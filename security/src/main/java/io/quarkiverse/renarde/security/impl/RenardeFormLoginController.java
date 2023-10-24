@@ -37,9 +37,9 @@ public class RenardeFormLoginController extends Controller {
     }
 
     @Inject
-    RenardeSecurity security;
+    public RenardeSecurity security;
     @Inject
-    RenardeUserProvider userProvider;
+    public RenardeUserProvider userProvider;
 
     @POST
     public Response login(@NotBlank @RestForm String username,

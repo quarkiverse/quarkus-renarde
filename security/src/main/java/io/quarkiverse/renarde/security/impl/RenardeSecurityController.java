@@ -13,7 +13,7 @@ import io.quarkiverse.renarde.security.RenardeSecurity;
 public class RenardeSecurityController extends Controller {
 
     @Inject
-    RenardeSecurity security;
+    public RenardeSecurity security;
 
     /**
      * Logout action, redirects to index
