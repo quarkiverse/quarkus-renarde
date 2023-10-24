@@ -56,9 +56,7 @@ public class AuthenticationFailedExceptionMapper {
         flash.flash("message", message);
         // FIXME: URI, perhaps redirect to login page?
         ResponseBuilder builder = Response.seeOther(URI.create("/"));
-        // FIXME: constant
-        NewCookie logoutCookie = new NewCookie.Builder("QuarkusUser").expiry(new Date(0)).build();
-        builder.cookie(logoutCookie);
+        builder.cookie(createLogoutCookie("QuarkusUser"));
         Map<String, Object> map = new HashMap<>();
         // FIXME: format?
         map.put("message", message);
@@ -66,4 +64,9 @@ public class AuthenticationFailedExceptionMapper {
 
         return builder.build();
     }
+
+    public static NewCookie createLogoutCookie(String cookieName) {
+        return new NewCookie.Builder(cookieName).expiry(new Date(0)).build();
+    }
+
 }
