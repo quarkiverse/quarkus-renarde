@@ -5,6 +5,7 @@ import java.net.URISyntaxException;
 import java.security.Principal;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -121,7 +122,8 @@ public class RenardeSecurity {
             cookies.add(new NewCookie("q_session_" + tenant, null, "/", null, null, 0, false, true));
         }
         // Manual
-        cookies.add(new NewCookie(jwtCookie, null, "/", null, null, 0, false, true));
+        NewCookie logoutCookie = new NewCookie.Builder("QuarkusUser").expiry(new Date(0)).build();
+        cookies.add(logoutCookie);
         return Response.seeOther(redirectUri).cookie(cookies.toArray(new NewCookie[0])).build();
     }
 }

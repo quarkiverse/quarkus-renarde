@@ -30,9 +30,7 @@ import io.quarkiverse.renarde.util.Flash;
 import io.quarkus.elytron.security.common.BcryptUtil;
 import io.quarkus.security.Authenticated;
 import io.quarkus.test.QuarkusUnitTest;
-import io.restassured.RestAssured;
 import io.restassured.response.Response;
-import io.restassured.response.ValidatableResponse;
 import io.smallrye.jwt.build.Jwt;
 
 public class JWTTest {
@@ -42,34 +40,6 @@ public class JWTTest {
             .setArchiveProducer(() -> ShrinkWrap.create(JavaArchive.class)
                     .addClasses(MyUser.class, MyUserProvider.class, MyController.class)
                     .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml"));
-
-    @Test
-    public void testCookieIsRemovedOnInvalidJwt() {
-        String expiredToken = Jwt.issuer("https://example.com/issuer")
-                .upn("user")
-                .issuedAt(Instant.now().minus(20, ChronoUnit.DAYS))
-                .expiresIn(Duration.ofDays(10))
-                .innerSign().encrypt();
-
-        Response response = RestAssured.given()
-                .when()
-                .redirects().follow(false)
-                .cookie("QuarkusUser", expiredToken)
-                .get("/");
-
-        ValidatableResponse validatableResponse = response.then()
-                .statusCode(303);
-
-        validatableResponse.cookie("QuarkusUser");
-
-        String quarkusUserCookie = response.headers()
-                .getValues("Set-Cookie")
-                .stream().filter(c -> c.startsWith("QuarkusUser=")).findFirst().get();
-
-        // An old 'Expires' value will make the browser to remove the Cookie
-        Assertions.assertEquals(quarkusUserCookie, "QuarkusUser=;Version=1;Expires=Thu, 01-Jan-1970 00:00:00 GMT");
-
-    }
 
     @Test
     public void testProtectedPageWithInvalidJwt() throws NoSuchAlgorithmException {
@@ -124,18 +94,26 @@ public class JWTTest {
 
     private void assertRedirectWithMessage(String token, String message) {
         // redirect with message
-        String flash = given()
+        Response response = given()
                 .when()
                 .cookie("QuarkusUser", token)
                 .log().ifValidationFails()
                 .redirects().follow(false)
-                .get("/")
-                .then()
+                .get("/").then()
                 .log().ifValidationFails()
-                .statusCode(303)
                 // logout
-                .cookie("QuarkusUser", "")
-                .extract().cookie(Flash.FLASH_COOKIE_NAME);
+                .cookie("QuarkusUser")
+                .statusCode(303)
+                .extract().response();
+
+        String quarkusUserCookie = response.headers()
+                .getValues("Set-Cookie")
+                .stream().filter(c -> c.startsWith("QuarkusUser=")).findFirst().get();
+
+        // An old 'Expires' value will make the browser to remove the Cookie
+        Assertions.assertEquals("QuarkusUser=;Version=1;Expires=Thu, 01-Jan-1970 00:00:00 GMT", quarkusUserCookie);
+
+        String flash = response.cookie(Flash.FLASH_COOKIE_NAME);
         Map<String, Object> data = Flash.decodeCookieValue(flash);
         Assertions.assertTrue(data.containsKey("message"));
         Assertions.assertEquals(message, data.get("message"));
