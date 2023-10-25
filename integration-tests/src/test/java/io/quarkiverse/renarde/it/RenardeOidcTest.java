@@ -135,7 +135,7 @@ public class RenardeOidcTest {
                 .statusCode(200);
 
         // now logout
-        given()
+        String logoutCookie = given()
                 .when()
                 .filter(cookieFilter)
                 .redirects().follow(false)
@@ -144,8 +144,14 @@ public class RenardeOidcTest {
                 .statusCode(303)
                 // go home
                 .header("Location", url)
-                // clear cookie
-                .cookie(cookieName, "");
+                // check cookie exists
+                .cookie(cookieName)
+                .extract().headers()
+                .getValues("Set-Cookie")
+                .stream().filter(c -> c.startsWith("QuarkusUser=")).findFirst().get();
+
+        Assertions.assertEquals("QuarkusUser=;Version=1;Max-Age=0", logoutCookie);
+
     }
 
     private Object findCookie(CookieStore cookieStore, String name) {

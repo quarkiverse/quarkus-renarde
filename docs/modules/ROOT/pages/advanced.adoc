@@ -469,7 +469,7 @@ quarkus.default-locale=en
 quarkus.locales=en,fr
 ----
 
-Next, you can declare your default language messages in the `src/main/resources/message.properties` file:
+Next, you can declare your default language messages in the `src/main/resources/messages.properties` file:
 
 [source,properties]
 ----
@@ -479,7 +479,7 @@ hello=Hello World
 views_Application_index_greet=Hello %s
 ----
 
-Declare your other language translations in the `src/main/resources/message_fr.properties` file:
+Declare your other language translations in the `src/main/resources/messages_fr.properties` file:
 
 [source,properties]
 ----

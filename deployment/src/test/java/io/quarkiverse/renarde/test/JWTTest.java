@@ -2,7 +2,6 @@ package io.quarkiverse.renarde.test;
 
 import static io.restassured.RestAssured.given;
 
-import java.net.URL;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -31,7 +30,7 @@ import io.quarkiverse.renarde.util.Flash;
 import io.quarkus.elytron.security.common.BcryptUtil;
 import io.quarkus.security.Authenticated;
 import io.quarkus.test.QuarkusUnitTest;
-import io.quarkus.test.common.http.TestHTTPResource;
+import io.restassured.response.Response;
 import io.smallrye.jwt.build.Jwt;
 
 public class JWTTest {
@@ -41,9 +40,6 @@ public class JWTTest {
             .setArchiveProducer(() -> ShrinkWrap.create(JavaArchive.class)
                     .addClasses(MyUser.class, MyUserProvider.class, MyController.class)
                     .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml"));
-
-    @TestHTTPResource
-    URL url;
 
     @Test
     public void testProtectedPageWithInvalidJwt() throws NoSuchAlgorithmException {
@@ -98,18 +94,25 @@ public class JWTTest {
 
     private void assertRedirectWithMessage(String token, String message) {
         // redirect with message
-        String flash = given()
+        Response response = given()
                 .when()
                 .cookie("QuarkusUser", token)
                 .log().ifValidationFails()
                 .redirects().follow(false)
-                .get("/")
-                .then()
+                .get("/").then()
                 .log().ifValidationFails()
-                .statusCode(303)
                 // logout
-                .cookie("QuarkusUser", "")
-                .extract().cookie(Flash.FLASH_COOKIE_NAME);
+                .cookie("QuarkusUser")
+                .statusCode(303)
+                .extract().response();
+
+        String quarkusUserCookie = response.headers()
+                .getValues("Set-Cookie")
+                .stream().filter(c -> c.startsWith("QuarkusUser=")).findFirst().get();
+
+        Assertions.assertEquals("QuarkusUser=;Version=1;Max-Age=0", quarkusUserCookie);
+
+        String flash = response.cookie(Flash.FLASH_COOKIE_NAME);
         Map<String, Object> data = Flash.decodeCookieValue(flash);
         Assertions.assertTrue(data.containsKey("message"));
         Assertions.assertEquals(message, data.get("message"));
