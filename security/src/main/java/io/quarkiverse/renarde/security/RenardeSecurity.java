@@ -1,6 +1,6 @@
 package io.quarkiverse.renarde.security;
 
-import static io.quarkiverse.renarde.util.AuthenticationFailedExceptionMapper.createLogoutCookie;
+import static io.quarkiverse.renarde.util.AuthenticationFailedExceptionMapper.invalidateCookie;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -117,14 +117,14 @@ public class RenardeSecurity {
         Set<String> tenants = tenantProvider.getTenants();
         List<NewCookie> cookies = new ArrayList<>(tenants.size() + 1);
         // Default tenant
-        cookies.add(createLogoutCookie("q_session"));
+        cookies.add(invalidateCookie("q_session"));
 
         // Named tenants
         for (String tenant : tenants) {
-            cookies.add(createLogoutCookie("q_session_" + tenant));
+            cookies.add(invalidateCookie("q_session_" + tenant));
         }
         // Manual
-        cookies.add(createLogoutCookie("QuarkusUser"));
+        cookies.add(invalidateCookie("QuarkusUser"));
         return Response.seeOther(redirectUri).cookie(cookies.toArray(new NewCookie[0])).build();
     }
 

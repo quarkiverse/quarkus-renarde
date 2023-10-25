@@ -110,8 +110,7 @@ public class JWTTest {
                 .getValues("Set-Cookie")
                 .stream().filter(c -> c.startsWith("QuarkusUser=")).findFirst().get();
 
-        // An old 'Expires' value will make the browser to remove the Cookie
-        Assertions.assertEquals("QuarkusUser=;Version=1;Expires=Thu, 01-Jan-1970 00:00:00 GMT", quarkusUserCookie);
+        Assertions.assertEquals("QuarkusUser=;Version=1;Max-Age=0", quarkusUserCookie);
 
         String flash = response.cookie(Flash.FLASH_COOKIE_NAME);
         Map<String, Object> data = Flash.decodeCookieValue(flash);
