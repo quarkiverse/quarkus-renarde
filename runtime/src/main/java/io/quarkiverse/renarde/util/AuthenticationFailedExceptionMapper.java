@@ -14,6 +14,7 @@ import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.ResponseBuilder;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.resteasy.reactive.server.ServerExceptionMapper;
 import org.jose4j.jwt.consumer.ErrorCodes;
 import org.jose4j.jwt.consumer.InvalidJwtException;
@@ -29,6 +30,9 @@ public class AuthenticationFailedExceptionMapper {
 
     @Inject
     HttpServerRequest request;
+
+    @ConfigProperty(name = "mp.jwt.token.cookie")
+    String jwtCookie;
 
     @ServerExceptionMapper(priority = Priorities.USER)
     public Response authenticationFailed(AuthenticationFailedException ex) {
@@ -55,7 +59,7 @@ public class AuthenticationFailedExceptionMapper {
         flash.flash("message", message);
         // FIXME: URI, perhaps redirect to login page?
         ResponseBuilder builder = Response.seeOther(URI.create("/"));
-        builder.cookie(invalidateCookie("QuarkusUser"));
+        builder.cookie(invalidateCookie(jwtCookie));
         Map<String, Object> map = new HashMap<>();
         // FIXME: format?
         map.put("message", message);
