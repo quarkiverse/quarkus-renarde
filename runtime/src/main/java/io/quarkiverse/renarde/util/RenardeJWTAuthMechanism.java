@@ -4,6 +4,7 @@ import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import io.quarkiverse.renarde.impl.RenardeConfig;
@@ -29,8 +30,8 @@ public class RenardeJWTAuthMechanism extends JWTAuthMechanism {
     @Inject
     RenardeConfig config;
 
-    // FIXME: make it configurable
-    String locationCookie = "quarkus-redirect-location";
+    @ConfigProperty(name = "renarde.redirect-location")
+    String locationCookie;
 
     // for CDI proxy
     RenardeJWTAuthMechanism() {

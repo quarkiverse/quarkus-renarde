@@ -9,7 +9,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
 
-import org.jboss.resteasy.reactive.RestCookie;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.resteasy.reactive.RestForm;
 
 import io.quarkiverse.renarde.Controller;
@@ -21,6 +21,7 @@ import io.quarkus.elytron.security.common.BcryptUtil;
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
 import io.smallrye.common.annotation.Blocking;
+import io.vertx.core.http.Cookie;
 
 // FIXME: for now we only support ORM which is blocking
 @Blocking
@@ -41,10 +42,12 @@ public class RenardeFormLoginController extends Controller {
     @Inject
     RenardeUserProvider userProvider;
 
+    @ConfigProperty(name = "renarde.redirect-location")
+    String redirectLocationCookie;
+
     @POST
     public Response login(@NotBlank @RestForm String username,
-            @NotBlank @RestForm String password,
-            @RestCookie("quarkus-redirect-location") String quarkusRedirectLocation) {
+            @NotBlank @RestForm String password) {
         if (validationFailed())
             login();
         RenardeUserWithPassword user = (RenardeUserWithPassword) userProvider.findUser("manual", username);
@@ -60,7 +63,8 @@ public class RenardeFormLoginController extends Controller {
         if (validationFailed())
             login();
         NewCookie cookie = security.makeUserCookie(user);
-        String target = quarkusRedirectLocation != null ? quarkusRedirectLocation : "/";
+        Cookie quarkusRedirectLocation = request.getCookie(redirectLocationCookie);
+        String target = quarkusRedirectLocation != null ? quarkusRedirectLocation.getValue() : "/";
         return Response.seeOther(URI.create(target)).cookie(cookie).build();
     }
 }
