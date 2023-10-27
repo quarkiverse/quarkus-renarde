@@ -6,6 +6,8 @@ import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.core.Cookie;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
 
@@ -21,7 +23,6 @@ import io.quarkus.elytron.security.common.BcryptUtil;
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
 import io.smallrye.common.annotation.Blocking;
-import io.vertx.core.http.Cookie;
 
 // FIXME: for now we only support ORM which is blocking
 @Blocking
@@ -45,6 +46,9 @@ public class RenardeFormLoginController extends Controller {
     @ConfigProperty(name = "renarde.redirect-location")
     String redirectLocationCookie;
 
+    @Inject
+    HttpHeaders httpHeaders;
+
     @POST
     public Response login(@NotBlank @RestForm String username,
             @NotBlank @RestForm String password) {
@@ -63,7 +67,7 @@ public class RenardeFormLoginController extends Controller {
         if (validationFailed())
             login();
         NewCookie cookie = security.makeUserCookie(user);
-        Cookie quarkusRedirectLocation = request.getCookie(redirectLocationCookie);
+        Cookie quarkusRedirectLocation = httpHeaders.getCookies().get(redirectLocationCookie);
         String target = quarkusRedirectLocation != null ? quarkusRedirectLocation.getValue() : "/";
         return Response.seeOther(URI.create(target)).cookie(cookie).build();
     }

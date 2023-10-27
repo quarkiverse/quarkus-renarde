@@ -16,12 +16,8 @@ import io.quarkiverse.renarde.util.RedirectException;
 import io.quarkiverse.renarde.util.RenderArgs;
 import io.quarkiverse.renarde.util.Validation;
 import io.quarkus.security.identity.SecurityIdentity;
-import io.vertx.core.http.HttpServerRequest;
 
 public class Controller {
-
-    @Inject
-    protected HttpServerRequest request;
 
     @Inject
     protected I18N i18n;
