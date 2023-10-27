@@ -51,7 +51,7 @@ public class Filters {
             template.data(entry.getKey(), entry.getValue());
         }
         // set the proper locale
-        template.setAttribute(MessageBundles.ATTRIBUTE_LOCALE, i18n.get());
+        template.setAttribute(MessageBundles.ATTRIBUTE_LOCALE, i18n.getLanguage());
     }
 
 }

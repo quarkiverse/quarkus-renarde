@@ -125,7 +125,7 @@ public class I18N {
         HttpServerResponse response = request.response();
         if (localeOverridden && !response.headWritten()) {
             response.addCookie(
-                    io.vertx.core.http.Cookie.cookie(LANGUAGE_COOKIE_NAME, locale.toString())
+                    io.vertx.core.http.Cookie.cookie(LOCALE_COOKIE_NAME, locale.toString())
                             .setPath("/")
                             .setSameSite(CookieSameSite.LAX)
                             .setSecure(request.isSSL()));
