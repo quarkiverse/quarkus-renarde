@@ -19,25 +19,26 @@ import io.quarkus.test.QuarkusUnitTest;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.restassured.RestAssured;
 
-public class CsrfTest {
+public class CsrfDisabledTest {
 
     @RegisterExtension
     static final QuarkusUnitTest config = new QuarkusUnitTest()
             .setArchiveProducer(() -> ShrinkWrap.create(JavaArchive.class)
                     .addClasses(MyController.class)
                     .addAsResource(new StringAsset("{#authenticityToken/}"), "templates/MyController/csrf.txt")
+                    .addAsResource(new StringAsset("quarkus.csrf-reactive.enabled=false"), "application.properties")
                     .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml"));
 
     @TestHTTPResource
     URL url;
 
     @Test
-    public void testCsrfEnabled() {
+    public void testCsrfDisabled() {
         RestAssured
                 .when()
                 .get("/csrf").then()
                 .statusCode(200)
-                .body(Matchers.startsWith("<input type=\"hidden\" name=\"csrf-token\" value=\""));
+                .body(Matchers.is(""));
     }
 
     public static class MyController extends Controller {

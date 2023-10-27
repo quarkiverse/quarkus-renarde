@@ -21,6 +21,7 @@ import io.quarkiverse.renarde.pdf.Pdf;
 import io.quarkus.runtime.ExecutorRecorder;
 import io.smallrye.mutiny.Uni;
 
+// NOTE: name used by reflection in RenardeProcessor
 public class PdfResponseHandler {
     private final static Logger logger = Logger.getLogger(Pdf.class);
 

@@ -101,7 +101,7 @@ public class LanguageTest {
                 .param("l", "fr")
                 .post("/lang").then()
                 .statusCode(200)
-                .cookie(I18N.LANGUAGE_COOKIE_NAME, "fr")
+                .cookie(I18N.LOCALE_COOKIE_NAME, "fr")
                 .body(Matchers.is("fr"));
         RestAssured
                 .given()
@@ -145,31 +145,31 @@ public class LanguageTest {
                 .body(Matchers.is("english message"));
         RestAssured
                 .given()
-                .cookie(I18N.LANGUAGE_COOKIE_NAME, "fr")
+                .cookie(I18N.LOCALE_COOKIE_NAME, "fr")
                 .get("/qute").then()
                 .statusCode(200)
                 .body(Matchers.is("message français"));
         RestAssured
                 .given()
-                .cookie(I18N.LANGUAGE_COOKIE_NAME, "fr")
+                .cookie(I18N.LOCALE_COOKIE_NAME, "fr")
                 .get("/qute-uni").then()
                 .statusCode(200)
                 .body(Matchers.is("message français"));
         RestAssured
                 .given()
-                .cookie(I18N.LANGUAGE_COOKIE_NAME, "fr")
+                .cookie(I18N.LOCALE_COOKIE_NAME, "fr")
                 .get("/qute-cs").then()
                 .statusCode(200)
                 .body(Matchers.is("message français"));
         RestAssured
                 .given()
-                .cookie(I18N.LANGUAGE_COOKIE_NAME, "fr")
+                .cookie(I18N.LOCALE_COOKIE_NAME, "fr")
                 .get("/qute-response").then()
                 .statusCode(200)
                 .body(Matchers.is("message français"));
         RestAssured
                 .given()
-                .cookie(I18N.LANGUAGE_COOKIE_NAME, "fr")
+                .cookie(I18N.LOCALE_COOKIE_NAME, "fr")
                 .get("/qute-rest-response").then()
                 .statusCode(200)
                 .body(Matchers.is("message français"));
@@ -184,7 +184,7 @@ public class LanguageTest {
                         "english message\nenglish STEF message\nenglish message\nenglish message\nenglish message with code\nenglish message with code\nenglish STEF message\nmissing"));
         RestAssured
                 .given()
-                .cookie(I18N.LANGUAGE_COOKIE_NAME, "fr")
+                .cookie(I18N.LOCALE_COOKIE_NAME, "fr")
                 .get("/type-unsafe").then()
                 .statusCode(200)
                 .body(Matchers.is(
@@ -195,7 +195,6 @@ public class LanguageTest {
                 .param("l", "de")
                 .post("/lang").then()
                 .statusCode(500);
-
     }
 
     @Test
@@ -261,14 +260,14 @@ public class LanguageTest {
 
         @Path("/lang")
         public String lang() {
-            return i18n.get();
+            return i18n.getLanguage();
         }
 
         @POST
         @Path("/lang")
         public String lang(@RestForm String l) {
             i18n.set(l);
-            return i18n.get();
+            return i18n.getLanguage();
         }
     }
 
