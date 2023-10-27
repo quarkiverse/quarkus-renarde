@@ -24,6 +24,6 @@ ifndef::add-copy-button-to-env-var[]
 Environment variable: `+++QUARKUS_RENARDE_AUTH_LOCATION_COOKIE+++`
 endif::add-copy-button-to-env-var[]
 --|string 
-|`quarkus-redirect-locationX`
+|`quarkus-redirect-location`
 
 |===
