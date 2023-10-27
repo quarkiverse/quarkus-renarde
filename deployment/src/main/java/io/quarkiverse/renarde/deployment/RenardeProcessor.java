@@ -93,6 +93,7 @@ import io.quarkus.arc.deployment.ExcludedTypeBuildItem;
 import io.quarkus.arc.deployment.GeneratedBeanBuildItem;
 import io.quarkus.arc.deployment.GeneratedBeanGizmoAdaptor;
 import io.quarkus.arc.deployment.UnremovableBeanBuildItem;
+import io.quarkus.bootstrap.classloading.QuarkusClassLoader;
 import io.quarkus.bootstrap.workspace.ArtifactSources;
 import io.quarkus.bootstrap.workspace.SourceDir;
 import io.quarkus.deployment.ApplicationArchive;
@@ -166,6 +167,7 @@ public class RenardeProcessor {
     private static final String FEATURE = "renarde";
 
     private static final String PDFBOX_PROBLEMATIC_CLASS = "org.apache.pdfbox.pdmodel.encryption.PublicKeySecurityHandler";
+    private static final String PDF_RESPONSE_HANDLER_CLASS = "io.quarkiverse.renarde.pdf.runtime.PdfResponseHandler";
 
     @BuildStep
     FeatureBuildItem feature() {
@@ -174,16 +176,17 @@ public class RenardeProcessor {
 
     @BuildStep
     void setupPdfBox(BuildProducer<RuntimeInitializedClassBuildItem> runtimeInitializedClassBuildItem) {
-        // only if the PDF extension is present
-        try {
-            Class.forName(PDFBOX_PROBLEMATIC_CLASS);
+        // If we have the renarde-pdf module, we'll see this class
+        if (QuarkusClassLoader.isClassPresentAtRuntime(PDF_RESPONSE_HANDLER_CLASS)) {
+            // This one needs to be initialised at runtime on jdk21/graalvm 23.1 because setting the logger starts the java2d disposer thread
+            runtimeInitializedClassBuildItem.produce(new RuntimeInitializedClassBuildItem(PDF_RESPONSE_HANDLER_CLASS));
+            // This one starts some crypto stuff
             runtimeInitializedClassBuildItem.produce(new RuntimeInitializedClassBuildItem(PDFBOX_PROBLEMATIC_CLASS));
-        } catch (ClassNotFoundException x) {
-            // ignore
-        } catch (NoClassDefFoundError x) {
-            // honestly this is weird, I'm getting this error when trying to load the other class, due to org/bouncycastle/cms/CMSException
-            // missing, even for projects where pdfbox is imported
-            runtimeInitializedClassBuildItem.produce(new RuntimeInitializedClassBuildItem(PDFBOX_PROBLEMATIC_CLASS));
+            // This is started by anybody doing graphics at startup time, including pdfbox instantiating an empty image
+            runtimeInitializedClassBuildItem.produce(new RuntimeInitializedClassBuildItem("sun.java2d.Disposer"));
+            // This causes the pdfbox to log at static init time, which creates a JUL which is forbidden
+            runtimeInitializedClassBuildItem
+                    .produce(new RuntimeInitializedClassBuildItem("com.openhtmltopdf.resource.FSEntityResolver"));
         }
     }
 
