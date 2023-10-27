@@ -617,7 +617,13 @@ For CSRF Security, you need a form parameter with the CSRF Token. By adding this
 <div hx-post"/hello" hx-vals='{"{inject:csrf.parameterName}": "{inject:csrf.token}"}'>
 ----
 
-NOTE: There is a ongoing issue to allow using a header instead of a form parameter (https://github.com/quarkusio/quarkus/issues/34513), this way it will be possible to have a `hx-headers` on the <body> to make all hx requests secured with CSRF.
+Alternatively, you can use `hx-headers` on the <body> to make all hx requests secured with CSRF by adding a custom header:
+
+[source,html]
+----
+<body hx-headers='{"{inject:csrf.headerName}":"{inject:csrf.token}"}'>
+</body>
+----
 
 Some example projects with Quarkus Renarde and htmx:
 - https://github.com/ia3andy/renotes[a demo note-taking web app]
