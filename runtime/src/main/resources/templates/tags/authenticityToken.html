@@ -1,4 +1,4 @@
 {! It is possible to disable CSRF via configuration !}
-{#if csrf??}
-<input type="hidden" name="{csrf.parameterName}" value="{csrf.token}"/>
+{#if data:csrf??}
+<input type="hidden" name="{data:csrf.parameterName}" value="{data:csrf.token}"/>
 {/if}
