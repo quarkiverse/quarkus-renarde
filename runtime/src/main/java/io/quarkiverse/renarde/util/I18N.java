@@ -80,7 +80,7 @@ public class I18N {
      * @return the language part of the current locale
      */
     public String getLanguage() {
-        return locale.getLanguage();
+        return getLocale().getLanguage();
     }
 
     /**
@@ -89,7 +89,7 @@ public class I18N {
      * @return the current locale, as obtained via a cookie override, or HTTP headers, or the default.
      */
     public Locale getLocale() {
-        return locale;
+        return locale != null ? locale : localesConfig.defaultLocale;
     }
 
     void readLanguageCookie(ResteasyReactiveContainerRequestContext requestContext) {
