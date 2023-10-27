@@ -216,8 +216,6 @@ public class RenardeProcessor {
             // those are the better defaults
             defineUnlessPresent("mp.jwt.token.header", "Cookie", config, runtimeConfigurationBuildItem);
             defineUnlessPresent("mp.jwt.token.cookie", "QuarkusUser", config, runtimeConfigurationBuildItem);
-            defineUnlessPresent("renarde.redirect-location", "quarkus-redirect-location", config,
-                    runtimeConfigurationBuildItem);
         }
         // Apparently, no OIDC capability to check
         defineUnlessPresent("quarkus.oidc.authentication.cookie-suffix", "q_session", config, runtimeConfigurationBuildItem);

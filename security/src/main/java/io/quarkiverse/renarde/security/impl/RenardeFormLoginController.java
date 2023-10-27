@@ -43,7 +43,7 @@ public class RenardeFormLoginController extends Controller {
     @Inject
     RenardeUserProvider userProvider;
 
-    @ConfigProperty(name = "renarde.redirect-location")
+    @ConfigProperty(name = "quarkus.renarde.auth.location-cookie")
     String redirectLocationCookie;
 
     @Inject

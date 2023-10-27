@@ -30,7 +30,7 @@ public class RenardeJWTAuthMechanism extends JWTAuthMechanism {
     @Inject
     RenardeConfig config;
 
-    @ConfigProperty(name = "renarde.redirect-location")
+    @ConfigProperty(name = "quarkus.renarde.auth.location-cookie")
     String locationCookie;
 
     // for CDI proxy
