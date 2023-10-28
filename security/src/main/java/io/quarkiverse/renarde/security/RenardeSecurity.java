@@ -33,7 +33,7 @@ public class RenardeSecurity {
     @ConfigProperty(name = "mp.jwt.token.cookie")
     String jwtCookie;
 
-    @ConfigProperty(name = "quarkus.oidc.authentication.cookie-suffix")
+    @ConfigProperty(name = "quarkus.oidc.authentication.cookie-suffix", defaultValue = "q_session")
     String oidcCookie;
 
     public NewCookie makeUserCookie(RenardeUser user) {

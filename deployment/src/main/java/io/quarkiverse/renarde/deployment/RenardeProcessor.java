@@ -223,7 +223,6 @@ public class RenardeProcessor {
             defineUnlessPresent("mp.jwt.token.cookie", "QuarkusUser", config, runtimeConfigurationBuildItem);
         }
         // Apparently, no OIDC capability to check
-        defineUnlessPresent("quarkus.oidc.authentication.cookie-suffix", "q_session", config, runtimeConfigurationBuildItem);
         for (String provider : Arrays.asList("facebook", "apple", "github", "microsoft", "google", "twitter", "spotify")) {
             if ((config.getOptionalValue("quarkus.oidc." + provider + ".provider", String.class).isPresent()
                     || config.getOptionalValue("quarkus.oidc." + provider + ".client-id", String.class).isPresent())
