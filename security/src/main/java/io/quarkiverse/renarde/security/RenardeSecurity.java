@@ -33,6 +33,9 @@ public class RenardeSecurity {
     @ConfigProperty(name = "mp.jwt.token.cookie")
     String jwtCookie;
 
+    @ConfigProperty(name = "quarkus.oidc.authentication.cookie-suffix", defaultValue = "q_session")
+    String oidcCookie;
+
     public NewCookie makeUserCookie(RenardeUser user) {
         Set<String> roles = user.roles();
         String token = Jwt.issuer(jwtIssuer)
@@ -117,14 +120,14 @@ public class RenardeSecurity {
         Set<String> tenants = tenantProvider.getTenants();
         List<NewCookie> cookies = new ArrayList<>(tenants.size() + 1);
         // Default tenant
-        cookies.add(invalidateCookie("q_session"));
+        cookies.add(invalidateCookie(oidcCookie));
 
         // Named tenants
         for (String tenant : tenants) {
-            cookies.add(invalidateCookie("q_session_" + tenant));
+            cookies.add(invalidateCookie(oidcCookie + "_" + tenant));
         }
         // Manual
-        cookies.add(invalidateCookie("QuarkusUser"));
+        cookies.add(invalidateCookie(jwtCookie));
         return Response.seeOther(redirectUri).cookie(cookies.toArray(new NewCookie[0])).build();
     }
 
