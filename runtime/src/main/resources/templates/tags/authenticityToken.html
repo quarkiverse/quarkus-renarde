@@ -1,3 +1,5 @@
+{! There appears to be a bug in native for globals, that require me to do this !}
+{@io.quarkus.csrf.reactive.runtime.CsrfTokenParameterProvider csrf}
 {! It is possible to disable CSRF via configuration !}
 {#if data:csrf??}
 <input type="hidden" name="{data:csrf.parameterName}" value="{data:csrf.token}"/>
