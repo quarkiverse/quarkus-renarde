@@ -8,7 +8,7 @@
   </parent>
   <groupId>io.quarkiverse.renarde</groupId>
   <artifactId>quarkus-renarde-parent</artifactId>
-  <version>3.0.5</version>
+  <version>3.0.6-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Quarkus - Renarde - Parent</name>
   <modules>
@@ -30,7 +30,7 @@
     <connection>:git:git@github.com:quarkiverse/quarkus-renarde.git</connection>
     <developerConnection>scm:git:git@github.com:quarkiverse/quarkus-renarde.git</developerConnection>
     <url>https://github.com/quarkiverse/quarkus-renarde</url>
-    <tag>3.0.5</tag>
+    <tag>HEAD</tag>
   </scm>
   <properties>
     <compiler-plugin.version>3.8.1</compiler-plugin.version>
