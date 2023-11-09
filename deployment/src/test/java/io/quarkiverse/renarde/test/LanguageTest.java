@@ -1,9 +1,11 @@
 package io.quarkiverse.renarde.test;
 
 import java.net.URL;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -16,11 +18,15 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.quarkiverse.renarde.Controller;
 import io.quarkiverse.renarde.util.I18N;
+import io.quarkus.mailer.Mail;
+import io.quarkus.mailer.MailTemplate.MailTemplateInstance;
+import io.quarkus.mailer.MockMailbox;
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
 import io.quarkus.qute.i18n.Message;
@@ -67,6 +73,9 @@ public class LanguageTest {
                             + "{m:my.params('STEF')}\n"
                             + "{m:missing}"),
                             "templates/MyController/typeUnsafe.txt")
+                    .addAsResource(new StringAsset("{m:my_greeting}\n"
+                            + "{msg:my_greeting}"),
+                            "templates/MyController/mail.txt")
 
                     .addAsResource(new StringAsset("quarkus.locales=en,fr\n"
                             + "quarkus.default-locale=en"), "application.properties")
@@ -74,6 +83,9 @@ public class LanguageTest {
 
     @TestHTTPResource
     URL url;
+
+    @Inject
+    MockMailbox mailbox;
 
     @Test
     public void testDefaultLanguage() {
@@ -198,6 +210,30 @@ public class LanguageTest {
     }
 
     @Test
+    public void testMail() {
+        mailbox.clear();
+        RestAssured
+                .get("/mail").then()
+                .statusCode(200)
+                .body(Matchers.is("OK"));
+        List<Mail> mails = mailbox.getMailsSentTo("foo@example.com");
+        Assertions.assertEquals(1, mails.size());
+        Assertions.assertEquals("english message\nenglish message", mails.get(0).getText());
+
+        mailbox.clear();
+        RestAssured
+                .given()
+                .cookie(I18N.LOCALE_COOKIE_NAME, "fr")
+                .get("/mail").then()
+                .statusCode(200)
+                .body(Matchers.is("OK"));
+
+        mails = mailbox.getMailsSentTo("foo@example.com");
+        Assertions.assertEquals(1, mails.size());
+        Assertions.assertEquals("message français\nmessage français", mails.get(0).getText());
+    }
+
+    @Test
     public void testValidationLanguage() {
         RestAssured
                 .post("/validation").then()
@@ -220,6 +256,8 @@ public class LanguageTest {
             public static native TemplateInstance qute();
 
             public static native TemplateInstance typeUnsafe(Object val);
+
+            public static native MailTemplateInstance mail();
         }
 
         @Path("/qute")
@@ -256,6 +294,12 @@ public class LanguageTest {
         @Path("/validation")
         public String validation(@NotEmpty @RestForm String param) {
             return validation.getError("param");
+        }
+
+        @Path("/mail")
+        public String mail() {
+            Templates.mail().to("foo@example.com").send().await().indefinitely();
+            return "OK";
         }
 
         @Path("/lang")

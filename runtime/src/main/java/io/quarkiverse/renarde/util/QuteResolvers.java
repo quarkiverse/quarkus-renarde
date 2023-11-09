@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
 
@@ -17,6 +18,7 @@ import io.quarkus.qute.EvalContext;
 import io.quarkus.qute.Expression;
 import io.quarkus.qute.NamespaceResolver;
 import io.quarkus.qute.ValueResolver;
+import io.quarkus.qute.i18n.MessageBundles;
 import io.smallrye.mutiny.Uni;
 
 public class QuteResolvers {
@@ -126,6 +128,22 @@ public class QuteResolvers {
         builder.addNamespaceResolver(NamespaceResolver.builder("uriabs")
                 .resolve(ctx -> new BoundRouter(ctx.getName(), true))
                 .build());
+    }
+
+    void registerTemplateInstanceLocaleAndRenderArgs(@Observes EngineBuilder engineBuilder, I18N i18n, RenderArgs renderArgs) {
+        engineBuilder.addTemplateInstanceInitializer(templateInstance -> {
+            // This should work if `I18N` is a request scoped bean
+            if (Arc.container().requestContext().isActive()) {
+                if (i18n.getLocale() != null
+                        && templateInstance.getAttribute(MessageBundles.ATTRIBUTE_LOCALE) == null) {
+                    templateInstance.setAttribute(MessageBundles.ATTRIBUTE_LOCALE, i18n.getLocale());
+                }
+                // extra parameters
+                for (Entry<String, Object> entry : renderArgs.entrySet()) {
+                    templateInstance.data(entry.getKey(), entry.getValue());
+                }
+            }
+        });
     }
 
     private URI findURI(EvalContext ctx, List<?> paramValues) {
