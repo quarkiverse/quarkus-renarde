@@ -106,8 +106,7 @@ import io.quarkus.deployment.builditem.LaunchModeBuildItem;
 import io.quarkus.deployment.builditem.RunTimeConfigurationDefaultBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
-// Quarkus main
-//import io.quarkus.deployment.execannotations.ExecutionModelAnnotationsAllowedBuildItem;
+import io.quarkus.deployment.execannotations.ExecutionModelAnnotationsAllowedBuildItem;
 import io.quarkus.deployment.logging.LogCleanupFilterBuildItem;
 import io.quarkus.deployment.pkg.builditem.CurateOutcomeBuildItem;
 import io.quarkus.deployment.util.AsmUtil;
@@ -432,11 +431,8 @@ public class RenardeProcessor {
             BuildProducer<UnremovableBeanBuildItem> unremovableBeans,
             BuildProducer<BytecodeTransformerBuildItem> bytecodeTransformers,
             BuildProducer<GeneratedBeanBuildItem> generatedBeans,
-            BuildProducer<LoginPageBuildItem> loginPageBuildItem/*
-                                                                 * Quarkus main:,
-                                                                 * BuildProducer<ExecutionModelAnnotationsAllowedBuildItem>
-                                                                 * executionModelAnnotationsAllowedBuildItems
-                                                                 */) {
+            BuildProducer<LoginPageBuildItem> loginPageBuildItem,
+            BuildProducer<ExecutionModelAnnotationsAllowedBuildItem> executionModelAnnotationsAllowedBuildItems) {
         Set<DotName> excludedControllers = new HashSet<>();
         for (ExcludedControllerBuildItem excludedControllerBuildItem : excludedControllerBuildItems) {
             excludedControllers.add(excludedControllerBuildItem.excludedClass);
@@ -499,16 +495,15 @@ public class RenardeProcessor {
                     }
                 }));
 
-        // Quarkus main
-        //        // Make sure the @Blocking annotation checker sees our endpoints, because it's not using the annotation transformer
-        //        executionModelAnnotationsAllowedBuildItems
-        //                .produce(new ExecutionModelAnnotationsAllowedBuildItem(new Predicate<MethodInfo>() {
-        //                    @Override
-        //                    public boolean test(MethodInfo method) {
-        //                        return isControllerMethod(method)
-        //                                && controllers.contains(method.declaringClass().name());
-        //                    }
-        //                }));
+        // Make sure the @Blocking annotation checker sees our endpoints, because it's not using the annotation transformer
+        executionModelAnnotationsAllowedBuildItems
+                .produce(new ExecutionModelAnnotationsAllowedBuildItem(new Predicate<MethodInfo>() {
+                    @Override
+                    public boolean test(MethodInfo method) {
+                        return isControllerMethod(method)
+                                && controllers.contains(method.declaringClass().name());
+                    }
+                }));
 
     }
 
