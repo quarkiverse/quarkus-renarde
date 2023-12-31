@@ -128,7 +128,7 @@ public class ControllerVisitor implements BiFunction<String, ClassVisitor, Class
         private Map<String, ControllerClass> controllers;
 
         public ControllerClassVisitor(ControllerClass controller, Map<String, ControllerClass> controllers,
-                                      ClassVisitor classVisitor) {
+                ClassVisitor classVisitor) {
             super(Opcodes.ASM9, classVisitor);
             this.controller = controller;
             this.controllers = controllers;
