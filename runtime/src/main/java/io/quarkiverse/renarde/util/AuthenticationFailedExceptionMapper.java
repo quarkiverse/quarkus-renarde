@@ -69,7 +69,7 @@ public class AuthenticationFailedExceptionMapper {
     }
 
     public static NewCookie invalidateCookie(String cookieName) {
-        return new NewCookie.Builder(cookieName).maxAge(0).build();
+        return new NewCookie.Builder(cookieName).path("/").maxAge(0).build();
     }
 
 }
