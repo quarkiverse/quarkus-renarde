@@ -55,11 +55,10 @@ public class RenardeConfig {
                     throw new UncheckedIOException(e);
                 }
                 Properties properties = bundles.get(language);
-                if (properties == null || properties.isEmpty()) {
+                if (properties == null) {
                     bundles.put(language, bundle);
                 } else {
                     properties.putAll(bundle);
-                    bundles.put(language, bundle);
                 }
             }
         } catch (IOException e) {
