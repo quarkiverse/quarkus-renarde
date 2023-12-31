@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UncheckedIOException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -42,13 +44,28 @@ public class RenardeConfig {
         if (cl == null) {
             cl = RenardeConfig.class.getClassLoader();
         }
-        try (Reader reader = new BufferedReader(
-                new InputStreamReader(cl.getResourceAsStream(bundlePath), StandardCharsets.UTF_8))) {
-            bundle.load(reader);
+        try {
+            Enumeration<URL> resources = cl.getResources(bundlePath);
+            while (resources.hasMoreElements()) {
+                URL url = resources.nextElement();
+                try (Reader reader = new BufferedReader(
+                        new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
+                    bundle.load(reader);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+                Properties properties = bundles.get(language);
+                if (properties == null || properties.isEmpty()) {
+                    bundles.put(language, bundle);
+                } else {
+                    properties.putAll(bundle);
+                    bundles.put(language, bundle);
+                }
+            }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        bundles.put(language, bundle);
+
     }
 
 }
