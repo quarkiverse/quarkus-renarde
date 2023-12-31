@@ -307,7 +307,8 @@ public class Router {
     public static UriBuilder getTestUriBuilder(boolean absolute) {
         Config config = ConfigProvider.getConfig();
         var uri = "http://" + config.getConfigValue("quarkus.http.host").getValue() + ":"
-                + config.getConfigValue("quarkus.http.test-port").getValue();
+                + config.getConfigValue("quarkus.http.test-port").getValue()
+                + config.getConfigValue("quarkus.http.root-path").getValue();
         UriBuilder uriBuilder = UriBuilder.fromUri(uri);
         return absolute ? uriBuilder : uriBuilder.host(null).port(-1).scheme(null);
     }
