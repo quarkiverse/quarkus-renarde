@@ -17,6 +17,7 @@ import org.objectweb.asm.Opcodes;
 import io.quarkiverse.renarde.Controller;
 import io.quarkiverse.renarde.router.Router;
 import io.quarkus.deployment.util.AsmUtil;
+import io.quarkus.runtime.LaunchMode;
 import io.quarkus.runtime.util.HashUtil;
 
 /**
@@ -379,7 +380,12 @@ public class ControllerVisitor implements BiFunction<String, ClassVisitor, Class
                     "__uri$" + method.name, descriptor, null, null);
             // UriBuilder uri = Router.getUriBuilder(absolute)
             visitor.visitVarInsn(Opcodes.ILOAD, 0);
-            visitor.visitMethodInsn(Opcodes.INVOKESTATIC, ROUTER_BINARY_NAME, "getUriBuilder",
+            var staticMethod = "getUriBuilder";
+            // check if we are in test
+            if (LaunchMode.current() == LaunchMode.TEST) {
+                staticMethod = "getTestUriBuilder";
+            }
+            visitor.visitMethodInsn(Opcodes.INVOKESTATIC, ROUTER_BINARY_NAME, staticMethod,
                     "(Z)Ljakarta/ws/rs/core/UriBuilder;", false);
             visitor.visitVarInsn(Opcodes.ASTORE, uriBuilderIndex);
             for (UriPart part : method.parts) {
