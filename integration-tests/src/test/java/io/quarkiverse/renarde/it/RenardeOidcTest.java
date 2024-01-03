@@ -150,7 +150,7 @@ public class RenardeOidcTest {
                 .getValues("Set-Cookie")
                 .stream().filter(c -> c.startsWith("QuarkusUser=")).findFirst().get();
 
-        Assertions.assertEquals("QuarkusUser=;Version=1;Max-Age=0", logoutCookie);
+        Assertions.assertEquals("QuarkusUser=;Version=1;Path=/;Max-Age=0", logoutCookie);
 
     }
 
