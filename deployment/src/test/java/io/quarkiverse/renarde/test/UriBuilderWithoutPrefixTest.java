@@ -57,7 +57,7 @@ public class UriBuilderWithoutPrefixTest {
 
         var email = "none@icann.org";
         List<Mail> sent = mockMailbox.getMailsSentTo(email);
-        assertEquals(1, sent.size(), "It has send one email");
+        assertEquals(1, sent.size(), "It has sent one email");
 
         Mail mail = sent.get(0);
         assertEquals(email, mail.getTo().get(0), "Email should be " + email);
