@@ -56,7 +56,7 @@ public class UriBuilderWithPrefixTest {
     void testDefaultUriBuilderIsUsed() {
         testService.sendQuteEmail();
 
-        var email = "none@icann.org";
+        var email = "none@example.com";
         List<Mail> sent = mockMailbox.getMailsSentTo(email);
         assertEquals(1, sent.size(), "It has sent one email");
 
@@ -83,7 +83,7 @@ public class UriBuilderWithPrefixTest {
         public void sendQuteEmail() {
             MyController.Templates
                     .email()
-                    .to("none@icann.org")
+                    .to("none@example.com")
                     .send()
                     .await()
                     .atMost(Duration.ofSeconds(10));
