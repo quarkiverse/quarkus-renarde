@@ -251,7 +251,6 @@ public class RenardeBackofficeProcessor {
 
                 ResultHandle entities = m.invokeStaticMethod(MethodDescriptor.ofMethod(entityClassName, "listAll", List.class));
                 if (implementsInterface(entityClass, index, DOTNAME_COMPARABLE)) {
-                    System.err.println(entityClass + " implements comparable ");
                     m.invokeStaticMethod(MethodDescriptor.ofMethod(Collections.class, "sort", void.class, List.class),
                             entities);
                 }
