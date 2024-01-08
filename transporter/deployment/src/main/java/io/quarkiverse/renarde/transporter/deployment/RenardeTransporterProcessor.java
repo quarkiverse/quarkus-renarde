@@ -189,7 +189,7 @@ public class RenardeTransporterProcessor {
                 for (EntityModel entityModel : entityModels) {
                     typeSwitch.caseOf(entityModel.name, t -> t.returnValue(t.loadClass(entityModel.name)));
                 }
-                typeSwitch.defaultCase(t -> t.throwException(AssertionError.class, "Unknown entity model"));
+                typeSwitch.defaultCase(t -> throwAssertionError(t, "Unknown entity model"));
             }
             // FIXME: signature?
             try (MethodCreator m = c.getMethodCreator("instantiate", PanacheEntityBase.class, String.class)
@@ -199,7 +199,7 @@ public class RenardeTransporterProcessor {
                     typeSwitch.caseOf(entityModel.name,
                             t -> t.returnValue(t.newInstance(MethodDescriptor.ofConstructor(entityModel.name))));
                 }
-                typeSwitch.defaultCase(t -> t.throwException(AssertionError.class, "Unknown entity model"));
+                typeSwitch.defaultCase(t -> throwAssertionError(t, "Unknown entity model"));
             }
         }
     }
@@ -555,7 +555,7 @@ public class RenardeTransporterProcessor {
                             t.assign(var, readValue);
                         });
                         fieldNameSwitch.defaultCase(t -> {
-                            t.throwException(AssertionError.class, "Don't know what to do with field");
+                            throwAssertionError(t, "Don't know what to do with field");
                         });
                     }
                 }
@@ -596,12 +596,17 @@ public class RenardeTransporterProcessor {
 
     private void assertt(BranchResult assertion) {
         try (BytecodeCreator assertionFailedBranch = assertion.trueBranch()) {
-            assertionFailedBranch.throwException(
-                    assertionFailedBranch.newInstance(MethodDescriptor.ofConstructor(AssertionError.class, Object.class),
-                            assertionFailedBranch.load("Assertion failed")));
+            throwAssertionError(assertionFailedBranch, "Assertion failed");
             assertionFailedBranch.returnVoid();
         }
         assertion.falseBranch().close();
 
+    }
+
+    private void throwAssertionError(BytecodeCreator creator, String message) {
+        // can't use creator.throwException(AssertionError, message) because that constructor is private
+        creator.throwException(
+                creator.newInstance(MethodDescriptor.ofConstructor(AssertionError.class, Object.class),
+                        creator.load(message)));
     }
 }
