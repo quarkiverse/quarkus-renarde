@@ -38,16 +38,20 @@ public class RenardeFormLoginController extends Controller {
         return Templates.login();
     }
 
+    //
+    // NOTE: public field injection is required in this class due to this class being in a different CL as the generated bean,
+    // leading to access errors otherwise with package-protected
+
     @Inject
     public RenardeSecurity security;
     @Inject
     public RenardeUserProvider userProvider;
 
     @ConfigProperty(name = "quarkus.renarde.auth.location-cookie")
-    String redirectLocationCookie;
+    public String redirectLocationCookie;
 
     @Inject
-    HttpHeaders httpHeaders;
+    public HttpHeaders httpHeaders;
 
     @POST
     public Response login(@NotBlank @RestForm String username,
