@@ -989,7 +989,7 @@ quarkus.oidc.microsoft.credentials.secret=<Secret>
 
 In order to set up OIDC for Apple you need to create a developer account, and sign up for the 99€/year program, but you cannot test your application on `localhost` like most other OIDC providers: 
 you will need to run it over `https` and make it publicly accessible, so for development purposes
-you may want to use a service such as https://ngrok.com.
+you may want to use a service such as https://github.com/quarkiverse/quarkus-ngrok[ngrok].
 
 Go to https://developer.apple.com/account/resources/identifiers/list[Create a new identifier] and press `+`
 
@@ -1095,7 +1095,7 @@ quarkus.oidc.apple.credentials.jwt.subject=<Bundle ID}
 
 Facebook you will not be let you test your application on `localhost` like most other OIDC providers: 
 you will need to run it over `https` and make it publicly accessible, so for development purposes
-you may want to use a service such as https://ngrok.com.
+you may want to use a service such as https://github.com/quarkiverse/quarkus-ngrok[ngrok].
 
 In order to set up OIDC for Facebook start by https://developers.facebook.com/apps/create/[Creating an application], select `None` as an app type, and press `Next`:
 
@@ -1192,7 +1192,7 @@ Select `Web App` as application type, then fill in your application details (use
 for the `Callback URI`).
 
 NOTE: Twitter doesn't require https usage in practice, but won't accept your `Website URL` without it, so
-you can still use ngrok for it.
+you can still use https://github.com/quarkiverse/quarkus-ngrok[ngrok] for it.
 
 Now press `Save`:
 
