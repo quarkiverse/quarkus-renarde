@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Htmx Powered</title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <script src="/htmx.js"></script>
+  <link rel="stylesheet" media="screen" href="/webjars/bootstrap/css/bootstrap.min.css">
+  <style>
+    input:read-only {
+      background-color: #e9ecef;
+    }
+  </style>
+</head>
+<body hx-headers='{"{inject:csrf.headerName}":"{inject:csrf.token}"}'>
+  <main class="container">
+
+    <h1>Htmx Powered</h1>
+    <div hx-get="{uri:HtmxApp.index}" hx-trigger="refreshList from:body">
+      {#fragment id="list"}
+      {#for contact in contacts}
+        <div class="row mb-4">
+          {#include HtmxApp/partials/view /}
+        </div>
+      {/for}
+      {/fragment}
+    </div>
+  </main>
+</body>
+</html>

@@ -44,6 +44,8 @@ public class Application extends Controller {
         public static native TemplateInstance test(User user);
 
         public static native TemplateInstance csrf();
+
+        public static native TemplateInstance gravatar();
     }
 
     @POST
@@ -66,6 +68,10 @@ public class Application extends Controller {
 
     public TemplateInstance index() {
         return Templates.index();
+    }
+
+    public TemplateInstance gravatar() {
+        return Templates.gravatar();
     }
 
     @Blocking

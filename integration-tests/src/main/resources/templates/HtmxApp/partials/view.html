@@ -1,0 +1,10 @@
+<div class="col" hx-target="this" hx-swap="outerHTML" aria-label="Viewing {contact.firstName} {contact.lastName}">
+  <div aria-label="Details">
+    <div><label>First Name</label>: {contact.firstName}</div>
+    <div><label>Last Name</label>: {contact.lastName}</div>
+    <div><label>Email</label>: {contact.email}</div>
+  </div>
+  <button hx-get="{uri:HtmxApp.edit(contact.id)}" class="btn btn-primary" aria-label="Edit">
+    Click To Edit
+  </button>
+</div>

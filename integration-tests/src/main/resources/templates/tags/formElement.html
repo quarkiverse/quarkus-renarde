@@ -1,0 +1,7 @@
+<div class="mb-3 form-group">
+  <label class="form-label" for="{name}">{label}</label>
+  {nested-content}
+  {#ifError name}
+    <span class="invalid-feedback" aria-label="Error for {name}">{#error name/}</span>
+  {/ifError}
+</div>
