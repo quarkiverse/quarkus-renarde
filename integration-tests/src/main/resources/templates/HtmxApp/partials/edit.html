@@ -1,0 +1,23 @@
+<div class="col" hx-target='this' hx-swap="outerHTML" aria-label="Editing {contact.firstName} {contact.lastName}">
+  {#form hx-put=uri:HtmxApp.save(contact.id) style="display: contents;"}
+    {#formElement name="firstName" label="First Name"}
+      {#input name="firstName" value=contact.firstName readonly=contact.locked/}
+    {/formElement}
+    {#formElement name="lastName" label="Last Name"}
+      {#input name="lastName" value=contact.lastName readonly=contact.locked/}
+    {/formElement}
+    {#formElement name="email" label="Email Address"}
+      {#input name="email" type="email" value=contact.email readonly=contact.locked/}
+    {/formElement}
+
+    {#if !contact.locked}
+      <button class="btn btn-primary" aria-label="Save">Save</button>
+    {/if}
+    <button class="btn btn-warning" hx-get="{uri:HtmxApp.view(contact.id)}" aria-label="Cancel">Cancel</button>
+  {/form}
+  {#if !contact.locked}
+    <button class="btn btn-danger" hx-delete="{uri:HtmxApp.delete(contact.id)}" aria-label="Delete">Delete</button>
+  {/if}
+  <button class="btn btn-secondary" hx-put="{uri:HtmxApp.lock(contact.id)}" aria-label="{contact.locked ? 'Unlock' : 'Lock'}">{contact.locked ? 'Unlock' : 'Lock'}</button>
+
+</div>

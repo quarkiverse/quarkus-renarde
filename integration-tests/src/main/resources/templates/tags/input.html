@@ -1,0 +1,1 @@
+<input type="{type ?: 'text'}" class="{class ?: 'form-control'} {#ifError name}is-invalid{/ifError}" {#if readonly}readonly ‹{/if}value="{inject:flash.get(name) ?: value}"  {_args.skip('class', 'type', 'readonly').asHtmlAttributes.safe}/>

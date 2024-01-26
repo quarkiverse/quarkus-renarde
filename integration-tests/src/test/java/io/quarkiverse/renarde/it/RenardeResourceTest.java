@@ -3,6 +3,7 @@ package io.quarkiverse.renarde.it;
 import static io.restassured.RestAssured.given;
 import static org.apache.http.client.params.ClientPNames.COOKIE_POLICY;
 import static org.apache.http.client.params.CookiePolicy.BROWSER_COMPATIBILITY;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
 import java.net.URL;
@@ -34,6 +35,17 @@ public class RenardeResourceTest {
                 .then()
                 .statusCode(200)
                 .body(is("Hello Renarde"));
+    }
+
+    @Test
+    void testGravatar() {
+        given()
+                .when().get("/Application/gravatar")
+                .then()
+                .statusCode(200)
+                .body(containsString(
+                        "<img src=\"https://www.gravatar.com/avatar/09abd59eb5653a7183ba812b8261f48b?s=200\" alt=\"Gravatar\" aria-label=\"my gravatar\" class=\"foo bar\"/>"))
+                .body(containsString("<img src=\"https://www.gravatar.com/avatar/09abd59eb5653a7183ba812b8261f48b\" />"));
     }
 
     @Test
