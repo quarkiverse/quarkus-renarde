@@ -73,14 +73,17 @@ public class RenardeHtmxPlaywrightTest {
             final ElementHandle editingJoeBlow = page.waitForSelector("[aria-label='Editing Joe BLOW']");
             editingJoeBlow.waitForSelector("button[aria-label='Lock']").click();
             page.waitForSelector("[aria-label='Viewing Joe BLOW'] button[aria-label='Edit']").click();
-            final ElementHandle editingJoeBlow2 = page.waitForSelector("[aria-label='Editing Joe BLOW']");
-            Assertions.assertFalse(editingJoeBlow2.waitForSelector("input[name='firstName']").isEditable());
-            Assertions.assertFalse(editingJoeBlow2.waitForSelector("input[name='lastName']").isEditable());
-            Assertions.assertFalse(editingJoeBlow2.waitForSelector("input[name='email']").isEditable());
-            editingJoeBlow2.waitForSelector("button[aria-label='Unlock']").click();
-            // Remove the two next lines to reproduce the flash bug (it will fail in testDeleteJoe when running all tests)
-            page.waitForCondition(
-                    () -> page.waitForSelector("[aria-label='Editing Joe BLOW'] input[name='firstName']").isEditable());
+            final ElementHandle locked = page.waitForSelector("[aria-label='Editing Joe BLOW']");
+            Assertions.assertFalse(locked.waitForSelector("input:read-only[name='firstName']").isEditable());
+            Assertions.assertFalse(locked.waitForSelector("input:read-only[name='lastName']").isEditable());
+            Assertions.assertFalse(locked.waitForSelector("input:read-only[name='email']").isEditable());
+            locked.waitForSelector("button[aria-label='Unlock']").click();
+            // Remove the next lines to reproduce the flash bug (it will fail in testDeleteJoe when running all tests)
+            page.waitForSelector("[aria-label='Editing Joe BLOW'] button[aria-label='Lock']");
+            final ElementHandle unlocked = page.waitForSelector("[aria-label='Editing Joe BLOW']");
+            Assertions.assertTrue(unlocked.waitForSelector("input[name='firstName']").isEditable());
+            Assertions.assertTrue(unlocked.waitForSelector("input[name='lastName']").isEditable());
+            Assertions.assertTrue(unlocked.waitForSelector("input[name='email']").isEditable());
         }
     }
 
