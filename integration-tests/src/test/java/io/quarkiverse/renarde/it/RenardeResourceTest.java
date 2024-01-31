@@ -247,7 +247,7 @@ public class RenardeResourceTest {
                 .statusCode(303)
                 .cookie("QuarkusUser",
                         RestAssuredMatchers.detailedCookie()
-                                .sameSite("LAX")
+                                .sameSite("Lax")
                                 .httpOnly(true))
                 .header("Location", baseURI + "SecureController/hello");
         given()
