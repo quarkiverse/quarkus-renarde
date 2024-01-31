@@ -106,6 +106,9 @@ public class JWTTest {
                 .statusCode(303)
                 .extract().response();
 
+        // make sure we have a single redirect target
+        Assertions.assertEquals(1, response.getHeaders().getValues("Location").size());
+
         String quarkusUserCookie = response.headers()
                 .getValues("Set-Cookie")
                 .stream().filter(c -> c.startsWith("QuarkusUser=")).findFirst().get();
