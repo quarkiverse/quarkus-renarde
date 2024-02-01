@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.jboss.logging.Logger;
+
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
@@ -16,9 +18,10 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 
 import io.quarkus.arc.Arc;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import io.quarkus.logging.Log;
 
 public class DatabaseTransporter {
+
+    private static Logger log = Logger.getLogger(DatabaseTransporter.class);
 
     // GENERATED
     //	static EntityTransporter entityTransporter = new EntityTransporter() {
@@ -66,7 +69,7 @@ public class DatabaseTransporter {
         entityTransporter.addDeserializers(module, resolver);
         mapper.registerModule(module);
 
-        Log.infof("Loading json: %s chars", json.length());
+        log.infof("Loading json: %s chars", json.length());
         Map<Class<?>, List<? extends PanacheEntityBase>> ret = new HashMap<>();
 
         try {
@@ -79,11 +82,11 @@ public class DatabaseTransporter {
                 Class<?> type = entityTransporter.getEntityClass(fieldName);
                 List<PanacheEntityBase> entities = new ArrayList<>();
                 ret.put(type, entities);
-                Log.infof("Reading type %s", fieldName);
+                log.infof("Reading type %s", fieldName);
                 assertt(parser.nextToken() == JsonToken.START_ARRAY);
                 while (parser.nextToken() != JsonToken.END_ARRAY) {
                     PanacheEntityBase readEntity = (PanacheEntityBase) parser.readValueAs(type);
-                    Log.infof("Read entity [%s] %s", count++, type);
+                    log.infof("Read entity [%s] %s", count++, type);
                     entities.add(readEntity);
                 }
             }
@@ -108,7 +111,7 @@ public class DatabaseTransporter {
         StringWriter writer = new StringWriter();
         try {
             JsonGenerator generator = mapper.createGenerator(writer);
-            Log.info("Generating json");
+            log.info("Generating json");
             generator.writeStartObject();
 
             int written = 0;
@@ -128,7 +131,7 @@ public class DatabaseTransporter {
             generator.writeEndObject();
             generator.close();
 
-            Log.infof("Wrote %s entries", written);
+            log.infof("Wrote %s entries", written);
             return writer.toString();
         } catch (IOException x) {
             throw new UncheckedIOException(x);
