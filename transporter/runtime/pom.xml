@@ -4,7 +4,7 @@
   <parent>
     <groupId>io.quarkiverse.renarde</groupId>
     <artifactId>quarkus-renarde-transporter-parent</artifactId>
-    <version>3.0.8-SNAPSHOT</version>
+    <version>3.0.8</version>
   </parent>
   <artifactId>quarkus-renarde-transporter</artifactId>
   <name>Quarkus - Renarde - Transporter - Runtime</name>
