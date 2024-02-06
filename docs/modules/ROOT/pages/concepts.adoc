@@ -438,6 +438,90 @@ This one declares an additional method on the `Date` type, allowing you to test 
 
 |===
 
+=== Global Variables
+
+If you need to pass variables to every template, instead of passing them manually to every view, you can define them as
+methods in a class annotated with `@TemplateGlobal`:
+
+[source,java]
+----
+package util;
+
+import io.quarkus.qute.TemplateGlobal;
+
+@TemplateGlobal
+public class Globals {
+
+    public static String lineSeparator(){
+        return System.lineSeparator();
+    }
+
+}
+----
+
+This one declares a `lineSeparator` global variable that you can use in the views:
+
+[source,html]
+----
+This system uses this line separator: {lineSeparator}
+----
+
+=== Renarde Predefined Global Variables
+
+[cols="1,1,1"]
+|===
+|Type|Name|Description
+
+|`String`
+|`request.url`
+|The absolute request url, including scheme, host, port, path
+
+|`String`
+|`request.method`
+|The request method (`GET`, `POST`…)
+
+|`String`
+|`request.scheme`
+|The request HTTP scheme (`http`, `https`)
+
+|`String`
+|`request.authority`
+|The request authority part (ex: `localhost:8080`)
+
+|`String`
+|`request.host`
+|The request host name (ex: `localhost`)
+
+|`int`
+|`request.port`
+|The request port (ex: `80`)
+
+|`String`
+|`request.path`
+|The request path (ex: `/Application/index`)
+
+|`String`
+|`request.action`
+|The controller endpoint class and method (ex: `Application.index`)
+
+|`boolean`
+|`request.ssl`
+|True if the request is served over SSL/HTTPS
+
+|`String`
+|`request.remoteAddress`
+|The remote client IP address
+
+|`String`
+|`request.remoteHost`
+|The remote client Host name, if available
+
+|`int`
+|`request.remotePort`
+|The remote client port
+
+|===
+
 
 === External CSS, JavaScript libraries
 
