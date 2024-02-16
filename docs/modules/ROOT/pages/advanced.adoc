@@ -759,3 +759,317 @@ to set things like document page size, odd/even page margins, etc…:
 ----
 
 Note that the default page size is https://en.wikipedia.org/wiki/ISO_216#A_series[A4].
+
+== Backoffice
+
+WARNING: This is an experimental API and feature, subject to change.
+
+Renarde can automatically generate a UI for editing your entities. This can be useful to expose
+access to your entities to authenticated users who are trained enough to understand how to navigate
+your model.
+
+You must import the optional `quarkus-renarde-backoffice` module.
+
+[source,xml,subs=attributes+]
+----
+<dependency>
+  <groupId>io.quarkiverse.renarde</groupId>
+  <artifactId>quarkus-renarde-backoffice</artifactId>
+  <version>{quarkus-renarde-version}</version>
+</dependency>
+----
+
+Now, you can opt-in to specify which of your entities will be exposed via the generated backoffice by
+implementing the `BackofficeController<X>` type for each entity type `X` to expose:
+
+[source,java]
+----
+package rest;
+
+import io.quarkiverse.renarde.backoffice.BackofficeController;
+import io.quarkus.security.Authenticated;
+import model.User;
+
+@Authenticated
+public class Users extends BackofficeController<User> {
+
+}
+----
+
+NOTE: This allows you to place authentication restrictions to your entities, but any other annotation
+works too.
+
+WARNING: Make sure to secure your backoffice, otherwise everyone will have access to your database!
+
+In order to also secure the backoffice index page, you may extend the `BackofficeIndexController`:
+
+[source,java]
+----
+package rest;
+
+import io.quarkiverse.renarde.backoffice.BackofficeIndexController;
+import io.quarkus.security.Authenticated;
+
+@Authenticated
+public class Backoffice extends BackofficeIndexController {
+
+}
+----
+
+This is all you have to do!
+
+Now you can sit back, relax and head over to http://localhost:8080/_renarde/backoffice/index and
+see the list of entity types you have enlisted in the backoffice:
+
+image::backoffice-index.png[role="thumb"]
+
+If you select an entity type, you are presented with the list of entities of this type:
+
+image::backoffice-entity-list.png[role="thumb"]
+
+From there, you can either create or edit one entity:
+
+image::backoffice-entity-edit.png[role="thumb"]
+
+The generated forms and controllers support the following attribute types:
+
+[cols="1,1"]
+|===
+|Type/Annotation|Form element
+
+|`boolean,Boolean`
+|Checkbox
+
+|`byte,short,int,Integer,long,Long,double,float`
+|Number input
+
+|`char`
+|Text field of length 1
+
+|`String` with `@Column(length > 255)`, or `@Length(max > 255)` or `@Size(max > 255)` or `@JdbcTypeCode(Types.LONGVARCHAR)` or `@Lob`
+|Text area
+
+|`String` (otherwise)
+|Text input
+
+|`byte[]`, `Blob`, `NamedBlob`
+|File input
+
+|`@JdbcTypeCode(SqlTypes.JSON)`
+|Text area
+
+|`Date`, `LocalDateTime`
+|DateTime input
+
+|`LocalDate`
+|Date input
+
+|`LocalTime`
+|Time input
+
+|`Timestamp`
+|Timestamp input
+
+|`Enum` subtype, `@Enumerated`
+|Select input with enum values
+
+|`@OneToMany`
+|Multiple-select input with possible values
+
+|`@ManyToMany`
+|Multiple-select input with possible values
+
+|`@ManyToOne`, `@OneToOne`
+|Select input with possible values
+
+|===
+
+
+== Database Transport
+
+WARNING: This is an experimental API and feature, subject to change.
+
+Renarde can help you transport your entities' data from one place to another, which is a notoriously
+complex thing to do with entities with relations. Most people who need to serialise an entity to a format,
+such as JSON, need to annotate their model with special annotations, or write a custom serialiser and
+deserialiser, because out of the box, model entities have too many relations to translate directly to JSON.
+
+On the other hand, if you do not care what the format of the serialised entity looks like, Renarde can
+automatically generate the proper serialisers and deserialisers for your entities, to make sure that
+you can serialise and deserialise them to JSON trivially using the Database Transporter module.
+
+This way, you can easily expose some or all of your data from your production or test instances, such
+that DEV instances will automatically pick it up and seed their DEV database, which makes for much simpler
+development set-up, with useful data.
+
+You must import the optional `quarkus-renarde-transporter` module.
+
+[source,xml,subs=attributes+]
+----
+<dependency>
+  <groupId>io.quarkiverse.renarde</groupId>
+  <artifactId>quarkus-renarde-transporter</artifactId>
+  <version>{quarkus-renarde-version}</version>
+</dependency>
+----
+
+Now, if you wish to expose your serialised entities somewhere, you may write an endpoint like
+this one:
+
+[source,java]
+----
+package rest;
+
+import io.quarkiverse.renarde.Controller;
+import io.quarkiverse.renarde.transporter.DatabaseTransporter;
+import jakarta.transaction.Transactional;
+import model.Configuration;
+import model.Organiser;
+import model.PreviousSpeaker;
+import model.PricePack;
+import model.PricePackDate;
+import model.Slot;
+import model.Speaker;
+import model.Sponsor;
+import model.Talk;
+import model.TalkTheme;
+import model.TalkType;
+import model.TemporarySlot;
+import model.Track;
+
+public class Serialiser extends Controller {
+  
+  @Transactional
+  public String json() {
+    return DatabaseTransporter.export((entityType, fieldName, value) -> {
+        // this will sanitise some data we wish to remove from the export
+      if(entityType == Speaker.class) {
+        // make sure we remove confidential info
+        switch(fieldName) {
+        case "email":
+        case "phone":
+          return null;
+        }
+      }
+      return value;
+    }, 
+    // we want all of these entities
+        Configuration.listAll(),
+        Organiser.listAll(),
+        PreviousSpeaker.listAll(),
+        PricePack.listAll(),
+        PricePackDate.listAll(),
+        Slot.listAll(),
+        Speaker.listAll(), 
+        Sponsor.listAll(),
+        Talk.listAll(),
+        TalkTheme.listAll(),
+        TalkType.listAll(),
+        TemporarySlot.listAll(),
+        Track.listAll());
+  }
+}
+----
+
+WARNING: Remember to not expose sensitive or private data publicly, or you should secure your endpoint.
+
+Now, if you want your DEV instances to pick up the data automatically from production or test servers, you can
+write the following startup class:
+
+[source,java]
+----
+package util;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+import io.quarkiverse.renarde.transporter.DatabaseTransporter;
+import io.quarkus.elytron.security.common.BcryptUtil;
+import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.logging.Log;
+import io.quarkus.runtime.LaunchMode;
+import io.quarkus.runtime.StartupEvent;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.transaction.Transactional;
+import model.Configuration;
+import model.Organiser;
+import model.PreviousSpeaker;
+import model.PricePack;
+import model.PricePackDate;
+import model.Slot;
+import model.Speaker;
+import model.Sponsor;
+import model.Talk;
+import model.TalkTheme;
+import model.TalkType;
+import model.TemporarySlot;
+import model.Track;
+import model.User;
+
+@ApplicationScoped
+public class Startup {
+
+  @ConfigProperty(name = "dev-auto-setup.url") 
+  Optional<String> devAutoSetupUrl;
+
+  /**
+   * This method is executed at the start of your application
+   */
+  @Transactional
+  public void start(@Observes StartupEvent evt) {
+    // in DEV mode we seed some data
+    if(LaunchMode.current() == LaunchMode.DEVELOPMENT) {
+      if(devAutoSetupUrl.isPresent()) {
+        String dataSource = devAutoSetupUrl.get();
+        Log.infof("Loading data from %s", dataSource);
+        try {
+          try(InputStream is = new URL(dataSource).openStream()){
+            String json = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            // make sure we delete all previous test data
+            Configuration.deleteAll();
+            Organiser.deleteAll();
+            PreviousSpeaker.deleteAll();
+            PricePack.deleteAll();
+            PricePackDate.deleteAll();
+            Slot.deleteAll();
+            Speaker.deleteAll(); 
+            Sponsor.deleteAll();
+            Talk.deleteAll();
+            TalkTheme.deleteAll();
+            TalkType.deleteAll();
+            TemporarySlot.deleteAll();
+            Track.deleteAll();
+            Map<Class<?>,List<? extends PanacheEntityBase>> entities = DatabaseTransporter.importEntities(json);
+            // Load the entities in the proper order: relation targets before relation owners
+            for (Class<? extends PanacheEntityBase> entityType : DatabaseTransporter.sortedEntityTypes()) {
+              List<? extends PanacheEntityBase> list = entities.get(entityType);
+              if(list != null) {
+                for (PanacheEntityBase entity : list) {
+                  // remove the ID, to get a fresh entity
+                  ((PanacheEntity)entity).id = null;
+                  entity.persist();
+                }
+              }
+            }
+          }
+        } catch (IOException e) {
+          throw new UncheckedIOException(e);
+        }
+      }
+    }
+  }
+}
+----
+
+And voilà! Your data is trivally transported from one server to another, using JSON, in a format
+you don't care about ♥.
