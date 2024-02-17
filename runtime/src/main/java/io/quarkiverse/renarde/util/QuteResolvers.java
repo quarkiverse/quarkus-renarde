@@ -1,5 +1,6 @@
 package io.quarkiverse.renarde.util;
 
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,14 +13,12 @@ import jakarta.enterprise.event.Observes;
 
 import io.quarkiverse.renarde.router.Router;
 import io.quarkus.arc.Arc;
-import io.quarkus.qute.CompletedStage;
-import io.quarkus.qute.EngineBuilder;
-import io.quarkus.qute.EvalContext;
-import io.quarkus.qute.Expression;
-import io.quarkus.qute.NamespaceResolver;
-import io.quarkus.qute.ValueResolver;
+import io.quarkus.qute.*;
 import io.quarkus.qute.i18n.MessageBundles;
+import io.quarkus.runtime.configuration.ProfileManager;
 import io.smallrye.mutiny.Uni;
+import io.vertx.core.MultiMap;
+import io.vertx.ext.web.RoutingContext;
 
 public class QuteResolvers {
 
@@ -131,6 +130,32 @@ public class QuteResolvers {
     }
 
     void registerTemplateInstanceLocaleAndRenderArgs(@Observes EngineBuilder engineBuilder, I18N i18n, RenderArgs renderArgs) {
+
+        if (ProfileManager.getLaunchMode().isDevOrTest()) {
+            engineBuilder.addTemplateInstanceInitializer(templateInstance -> {
+                RoutingContext routingContext = Arc.container().instance(RoutingContext.class).get();
+                MultiMap headers = routingContext.response().headers();
+                Template template = templateInstance.getTemplate();
+                boolean isFragment = template.getClass().getName().equals("io.quarkus.qute.TemplateImpl$FragmentImpl");
+                String parentTemplateId = "";
+                if (isFragment) {
+                    try {
+                        Field rootField = template.getClass().getEnclosingClass().getDeclaredField("root");
+                        rootField.setAccessible(true);
+                        var sectionNode = rootField.get(template);
+                        Field originField = sectionNode.getClass().getDeclaredField("origin");
+                        originField.setAccessible(true);
+                        TemplateNode.Origin origin = (TemplateNode.Origin) originField.get(sectionNode);
+                        parentTemplateId = origin.getTemplateId() + ".";
+                    } catch (IllegalAccessException | NoSuchFieldException ignored) {
+                    }
+                }
+
+                headers.add("X-Template", parentTemplateId + template.getId());
+                headers.add("X-Fragment", Boolean.toString(isFragment));
+            });
+        }
+
         engineBuilder.addTemplateInstanceInitializer(templateInstance -> {
             // This should work if `I18N` is a request scoped bean
             if (Arc.container().requestContext().isActive()) {
