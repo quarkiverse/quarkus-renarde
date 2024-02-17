@@ -154,8 +154,9 @@ public class QuteResolvers {
                     }
                 }
 
-                headers.add("X-Template", parentTemplateId + template.getId());
-                headers.add("X-Fragment", Boolean.toString(isFragment));
+                // if we send an email before returning the template the headers get added twice
+                headers.remove("X-Template").add("X-Template", parentTemplateId + template.getId());
+                headers.remove("X-Fragment").add("X-Fragment", Boolean.toString(isFragment));
             });
         }
 
