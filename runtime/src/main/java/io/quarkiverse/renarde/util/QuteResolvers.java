@@ -133,6 +133,9 @@ public class QuteResolvers {
 
         if (ProfileManager.getLaunchMode().isDevOrTest()) {
             engineBuilder.addTemplateInstanceInitializer(templateInstance -> {
+                if (!Arc.container().requestContext().isActive()) {
+                    return;
+                }
                 RoutingContext routingContext = Arc.container().instance(RoutingContext.class).get();
                 MultiMap headers = routingContext.response().headers();
                 Template template = templateInstance.getTemplate();
