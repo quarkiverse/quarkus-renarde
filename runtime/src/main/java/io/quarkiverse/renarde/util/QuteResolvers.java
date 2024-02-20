@@ -1,6 +1,5 @@
 package io.quarkiverse.renarde.util;
 
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -139,19 +138,11 @@ public class QuteResolvers {
                 RoutingContext routingContext = Arc.container().instance(RoutingContext.class).get();
                 MultiMap headers = routingContext.response().headers();
                 Template template = templateInstance.getTemplate();
-                boolean isFragment = template.getClass().getName().equals("io.quarkus.qute.TemplateImpl$FragmentImpl");
+                boolean isFragment = template.isFragment();
                 String parentTemplateId = "";
                 if (isFragment) {
-                    try {
-                        Field rootField = template.getClass().getEnclosingClass().getDeclaredField("root");
-                        rootField.setAccessible(true);
-                        var sectionNode = rootField.get(template);
-                        Field originField = sectionNode.getClass().getDeclaredField("origin");
-                        originField.setAccessible(true);
-                        TemplateNode.Origin origin = (TemplateNode.Origin) originField.get(sectionNode);
-                        parentTemplateId = origin.getTemplateId() + ".";
-                    } catch (IllegalAccessException | NoSuchFieldException ignored) {
-                    }
+                    var fragment = (Template.Fragment) template;
+                    parentTemplateId = fragment.getOriginalTemplate().getId() + ".";
                 }
 
                 // if we send an email before returning the template the headers get added twice
