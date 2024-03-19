@@ -27,15 +27,15 @@
     </dependency>
     <dependency>
         <groupId>io.quarkus</groupId>
-        <artifactId>quarkus-resteasy-reactive</artifactId>
+        <artifactId>quarkus-security</artifactId>
     </dependency>
     <dependency>
         <groupId>io.quarkus</groupId>
-        <artifactId>quarkus-resteasy-reactive-qute</artifactId>
+        <artifactId>quarkus-rest</artifactId>
     </dependency>
     <dependency>
         <groupId>io.quarkus</groupId>
-        <artifactId>quarkus-reactive-routes</artifactId>
+        <artifactId>quarkus-rest-qute</artifactId>
     </dependency>
     <dependency>
         <groupId>io.quarkus</groupId>
@@ -47,7 +47,7 @@
     </dependency>
     <dependency>
         <groupId>io.quarkus</groupId>
-        <artifactId>quarkus-csrf-reactive</artifactId>
+        <artifactId>quarkus-rest-csrf</artifactId>
     </dependency>
     <dependency>
         <groupId>io.quarkus.qute</groupId>

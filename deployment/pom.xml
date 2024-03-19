@@ -27,15 +27,11 @@
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-resteasy-reactive-deployment</artifactId>
+      <artifactId>quarkus-rest-deployment</artifactId>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-resteasy-reactive-qute-deployment</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-reactive-routes-deployment</artifactId>
+      <artifactId>quarkus-rest-qute-deployment</artifactId>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -51,7 +47,7 @@
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-csrf-reactive-deployment</artifactId>
+      <artifactId>quarkus-rest-csrf-deployment</artifactId>
     </dependency>
     <dependency>
       <groupId>io.quarkiverse.renarde</groupId>
