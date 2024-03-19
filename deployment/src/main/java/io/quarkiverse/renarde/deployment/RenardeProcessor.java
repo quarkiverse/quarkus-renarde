@@ -44,6 +44,7 @@ import org.jboss.jandex.AnnotationTarget.Kind;
 import org.jboss.jandex.AnnotationValue;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
+import org.jboss.jandex.IndexView;
 import org.jboss.jandex.MethodInfo;
 import org.jboss.jandex.Type;
 import org.jboss.logging.Logger;
@@ -78,12 +79,15 @@ import io.quarkiverse.renarde.util.RenderArgs;
 import io.quarkiverse.renarde.util.Validation;
 import io.quarkus.arc.Unremovable;
 import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
+import io.quarkus.arc.deployment.AutoAddScopeBuildItem;
+import io.quarkus.arc.deployment.AutoAddScopeBuildItem.MatchPredicate;
 import io.quarkus.arc.deployment.BeanContainerBuildItem;
 import io.quarkus.arc.deployment.BuildTimeConditionBuildItem;
 import io.quarkus.arc.deployment.ExcludedTypeBuildItem;
 import io.quarkus.arc.deployment.GeneratedBeanBuildItem;
 import io.quarkus.arc.deployment.GeneratedBeanGizmoAdaptor;
 import io.quarkus.arc.deployment.UnremovableBeanBuildItem;
+import io.quarkus.arc.processor.BuiltinScope;
 import io.quarkus.bootstrap.classloading.QuarkusClassLoader;
 import io.quarkus.bootstrap.workspace.ArtifactSources;
 import io.quarkus.bootstrap.workspace.SourceDir;
@@ -432,7 +436,8 @@ public class RenardeProcessor {
             BuildProducer<BytecodeTransformerBuildItem> bytecodeTransformers,
             BuildProducer<GeneratedBeanBuildItem> generatedBeans,
             BuildProducer<LoginPageBuildItem> loginPageBuildItem,
-            BuildProducer<ExecutionModelAnnotationsAllowedBuildItem> executionModelAnnotationsAllowedBuildItems) {
+            BuildProducer<ExecutionModelAnnotationsAllowedBuildItem> executionModelAnnotationsAllowedBuildItems,
+            BuildProducer<AutoAddScopeBuildItem> autoAddScopeBuildItems) {
         Set<DotName> excludedControllers = new HashSet<>();
         for (ExcludedControllerBuildItem excludedControllerBuildItem : excludedControllerBuildItems) {
             excludedControllers.add(excludedControllerBuildItem.excludedClass);
@@ -469,17 +474,21 @@ public class RenardeProcessor {
         annotationTransformerBuildItems.produce(new AnnotationsTransformerBuildItem(
                 AnnotationsTransformer.builder().appliesTo(Kind.CLASS).transform(ti -> transformController(ti, controllers))));
 
+        autoAddScopeBuildItems.produce(AutoAddScopeBuildItem.builder()
+                .defaultScope(BuiltinScope.REQUEST)
+                .match(new MatchPredicate() {
+                    @Override
+                    public boolean test(ClassInfo klass, Collection<AnnotationInstance> annotations, IndexView index) {
+                        return !klass.isInterface()
+                                && !Modifier.isAbstract(klass.flags())
+                                && controllers.contains(klass.name());
+                    }
+                }).build());
+
         arcTransformers.produce(new io.quarkus.arc.deployment.AnnotationsTransformerBuildItem(
                 new io.quarkus.arc.processor.AnnotationsTransformer() {
                     @Override
                     public void transform(TransformationContext transformationContext) {
-                        if (transformationContext.isClass()
-                                && !Modifier.isAbstract(transformationContext.getTarget().asClass().flags())
-                                && controllers.contains(transformationContext.getTarget().asClass().name())) {
-                            // FIXME: probably don't add a scope annotation if it has one already?
-                            transformationContext.transform().add(ResteasyReactiveDotNames.REQUEST_SCOPED)
-                                    .done();
-                        }
                         if (transformationContext.isMethod()) {
                             MethodInfo method = transformationContext.getTarget().asMethod();
                             if (controllers.contains(method.declaringClass().name())
