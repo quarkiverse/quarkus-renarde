@@ -10,7 +10,7 @@ h|[[quarkus-renarde_configuration]]link:#quarkus-renarde_configuration[Configura
 h|Type
 h|Default
 
-a|icon:lock[title=Fixed at build time] [[quarkus-renarde_quarkus.renarde.auth.location-cookie]]`link:#quarkus-renarde_quarkus.renarde.auth.location-cookie[quarkus.renarde.auth.location-cookie]`
+a|icon:lock[title=Fixed at build time] [[quarkus-renarde_quarkus-renarde-auth-location-cookie]]`link:#quarkus-renarde_quarkus-renarde-auth-location-cookie[quarkus.renarde.auth.location-cookie]`
 
 
 [.description]
