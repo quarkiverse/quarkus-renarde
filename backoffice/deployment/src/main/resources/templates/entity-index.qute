@@ -31,7 +31,7 @@
   <tbody>
     \{#for entity in entities}
     <tr>
-      <td><a href="edit/\{entity.id}">\{entity.toString()}</a></td>
+      <td><a href="edit/\{entity.{entityId}}">\{entity}</a></td>
     </tr>
     \{/for}
   </tbody>

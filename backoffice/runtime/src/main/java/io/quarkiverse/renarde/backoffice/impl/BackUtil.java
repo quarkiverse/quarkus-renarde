@@ -22,6 +22,7 @@ import java.util.TreeMap;
 import jakarta.ws.rs.core.Response;
 
 import org.hibernate.engine.jdbc.BlobProxy;
+import org.hibernate.engine.spi.ManagedEntity;
 import org.jboss.resteasy.reactive.common.util.types.TypeSignatureParser;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
 
@@ -32,6 +33,7 @@ import io.quarkiverse.renarde.jpa.NamedBlob;
 import io.quarkiverse.renarde.util.FileUtils;
 import io.quarkiverse.renarde.util.JavaExtensions;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.qute.TemplateData;
 
 @TemplateData
@@ -179,18 +181,28 @@ public class BackUtil {
         return ret;
     }
 
-    public static Map<String, String> entityPossibleValues(List<PanacheEntity> list) {
+    public static Map<String, String> entityPossibleValues(List<PanacheEntityBase> list) {
         Map<String, String> ret = new TreeMap<>();
-        for (PanacheEntity entity : list) {
-            ret.put(String.valueOf(entity.id), entity.toString());
+        for (PanacheEntityBase entity : list) {
+            ret.put(String.valueOf(id(entity)), entity.toString());
         }
         return ret;
     }
 
-    public static List<String> entityCurrentValues(List<PanacheEntity> list) {
+    private static Object id(PanacheEntityBase entity) {
+        if (entity instanceof PanacheEntity) {
+            return ((PanacheEntity) entity).id;
+        }
+        if (entity instanceof ManagedEntity) {
+            return ((ManagedEntity) entity).$$_hibernate_getEntityEntry().getId();
+        }
+        throw new RuntimeException("Don't know how to load @Id from entity: " + entity);
+    }
+
+    public static List<String> entityCurrentValues(List<PanacheEntityBase> list) {
         List<String> ret = new ArrayList<>(list.size());
-        for (PanacheEntity entity : list) {
-            ret.add(String.valueOf(entity.id));
+        for (PanacheEntityBase entity : list) {
+            ret.add(String.valueOf(id(entity)));
         }
         return ret;
     }

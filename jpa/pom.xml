@@ -18,6 +18,10 @@
         <artifactId>jakarta.persistence-api</artifactId>
     </dependency>
     <dependency>
+        <groupId>org.hibernate.orm</groupId>
+        <artifactId>hibernate-core</artifactId>
+    </dependency>
+    <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>quarkus-renarde</artifactId>
         <version>${project.version}</version>

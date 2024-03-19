@@ -7,13 +7,17 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 
@@ -65,6 +69,10 @@ public class ModelField {
     private static final DotName DOTNAME_TYPES = DotName.createSimple(Types.class.getName());
     private static final DotName DOTNAME_LOB = DotName.createSimple(Lob.class.getName());
     private static final DotName DOTNAME_ID = DotName.createSimple(Id.class.getName());
+    private static final DotName DOTNAME_TRANSIENT = DotName.createSimple(Transient.class.getName());
+    private static final DotName DOTNAME_ENTITY = DotName.createSimple(Entity.class.getName());
+    private static final DotName DOTNAME_MAPPED_SUPERCLASS = DotName.createSimple(MappedSuperclass.class.getName());
+    private static final DotName DOTNAME_GENERATED_VALUE = DotName.createSimple(GeneratedValue.class.getName());
     public static final String NAMED_BLOB_DESCRIPTOR = "L" + NamedBlob.class.getName().replace('.', '/') + ";";
 
     // For views
@@ -72,6 +80,7 @@ public class ModelField {
     public String label;
     public Type type = Type.Text;
     public String relationClass;
+    public String relationIdFieldName;
     public long min, max;
     public double step;
     public String help;
@@ -84,6 +93,8 @@ public class ModelField {
     public String signature;
     public boolean relationOwner;
     public boolean id;
+    public boolean generatedValue;
+    public String relationIdFieldClass;
 
     public ModelField(EntityField entityField, String entityClass, MetamodelInfo metamodelInfo, IndexView index) {
         this.name = entityField.name;
@@ -95,6 +106,7 @@ public class ModelField {
         AnnotationInstance column = field.annotation(DOTNAME_COLUMN);
         AnnotationInstance jdbcTypeCode = field.annotation(DOTNAME_JDBC_TYPE_CODE);
         this.id = field.annotation(DOTNAME_ID) != null;
+        this.generatedValue = field.annotation(DOTNAME_GENERATED_VALUE) != null;
         if (jdbcTypeCode != null
                 && jdbcTypeCode.value().asInt() == SqlTypes.JSON) {
             this.type = Type.JSON;
@@ -176,6 +188,9 @@ public class ModelField {
             // FIXME: inheritance
             this.inverseField = relationModel.fields.get(inverseField);
             this.relationOwner = false;
+            FieldInfo relationIdField = findRelationIdField(relationClass, index);
+            this.relationIdFieldName = relationIdField.name();
+            this.relationIdFieldClass = relationIdField.type().asClassType().name().toString();
         } else if (field.hasAnnotation(DOTNAME_MANYTOMANY)) {
             this.type = Type.MultiMultiRelation;
             this.relationClass = field.type().asParameterizedType().arguments().get(0).name().toString();
@@ -206,6 +221,9 @@ public class ModelField {
                 }
                 this.relationOwner = true;
             }
+            FieldInfo relationIdField = findRelationIdField(relationClass, index);
+            this.relationIdFieldName = relationIdField.name();
+            this.relationIdFieldClass = relationIdField.type().asClassType().name().toString();
         } else if (oneToOne != null
                 && oneToOne.value("mappedBy") != null) {
             // actually we may want to support this in the future too?
@@ -216,6 +234,9 @@ public class ModelField {
                         && oneToOne.value("mappedBy") == null)) {
             this.type = Type.Relation;
             this.relationClass = entityField.descriptor.substring(1, entityField.descriptor.length() - 1).replace('/', '.');
+            FieldInfo relationIdField = findRelationIdField(relationClass, index);
+            this.relationIdFieldName = relationIdField.name();
+            this.relationIdFieldClass = relationIdField.type().asClassType().name().toString();
             this.relationOwner = true;
         } else {
             // see if we can find what to do with it
@@ -232,6 +253,30 @@ public class ModelField {
             help = "This field is required";
         }
         this.entityField = entityField;
+    }
+
+    private FieldInfo findRelationIdField(String relationClass, IndexView index) {
+        ClassInfo classInfo = index.getClassByName(relationClass);
+        if (classInfo == null) {
+            return null;
+        }
+        // only look at those fields
+        if (classInfo.hasAnnotation(DOTNAME_ENTITY) || classInfo.hasAnnotation(DOTNAME_MAPPED_SUPERCLASS)) {
+            for (FieldInfo fieldInfo : classInfo.fields()) {
+                if (fieldInfo.hasAnnotation(DOTNAME_TRANSIENT)) {
+                    continue;
+                }
+                if (fieldInfo.hasAnnotation(DOTNAME_ID)) {
+                    return fieldInfo;
+                }
+            }
+        }
+        // look up
+        DotName superName = classInfo.superName();
+        if (superName != null) {
+            return findRelationIdField(superName.toString(), index);
+        }
+        return null;
     }
 
     public String getClassName() {

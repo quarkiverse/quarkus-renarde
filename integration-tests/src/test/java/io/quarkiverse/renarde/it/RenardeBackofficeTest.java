@@ -35,6 +35,9 @@ import io.quarkiverse.renarde.util.JavaExtensions;
 import io.quarkus.hibernate.orm.panache.Panache;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
+import io.restassured.specification.RequestSpecification;
+import model.CustomIdEntity;
+import model.CustomIdOneToManyEntity;
 import model.ExampleEntity;
 import model.ExampleEnum;
 import model.ManyToManyNotOwningEntity;
@@ -63,6 +66,8 @@ public class RenardeBackofficeTest {
         OneToManyEntity.deleteAll();
         ManyToManyOwningEntity.deleteAll();
         ManyToManyNotOwningEntity.deleteAll();
+        CustomIdEntity.deleteAll();
+        CustomIdOneToManyEntity.deleteAll();
 
         new OneToOneOwningEntity().persist();
         new OneToOneOwningEntity().persist();
@@ -310,6 +315,96 @@ public class RenardeBackofficeTest {
     }
 
     @Test
+    public void testBackofficeCustomIdEntityCreate() throws SQLException {
+        Assertions.assertEquals(0, CustomIdEntity.count());
+        transact(() -> {
+            CustomIdOneToManyEntity rel = new CustomIdOneToManyEntity();
+            rel.myid = "a";
+            rel.persist();
+
+            rel = new CustomIdOneToManyEntity();
+            rel.myid = "b";
+            rel.persist();
+
+            CustomIdEntity entity = new CustomIdEntity();
+            entity.identifiant = "lolo";
+            entity.persist();
+        });
+
+        String html = given()
+                .when()
+                .get("/_renarde/backoffice/CustomIdEntity/create")
+                .then()
+                .statusCode(200)
+                .extract().body().asString();
+        Document document = Jsoup.parse(html);
+        Elements manyToOne = document.select("select[name='manyToOne']");
+        Assertions.assertEquals(1, manyToOne.size());
+        Assertions.assertEquals("CustomIdOneToManyEntity<a>",
+                manyToOne.select("option[value='a']").text());
+        Assertions.assertEquals("CustomIdOneToManyEntity<b>",
+                manyToOne.select("option[value='b']").text());
+
+        given()
+                .when()
+                .multiPart("identifiant", "lala")
+                .multiPart("manyToOne", "a")
+                .multiPart("action", "CreateAndCreateAnother")
+                .redirects().follow(false)
+                .post("/_renarde/backoffice/CustomIdEntity/create")
+                .then()
+                .statusCode(303)
+                .header("Location", Matchers.endsWith("/_renarde/backoffice/CustomIdEntity/create"));
+
+        Assertions.assertEquals(2, CustomIdEntity.count());
+        CustomIdEntity entity = CustomIdEntity.findById("lala");
+        Assertions.assertNotNull(entity);
+        Assertions.assertEquals("lala", entity.identifiant);
+        Assertions.assertNotNull(entity.manyToOne);
+        Assertions.assertEquals("a", entity.manyToOne.myid);
+
+        // now the other way around for the one to many
+        html = given()
+                .when()
+                .get("/_renarde/backoffice/CustomIdOneToManyEntity/create")
+                .then()
+                .statusCode(200)
+                .extract().body().asString();
+        document = Jsoup.parse(html);
+        Elements oneToMany = document.select("select[name='oneToMany']");
+        Assertions.assertEquals(1, oneToMany.size());
+        Assertions.assertEquals("CustomIdEntity<lala>",
+                oneToMany.select("option[value='lala']").text());
+        Assertions.assertEquals("CustomIdEntity<lolo>",
+                oneToMany.select("option[value='lolo']").text());
+
+        given()
+                .when()
+                .multiPart("myid", "c")
+                .multiPart("oneToMany", "lala")
+                .multiPart("oneToMany", "lolo")
+                .multiPart("action", "CreateAndCreateAnother")
+                .redirects().follow(false)
+                .post("/_renarde/backoffice/CustomIdOneToManyEntity/create")
+                .then()
+                .statusCode(303)
+                .header("Location", Matchers.endsWith("/_renarde/backoffice/CustomIdOneToManyEntity/create"));
+
+        Assertions.assertEquals(3, CustomIdOneToManyEntity.count());
+        CustomIdOneToManyEntity relEntity = CustomIdOneToManyEntity.findById("c");
+        Assertions.assertNotNull(relEntity);
+        Assertions.assertEquals("c", relEntity.myid);
+        Assertions.assertNotNull(relEntity.oneToMany);
+        Assertions.assertEquals(2, relEntity.oneToMany.size());
+        if ("lala".equals(relEntity.oneToMany.get(0).identifiant)) {
+            Assertions.assertEquals("lolo", relEntity.oneToMany.get(1).identifiant);
+        } else {
+            Assertions.assertEquals("lala", relEntity.oneToMany.get(1).identifiant);
+            Assertions.assertEquals("lolo", relEntity.oneToMany.get(0).identifiant);
+        }
+    }
+
+    @Test
     public void testBackofficeExampleEntityCreateWithoutSeconds() {
         Assertions.assertEquals(0, ExampleEntity.count());
 
@@ -344,26 +439,55 @@ public class RenardeBackofficeTest {
     public void testBackofficeExampleEntityLinks() {
         Assertions.assertEquals(0, ExampleEntity.count());
 
-        testBackOfficeLink("create", "CreateAndCreateAnother", Matchers.endsWith("/_renarde/backoffice/ExampleEntity/create"));
-        testBackOfficeLink("create", "CreateAndContinueEditing",
+        testBackOfficeLink("ExampleEntity", "create", "CreateAndCreateAnother",
+                Matchers.endsWith("/_renarde/backoffice/ExampleEntity/create"));
+        testBackOfficeLink("ExampleEntity", "create", "CreateAndContinueEditing",
                 Matchers.containsString("/_renarde/backoffice/ExampleEntity/edit/"));
-        testBackOfficeLink("create", "Create", Matchers.endsWith("/_renarde/backoffice/ExampleEntity/index"));
+        testBackOfficeLink("ExampleEntity", "create", "Create", Matchers.endsWith("/_renarde/backoffice/ExampleEntity/index"));
 
         ExampleEntity entity = ExampleEntity.<ExampleEntity> listAll().get(0);
-        testBackOfficeLink("edit/" + entity.id, "Save", Matchers.endsWith("/_renarde/backoffice/ExampleEntity/index"));
-        testBackOfficeLink("edit/" + entity.id, "SaveAndContinueEditing",
+        testBackOfficeLink("ExampleEntity", "edit/" + entity.id, "Save",
+                Matchers.endsWith("/_renarde/backoffice/ExampleEntity/index"));
+        testBackOfficeLink("ExampleEntity", "edit/" + entity.id, "SaveAndContinueEditing",
                 Matchers.containsString("/_renarde/backoffice/ExampleEntity/edit/"));
     }
 
-    private void testBackOfficeLink(String uri, String action, Matcher<String> matcher) {
-        given()
+    @Test
+    public void testBackofficeCustomIdEntityLinks() {
+        Assertions.assertEquals(0, CustomIdEntity.count());
+
+        testBackOfficeLink("CustomIdEntity", "create", "CreateAndCreateAnother",
+                Matchers.endsWith("/_renarde/backoffice/CustomIdEntity/create"), "lala1");
+        testBackOfficeLink("CustomIdEntity", "create", "CreateAndContinueEditing",
+                Matchers.containsString("/_renarde/backoffice/CustomIdEntity/edit/"), "lala2");
+        testBackOfficeLink("CustomIdEntity", "create", "Create", Matchers.endsWith("/_renarde/backoffice/CustomIdEntity/index"),
+                "lala3");
+
+        CustomIdEntity entity = CustomIdEntity.<CustomIdEntity> listAll().get(0);
+        testBackOfficeLink("CustomIdEntity", "edit/" + entity.identifiant, "Save",
+                Matchers.endsWith("/_renarde/backoffice/CustomIdEntity/index"), entity.identifiant);
+        testBackOfficeLink("CustomIdEntity", "edit/" + entity.identifiant, "SaveAndContinueEditing",
+                Matchers.containsString("/_renarde/backoffice/CustomIdEntity/edit/"), entity.identifiant);
+    }
+
+    private void testBackOfficeLink(String entityName, String uri, String action, Matcher<String> matcher) {
+        testBackOfficeLink(entityName, uri, action, matcher, null);
+    }
+
+    private void testBackOfficeLink(String entityName, String uri, String action, Matcher<String> matcher, String identifiant) {
+        RequestSpecification requestSpecification = given()
                 .when()
                 .contentType(ContentType.MULTIPART)
-                .multiPart("requiredString", "aString")
+                .multiPart("requiredString", "aString");
+        if (identifiant != null) {
+            requestSpecification
+                    .multiPart("identifiant", identifiant);
+        }
+        requestSpecification
                 .multiPart("action", action)
                 .redirects().follow(false)
                 .log().ifValidationFails()
-                .post("/_renarde/backoffice/ExampleEntity/" + uri)
+                .post("/_renarde/backoffice/" + entityName + "/" + uri)
                 .then()
                 .log().ifValidationFails()
                 .statusCode(303)
@@ -670,6 +794,104 @@ public class RenardeBackofficeTest {
     }
 
     @Test
+    public void testBackofficeCustomIdEntityUpdate() throws SQLException {
+        Assertions.assertEquals(0, CustomIdEntity.count());
+        transact(() -> {
+            CustomIdOneToManyEntity rel = new CustomIdOneToManyEntity();
+            rel.myid = "a";
+            rel.persist();
+
+            rel = new CustomIdOneToManyEntity();
+            rel.myid = "b";
+            rel.persist();
+
+            CustomIdEntity entity = new CustomIdEntity();
+            entity.identifiant = "lala";
+            entity.manyToOne = rel;
+            entity.persist();
+
+            entity = new CustomIdEntity();
+            entity.identifiant = "lolo";
+            entity.persist();
+        });
+
+        CustomIdEntity entity = CustomIdEntity.findById("lala");
+        Assertions.assertNotNull(entity);
+
+        String html = given()
+                .when().get("/_renarde/backoffice/CustomIdEntity/edit/" + entity.identifiant)
+                .then()
+                .statusCode(200)
+                .extract().body().asString();
+        Document document = Jsoup.parse(html);
+
+        Elements manyToOne = document.select("select[name='manyToOne']");
+        Assertions.assertEquals(1, manyToOne.size());
+        Assertions.assertEquals("CustomIdOneToManyEntity<b>",
+                manyToOne.select("option[value='b'][selected]").text());
+        Assertions.assertEquals("CustomIdOneToManyEntity<a>",
+                manyToOne.select("option[value='a']").text());
+
+        given()
+                .when()
+                .multiPart("identifiant", "lala")
+                .multiPart("manyToOne", "a")
+                .multiPart("action", "SaveAndContinueEditing")
+                .redirects().follow(false)
+                .post("/_renarde/backoffice/CustomIdEntity/edit/" + entity.identifiant)
+                .then()
+                .statusCode(303)
+                .header("Location", Matchers.endsWith("/_renarde/backoffice/CustomIdEntity/edit/" + entity.identifiant));
+
+        Assertions.assertEquals(2, CustomIdEntity.count());
+        Panache.getEntityManager().clear();
+        entity = CustomIdEntity.findById("lala");
+        Assertions.assertNotNull(entity);
+        Assertions.assertEquals("a", entity.manyToOne.myid);
+
+        // now the one to many
+        html = given()
+                .when().get("/_renarde/backoffice/CustomIdOneToManyEntity/edit/b")
+                .then()
+                .statusCode(200)
+                .extract().body().asString();
+        document = Jsoup.parse(html);
+
+        Elements oneToMany = document.select("select[name='oneToMany']");
+        Assertions.assertEquals(1, oneToMany.size());
+        Assertions.assertEquals("CustomIdEntity<lala>",
+                oneToMany.select("option[value='lala']").text());
+        Assertions.assertEquals("CustomIdEntity<lolo>",
+                oneToMany.select("option[value='lolo']").text());
+
+        given()
+                .when()
+                .multiPart("myid", "b")
+                .multiPart("oneToMany", "lala")
+                .multiPart("oneToMany", "lolo")
+                .multiPart("action", "SaveAndContinueEditing")
+                .redirects().follow(false)
+                .post("/_renarde/backoffice/CustomIdOneToManyEntity/edit/b")
+                .then()
+                .statusCode(303)
+                .header("Location", Matchers.endsWith("/_renarde/backoffice/CustomIdOneToManyEntity/edit/b"));
+
+        Assertions.assertEquals(2, CustomIdOneToManyEntity.count());
+        Panache.getEntityManager().clear();
+        CustomIdOneToManyEntity relEntity = CustomIdOneToManyEntity.findById("b");
+        Assertions.assertNotNull(relEntity);
+        Assertions.assertEquals("b", relEntity.myid);
+        Assertions.assertNotNull(relEntity.oneToMany);
+        Assertions.assertEquals(2, relEntity.oneToMany.size());
+        if ("lala".equals(relEntity.oneToMany.get(0).identifiant)) {
+            Assertions.assertEquals("lolo", relEntity.oneToMany.get(1).identifiant);
+        } else {
+            Assertions.assertEquals("lala", relEntity.oneToMany.get(1).identifiant);
+            Assertions.assertEquals("lolo", relEntity.oneToMany.get(0).identifiant);
+        }
+    }
+
+    @Test
     public void testBackofficeExampleEntityListAndDelete() {
         Assertions.assertEquals(0, ExampleEntity.count());
 
@@ -680,22 +902,43 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(1, ExampleEntity.count());
         ExampleEntity loadedEntity = ExampleEntity.findAll().firstResult();
 
+        assertListAndDelete("ExampleEntity", loadedEntity.id.toString());
+
+        Panache.getEntityManager().clear();
+        Assertions.assertEquals(0, ExampleEntity.count());
+    }
+
+    @Test
+    public void testBackofficeCustomIdEntityListAndDelete() {
+        Assertions.assertEquals(0, CustomIdEntity.count());
+
+        CustomIdEntity entity = new CustomIdEntity();
+        entity.identifiant = "lala";
+        transact(() -> entity.persist());
+
+        Assertions.assertEquals(1, CustomIdEntity.count());
+        CustomIdEntity loadedEntity = CustomIdEntity.findAll().firstResult();
+
+        assertListAndDelete("CustomIdEntity", loadedEntity.identifiant.toString());
+
+        Panache.getEntityManager().clear();
+        Assertions.assertEquals(0, CustomIdEntity.count());
+    }
+
+    private void assertListAndDelete(String entityName, String id) {
         given()
-                .when().get("/_renarde/backoffice/ExampleEntity/index")
+                .when().get("/_renarde/backoffice/" + entityName + "/index")
                 .then()
                 .statusCode(200)
-                .body(Matchers.containsString("edit/" + entity.id));
+                .body(Matchers.containsString("edit/" + id));
 
         given()
                 .when()
                 .redirects().follow(false)
-                .post("/_renarde/backoffice/ExampleEntity/delete/" + loadedEntity.id)
+                .post("/_renarde/backoffice/" + entityName + "/delete/" + id)
                 .then()
                 .statusCode(303)
-                .header("Location", Matchers.endsWith("/_renarde/backoffice/ExampleEntity/index"));
-
-        Panache.getEntityManager().clear();
-        Assertions.assertEquals(0, ExampleEntity.count());
+                .header("Location", Matchers.endsWith("/_renarde/backoffice/" + entityName + "/index"));
     }
 
     @Test
@@ -705,36 +948,91 @@ public class RenardeBackofficeTest {
         ExampleEntity entity = new ExampleEntity();
         entity.requiredString = "aString";
         entity.arrayBlob = "Hello World".getBytes();
+        entity.namedBlob = new NamedBlob("fu.txt", "text/plain", "Stef");
         transact(() -> entity.persist());
 
         Assertions.assertEquals(1, ExampleEntity.count());
         ExampleEntity loadedEntity = ExampleEntity.findAll().firstResult();
 
-        given()
-                .when().get("/_renarde/backoffice/ExampleEntity/" + loadedEntity.id + "/arrayBlob")
-                .then()
-                .statusCode(200)
-                .contentType(ContentType.TEXT)
-                .body(Matchers.equalTo("Hello World"));
-
-        given()
-                .when().get("/_renarde/backoffice/ExampleEntity/" + loadedEntity.id + "/sqlBlob")
-                .then()
-                .statusCode(204);
+        binaryAccessUris1("ExampleEntity", loadedEntity.id.toString());
 
         byte[] jpgBytes = Files.readAllBytes(Path.of("../docs/modules/ROOT/assets/images/oidc-apple-1.png"));
 
         transact(() -> {
             ExampleEntity toUpdate = (ExampleEntity) ExampleEntity.listAll().get(0);
             toUpdate.arrayBlob = jpgBytes;
+            toUpdate.namedBlob = new NamedBlob("foo.txt", "text/pain", "Steff");
         });
 
-        given()
-                .when().get("/_renarde/backoffice/ExampleEntity/" + loadedEntity.id + "/arrayBlob")
+        binaryAccessUris2("ExampleEntity", loadedEntity.id.toString(), jpgBytes);
+    }
+
+    @Test
+    public void testBackofficeBinaryAccessCustomId() throws IOException {
+        Assertions.assertEquals(0, CustomIdEntity.count());
+
+        CustomIdEntity entity = new CustomIdEntity();
+        entity.identifiant = "lala";
+        entity.arrayBlob = "Hello World".getBytes();
+        entity.namedBlob = new NamedBlob("fu.txt", "text/plain", "Stef");
+        transact(() -> entity.persist());
+
+        Assertions.assertEquals(1, CustomIdEntity.count());
+        CustomIdEntity loadedEntity = CustomIdEntity.findAll().firstResult();
+
+        binaryAccessUris1("CustomIdEntity", loadedEntity.identifiant.toString());
+
+        byte[] jpgBytes = Files.readAllBytes(Path.of("../docs/modules/ROOT/assets/images/oidc-apple-1.png"));
+
+        transact(() -> {
+            CustomIdEntity toUpdate = (CustomIdEntity) CustomIdEntity.listAll().get(0);
+            toUpdate.arrayBlob = jpgBytes;
+            toUpdate.namedBlob = new NamedBlob("foo.txt", "text/pain", "Steff");
+        });
+
+        binaryAccessUris2("CustomIdEntity", loadedEntity.identifiant.toString(), jpgBytes);
+    }
+
+    private void binaryAccessUris2(String entityName, String id, byte[] jpgBytes) {
+        byte[] body = given()
+                .when().get("/_renarde/backoffice/" + entityName + "/" + id + "/arrayBlob")
                 .then()
                 .statusCode(200)
                 .contentType("image/png")
-                .header("Content-Length", "" + jpgBytes.length);
+                .header("Content-Length", "" + jpgBytes.length)
+                .extract().asByteArray();
+        Assertions.assertArrayEquals(jpgBytes, body);
+
+        given()
+                .when().get("/_renarde/backoffice/" + entityName + "/" + id + "/namedBlob")
+                .then()
+                .statusCode(200)
+                .header("Content-Disposition", "attachment; filename=\"foo.txt\"")
+                .contentType("text/pain")
+                .body(Matchers.equalTo("Steff"));
+    }
+
+    private void binaryAccessUris1(String entityName, String id) {
+        given()
+                .when().get("/_renarde/backoffice/" + entityName + "/" + id + "/arrayBlob")
+                .then()
+                .statusCode(200)
+                .contentType(ContentType.TEXT)
+                .body(Matchers.equalTo("Hello World"));
+
+        // this one is null
+        given()
+                .when().get("/_renarde/backoffice/" + entityName + "/" + id + "/sqlBlob")
+                .then()
+                .statusCode(204);
+
+        given()
+                .when().get("/_renarde/backoffice/" + entityName + "/" + id + "/namedBlob")
+                .then()
+                .statusCode(200)
+                .header("Content-Disposition", "attachment; filename=\"fu.txt\"")
+                .contentType(ContentType.TEXT)
+                .body(Matchers.equalTo("Stef"));
     }
 
     @Transactional

@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.persistence.Entity;
@@ -172,21 +171,32 @@ public class RenardeBackofficeProcessor {
 
             // collect fields
             List<ModelField> fields = ModelField.loadModelFields(entityModel, metamodel.getMetamodelInfo(), index.getIndex());
-            // remove ID fields
-            fields = fields.stream().filter(modelField -> !modelField.id).collect(Collectors.toList());
+            // only support a single ID field
+            List<ModelField> idFields = fields.stream().filter(modelField -> modelField.id)
+                    .toList();
+            if (idFields.size() != 1) {
+                throw new RuntimeException(
+                        "Failed to find single @Id field for entity " + entityName + ", found: " + idFields.size());
+            }
+            ModelField idField = idFields.get(0);
+
+            // remove generated ID fields
+            fields = fields.stream().filter(modelField -> !modelField.id || !modelField.generatedValue).toList();
 
             generateEntityController(classInfo, index.getIndex(), entityName.toString(), entityController, simpleName, fields,
-                    jaxrsOutput);
+                    jaxrsOutput, idField);
 
             TemplateInstance indexTemplate = engine.getTemplate("entity-index.qute").instance();
             indexTemplate.data("entity", simpleName);
             indexTemplate.data("entityClass", entityName.toString());
+            indexTemplate.data("entityId", idField.name);
             indexTemplate.data("mainTemplate", mainTemplate);
             render(output, nativeImageResources, templates, indexTemplate, simpleName + "/index.html");
 
             TemplateInstance editTemplate = engine.getTemplate("entity-edit.qute").instance();
             editTemplate.data("entity", simpleName);
             editTemplate.data("entityClass", entityName.toString());
+            editTemplate.data("entityId", idField.name);
             editTemplate.data("fields", fields);
             editTemplate.data("mainTemplate", mainTemplate);
             render(output, nativeImageResources, templates, editTemplate, simpleName + "/edit.html");
@@ -194,6 +204,7 @@ public class RenardeBackofficeProcessor {
             TemplateInstance createTemplate = engine.getTemplate("entity-create.qute").instance();
             createTemplate.data("entity", simpleName);
             createTemplate.data("fields", fields);
+            createTemplate.data("entityId", idField.name);
             createTemplate.data("mainTemplate", mainTemplate);
             render(output, nativeImageResources, templates, createTemplate, simpleName + "/create.html");
         }
@@ -219,7 +230,7 @@ public class RenardeBackofficeProcessor {
 
     private void generateEntityController(ClassInfo entityClass, IndexView index, String entityClassName,
             ClassInfo entityController, String simpleName,
-            List<ModelField> fields, BuildProducer<GeneratedJaxRsResourceBuildItem> jaxrsOutput) {
+            List<ModelField> fields, BuildProducer<GeneratedJaxRsResourceBuildItem> jaxrsOutput, ModelField idField) {
         // TODO: hand it off to RenardeProcessor to generate annotations and uri methods
         // TODO: generate templateinstance native build item or what?
 
@@ -263,21 +274,21 @@ public class RenardeBackofficeProcessor {
                 m.returnValue(instance);
             }
 
-            try (MethodCreator m = c.getMethodCreator("edit", TemplateInstance.class, Long.class)) {
+            try (MethodCreator m = c.getMethodCreator("edit", TemplateInstance.class, idField.entityField.descriptor)) {
                 editOrCreateView(m, controllerClass, entityClassName, simpleName, fields, Mode.EDIT);
             }
 
-            editOrCreateAction(c, controllerClass, entityClassName, simpleName, fields, Mode.EDIT);
+            editOrCreateAction(c, controllerClass, entityClassName, simpleName, fields, idField, Mode.EDIT);
 
             try (MethodCreator m = c.getMethodCreator("create", TemplateInstance.class)) {
                 editOrCreateView(m, controllerClass, entityClassName, simpleName, fields, Mode.CREATE);
             }
 
-            editOrCreateAction(c, controllerClass, entityClassName, simpleName, fields, Mode.CREATE);
+            editOrCreateAction(c, controllerClass, entityClassName, simpleName, fields, idField, Mode.CREATE);
 
-            deleteAction(c, controllerClass, entityClassName, simpleName);
+            deleteAction(c, controllerClass, entityClassName, simpleName, idField);
 
-            addBinaryFieldGetters(c, controllerClass, entityClassName, fields);
+            addBinaryFieldGetters(c, controllerClass, entityClassName, fields, idField);
         }
     }
 
@@ -331,11 +342,13 @@ public class RenardeBackofficeProcessor {
     //      return BackUtil.binaryResponse(entity.getField());
     //  }
     //
-    private void addBinaryFieldGetters(ClassCreator c, String controllerClass, String entityClass, List<ModelField> fields) {
+    private void addBinaryFieldGetters(ClassCreator c, String controllerClass, String entityClass, List<ModelField> fields,
+            ModelField idField) {
         for (ModelField field : fields) {
             if (field.type == ModelField.Type.Binary) {
                 // Add a method to read the binary field data
-                try (MethodCreator m = c.getMethodCreator(field.name + "ForBinary", Response.class, Long.class)) {
+                try (MethodCreator m = c.getMethodCreator(field.name + "ForBinary", Response.class,
+                        idField.entityField.descriptor)) {
                     m.getParameterAnnotations(0).addAnnotation(RestPath.class).addValue("value", "id");
                     m.addAnnotation(Path.class).addValue("value", "{id}/" + field.name);
                     m.addAnnotation(GET.class);
@@ -380,8 +393,9 @@ public class RenardeBackofficeProcessor {
     //        //index();
     //        seeOther("/_renarde/backoffice/index");
     //    }
-    private void deleteAction(ClassCreator c, String controllerClass, String entityClass, String simpleName) {
-        try (MethodCreator m = c.getMethodCreator("delete", void.class, Long.class)) {
+    private void deleteAction(ClassCreator c, String controllerClass, String entityClass, String simpleName,
+            ModelField idField) {
+        try (MethodCreator m = c.getMethodCreator("delete", void.class, idField.entityField.descriptor)) {
             m.getParameterAnnotations(0).addAnnotation(RestPath.class).addValue("value", "id");
             m.addAnnotation(Path.class).addValue("value", "delete/{id}");
             m.addAnnotation(POST.class);
@@ -406,10 +420,10 @@ public class RenardeBackofficeProcessor {
     }
 
     // @Consumes(MediaType.MULTIPART_FORM_DATA)
-    // @Path("edit/{id}")
+    // @Path("edit/{_id}")
     // @POST
     // @Transactional
-    // public void edit(@RestPath("id") Long id,
+    // public void edit(@RestPath("_id") Long _id,
     //                    @RestForm("action") EditAction action,
     //                    @RestForm("task") String task,
     //                    @RestForm("done") String done,
@@ -418,10 +432,10 @@ public class RenardeBackofficeProcessor {
     //                    @RestForm("blob") FileUpload blob,
     //                    @RestForm("owner") String owner) {
     //   if(validationFailed(){
-    //     // edit(id);
+    //     // edit(_id);
     //     seeOther("/_renarde/backoffice/Entity/edit/"+id);
     //   }
-    //   Todo todo = Todo.findById(id);
+    //   Todo todo = Todo.findById(_id);
     //   notFoundIfNull(todo);
     //   todo.setTask(BackUtil.stringField(task));
     //   todo.setDone(BackUtil.booleanField(done));
@@ -436,8 +450,8 @@ public class RenardeBackofficeProcessor {
     //     // index();
     //     seeOther("/_renarde/backoffice/Entity/index");
     //   } else {
-    //     // edit(id);
-    //     seeOther("/_renarde/backoffice/Entity/edit/"+id);
+    //     // edit(_id);
+    //     seeOther("/_renarde/backoffice/Entity/edit/"+_id);
     //   }
     // }
 
@@ -479,7 +493,7 @@ public class RenardeBackofficeProcessor {
     //   }
     // }
     private void editOrCreateAction(ClassCreator c, String controllerClass, String entityClass, String simpleName,
-            List<ModelField> fields, Mode mode) {
+            List<ModelField> fields, ModelField idField, Mode mode) {
         int neededParams = 1; // action
         if (mode == Mode.EDIT) {
             neededParams++; // id
@@ -497,13 +511,13 @@ public class RenardeBackofficeProcessor {
         StringBuilder signature = new StringBuilder("(");
         editParams = new String[neededParams];
         if (mode == Mode.EDIT) {
-            editParams[0] = Long.class.getName();
+            editParams[0] = idField.entityField.descriptor;
             editParams[1] = EditAction.class.getName();
-            signature.append("Ljava/lang/Long;");
+            signature.append(idField.entityField.descriptor);
             signature.append("L" + EditAction.class.getName().replace('.', '/') + ";");
             offset = 2;
             parameterNames = new String[editParams.length];
-            parameterNames[0] = "id";
+            parameterNames[0] = "_id";
             parameterNames[1] = "action";
         } else {
             editParams[0] = CreateAction.class.getName();
@@ -535,7 +549,7 @@ public class RenardeBackofficeProcessor {
         try (MethodCreator m = c.getMethodCreator(mode == Mode.CREATE ? "create" : "edit", void.class, editParams)) {
             m.setSignature(signature.toString());
             if (mode == Mode.EDIT) {
-                m.getParameterAnnotations(0).addAnnotation(RestPath.class).addValue("value", "id");
+                m.getParameterAnnotations(0).addAnnotation(RestPath.class).addValue("value", "_id");
                 m.getParameterAnnotations(1).addAnnotation(RestForm.class).addValue("value", "action");
             } else {
                 m.getParameterAnnotations(0).addAnnotation(RestForm.class).addValue("value", "action");
@@ -558,7 +572,7 @@ public class RenardeBackofficeProcessor {
             }
             m.setParameterNames(parameterNames);
             m.addAnnotation(Consumes.class).addValue("value", new String[] { MediaType.MULTIPART_FORM_DATA });
-            m.addAnnotation(Path.class).addValue("value", mode == Mode.CREATE ? "create" : "edit/{id}");
+            m.addAnnotation(Path.class).addValue("value", mode == Mode.CREATE ? "create" : "edit/{_id}");
             m.addAnnotation(POST.class);
             m.addAnnotation(Transactional.class);
 
@@ -798,9 +812,7 @@ public class RenardeBackofficeProcessor {
                         EntityField inverseField = field.inverseField;
                         String relationSignature = "L" + field.relationClass.replace('.', '/') + ";";
                         AssignableResultHandle otherEntityVar = m.createVariable(relationSignature);
-                        ResultHandle id = loop.invokeStaticMethod(
-                                MethodDescriptor.ofMethod(Long.class, "valueOf", Long.class, String.class),
-                                next);
+                        ResultHandle id = convertId(loop, field.relationIdFieldClass, next);
                         ResultHandle otherEntity = loop.invokeStaticMethod(
                                 MethodDescriptor.ofMethod(field.relationClass, "findById", PanacheEntityBase.class,
                                         Object.class),
@@ -837,9 +849,8 @@ public class RenardeBackofficeProcessor {
                             parameterValue));
                     AssignableResultHandle valueVar = m.createVariable(field.entityField.descriptor);
                     try (BytecodeCreator tb = branch.trueBranch()) {
-                        value = tb.invokeStaticMethod(
-                                MethodDescriptor.ofMethod(Long.class, "valueOf", Long.class, String.class),
-                                parameterValue);
+                        // Let's assume a Type Type.valueOf(String) method
+                        value = convertId(tb, field.relationIdFieldClass, parameterValue);
                         value = tb.invokeStaticMethod(
                                 MethodDescriptor.ofMethod(field.getClassName(), "findById", PanacheEntityBase.class,
                                         Object.class),
@@ -900,7 +911,9 @@ public class RenardeBackofficeProcessor {
                     try (BytecodeCreator tb2 = ifCreateAndContinueEditing.trueBranch()) {
                         String editTarget = URI_PREFIX + "/" + simpleName + "/edit/";
                         redirectToAction(tb2, controllerClass, editTarget, simpleName,
-                                () -> tb2.invokeVirtualMethod(MethodDescriptor.ofMethod(entityClass, "getId", Long.class),
+                                () -> tb2.invokeVirtualMethod(
+                                        MethodDescriptor.ofMethod(entityClass, idField.entityField.getGetterName(),
+                                                idField.entityField.descriptor),
                                         entityVariable));
                     }
                     try (BytecodeCreator fb2 = ifCreate.falseBranch()) {
@@ -911,6 +924,17 @@ public class RenardeBackofficeProcessor {
             }
             m.returnValue(null);
         }
+    }
+
+    private ResultHandle convertId(BytecodeCreator loop, String relationIdFieldClass, ResultHandle next) {
+        if (relationIdFieldClass.equals("java.lang.String")) {
+            return next;
+        }
+        // Let's assume a Type Type.valueOf(String) method
+        return loop.invokeStaticMethod(
+                MethodDescriptor.ofMethod(relationIdFieldClass, "valueOf", relationIdFieldClass,
+                        String.class),
+                next);
     }
 
     private void redirectToAction(BytecodeCreator m, String controllerClass, String uriTarget, String simpleName,
