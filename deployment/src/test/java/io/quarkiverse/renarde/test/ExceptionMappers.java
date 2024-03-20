@@ -2,7 +2,6 @@ package io.quarkiverse.renarde.test;
 
 import java.net.URL;
 
-import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
 
 import org.hamcrest.Matchers;
@@ -33,9 +32,14 @@ public class ExceptionMappers {
     public void testExceptionMapper() {
         RestAssured
                 .when()
-                .get("/exception").then()
+                .get("/MyController/exception").then()
                 .statusCode(200)
                 .body(Matchers.is("OK"));
+        // make sure we don't get an endpoint for it
+        RestAssured
+                .when()
+                .get("/MyController/map").then()
+                .statusCode(404);
     }
 
     public static class MyException extends RuntimeException {
@@ -43,7 +47,6 @@ public class ExceptionMappers {
 
     public static class MyController extends Controller {
 
-        @Path("/exception")
         public String exception() {
             throw new MyException();
         }

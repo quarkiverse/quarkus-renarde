@@ -53,6 +53,7 @@ import org.jboss.resteasy.reactive.common.processor.transformation.AnnotationsTr
 import org.jboss.resteasy.reactive.common.processor.transformation.AnnotationsTransformer.TransformationContext;
 import org.jboss.resteasy.reactive.common.processor.transformation.Transformation;
 import org.jboss.resteasy.reactive.common.util.URLUtils;
+import org.jboss.resteasy.reactive.server.ServerExceptionMapper;
 
 import io.quarkiverse.renarde.Controller;
 import io.quarkiverse.renarde.deployment.ControllerVisitor.ControllerClass;
@@ -684,7 +685,8 @@ public class RenardeProcessor {
                 && !Modifier.isNative(method.flags())
                 && !Modifier.isStatic(method.flags())
                 && !method.name().equals("<init>")
-                && !method.name().equals("<clinit>");
+                && !method.name().equals("<clinit>")
+                && !method.hasDeclaredAnnotation(ServerExceptionMapper.class);
     }
 
     private void transformController(TransformationContext ti, Set<DotName> controllers) {
