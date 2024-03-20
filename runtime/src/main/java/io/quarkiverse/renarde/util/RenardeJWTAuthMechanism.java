@@ -7,6 +7,7 @@ import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.quarkiverse.renarde.impl.RenardeConfig;
 import io.quarkus.smallrye.jwt.runtime.auth.JWTAuthMechanism;
 import io.quarkus.smallrye.jwt.runtime.auth.SmallRyeJwtConfig;
@@ -59,19 +60,21 @@ public class RenardeJWTAuthMechanism extends JWTAuthMechanism {
 
     @Override
     public Uni<ChallengeData> getChallenge(RoutingContext context) {
-        if (config.getLoginPage() != null) {
-            if (context.request().uri().equals(config.getLoginPage())) {
-                log.errorf(
-                        "Avoiding redirect loop, make sure that your endpoint annotated with @LoginPage is accessible without being authenticated: %s",
-                        config.getLoginPage());
-                return super.getChallenge(context);
-            } else {
-                // we need to store the URL
-                storeInitialLocation(context);
-                return getRedirect(context, config.getLoginPage());
-            }
-        } else {
+        // always redirect to the login page, except when we have a special REST header
+        String authHeader = context.request().headers().get(HttpHeaderNames.AUTHORIZATION);
+        if (authHeader != null) {
             return super.getChallenge(context);
+        }
+
+        if (context.request().uri().equals(config.getLoginPage())) {
+            log.errorf(
+                    "Avoiding redirect loop, make sure that your endpoint annotated with @LoginPage is accessible without being authenticated: %s",
+                    config.getLoginPage());
+            return super.getChallenge(context);
+        } else {
+            // we need to store the URL
+            storeInitialLocation(context);
+            return getRedirect(context, config.getLoginPage());
         }
     }
 }

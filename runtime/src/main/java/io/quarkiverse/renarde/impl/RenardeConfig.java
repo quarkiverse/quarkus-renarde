@@ -20,6 +20,9 @@ public class RenardeConfig {
     private String loginPage;
     private Map<String, Properties> bundles = new HashMap<>();
 
+    /**
+     * The login page, never null. Defaults to "/"
+     */
     public String getLoginPage() {
         return loginPage;
     }

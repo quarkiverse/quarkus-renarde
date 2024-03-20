@@ -69,8 +69,7 @@ public class AuthenticationFailedExceptionMapper {
             // in there being two, which is invalid HTTP
             vertxResponse.headers().remove(HttpHeaders.LOCATION);
         }
-        String target = config.getLoginPage() != null ? config.getLoginPage() : "/";
-        ResponseBuilder builder = Response.seeOther(URI.create(target));
+        ResponseBuilder builder = Response.seeOther(URI.create(config.getLoginPage()));
         builder.cookie(invalidateCookie(jwtCookie));
         Map<String, Object> map = new HashMap<>();
         // FIXME: format?

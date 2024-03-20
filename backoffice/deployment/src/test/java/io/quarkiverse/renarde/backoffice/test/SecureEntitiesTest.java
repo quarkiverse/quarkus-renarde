@@ -36,7 +36,8 @@ public class SecureEntitiesTest {
                 .redirects().follow(false)
                 .when()
                 .get("/_renarde/backoffice/index").then()
-                .statusCode(401);
+                .statusCode(302)
+                .header("Location", url.toString());
     }
 
     @Test
@@ -47,7 +48,8 @@ public class SecureEntitiesTest {
                 .urlEncodingEnabled(false)
                 .when()
                 .get("/_renarde/backoffice/SecureEntitiesTest$Order/index").then()
-                .statusCode(401);
+                .statusCode(302)
+                .header("Location", url.toString());
     }
 
     @Test

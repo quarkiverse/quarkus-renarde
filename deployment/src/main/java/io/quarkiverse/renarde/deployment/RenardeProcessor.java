@@ -164,6 +164,9 @@ public class RenardeProcessor {
     private static final String PDFBOX_PROBLEMATIC_CLASS = "org.apache.pdfbox.pdmodel.encryption.PublicKeySecurityHandler";
     private static final String PDF_RESPONSE_HANDLER_CLASS = "io.quarkiverse.renarde.pdf.runtime.PdfResponseHandler";
 
+    private static final String[] SUPPORTED_OIDC_PROVIDERS = new String[] { "facebook", "apple", "github", "microsoft",
+            "google", "twitter", "spotify" };
+
     @BuildStep
     FeatureBuildItem feature() {
         return new FeatureBuildItem(FEATURE);
@@ -216,7 +219,7 @@ public class RenardeProcessor {
             defineUnlessPresent("mp.jwt.token.cookie", "QuarkusUser", config, runtimeConfigurationBuildItem);
         }
         // Apparently, no OIDC capability to check
-        for (String provider : Arrays.asList("facebook", "apple", "github", "microsoft", "google", "twitter", "spotify")) {
+        for (String provider : SUPPORTED_OIDC_PROVIDERS) {
             if ((config.getOptionalValue("quarkus.oidc." + provider + ".provider", String.class).isPresent()
                     || config.getOptionalValue("quarkus.oidc." + provider + ".client-id", String.class).isPresent())
                     && !config.getOptionalValue("quarkus.oidc." + provider + ".authentication.redirect-path", String.class)
@@ -807,8 +810,32 @@ public class RenardeProcessor {
     void configureLoginPage(RenardeRecorder recorder,
             LoginPageBuildItem loginPageBuildItem,
             BeanContainerBuildItem beanContainerBuildItem) {
-        recorder.configureLoginPage(beanContainerBuildItem.getValue(),
-                loginPageBuildItem != null ? loginPageBuildItem.uri : null);
+        String loginPage;
+        if (loginPageBuildItem != null) {
+            loginPage = loginPageBuildItem.uri;
+        } else {
+            Config config = ConfigProvider.getConfig();
+            // if we have a single provider it's easy
+            String oidcLoginPage = null;
+            for (String provider : SUPPORTED_OIDC_PROVIDERS) {
+                if ((config.getOptionalValue("quarkus.oidc." + provider + ".provider", String.class).isPresent()
+                        || config.getOptionalValue("quarkus.oidc." + provider + ".client-id", String.class).isPresent())) {
+                    if (oidcLoginPage == null) {
+                        oidcLoginPage = "/_renarde/security/login-" + provider;
+                    } else {
+                        // two providers, we can't choose, fall back to root
+                        oidcLoginPage = null;
+                        break;
+                    }
+                }
+            }
+            if (oidcLoginPage != null) {
+                loginPage = oidcLoginPage;
+            } else {
+                loginPage = "/";
+            }
+        }
+        recorder.configureLoginPage(beanContainerBuildItem.getValue(), loginPage);
     }
 
     @BuildStep

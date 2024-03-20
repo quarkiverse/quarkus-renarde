@@ -52,7 +52,8 @@ public class NoLoginControllerTest {
                 .redirects().follow(false)
                 .when()
                 .get("/protected").then()
-                .statusCode(401);
+                .statusCode(302)
+                .header("Location", url.toString());
     }
 
     @Test
