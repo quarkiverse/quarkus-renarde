@@ -61,7 +61,6 @@ public class RernardeRevokeController extends Controller {
                 .keyId(appleOidcKeyId)
                 .algorithm(SignatureAlgorithm.ES256)
                 .sign(getPrivateKey(String.format("src/main/resources/%s", appleKeyFile)));
-        // Revoke token access for apple user
         renardeAppleClient.revokeAppleUser(appleClientId, clientSecret, accessToken.getToken(), "access_token");
         return security.makeLogoutResponse();
     }
