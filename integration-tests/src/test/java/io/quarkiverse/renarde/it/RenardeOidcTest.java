@@ -150,7 +150,7 @@ public class RenardeOidcTest {
                 .statusCode(302).extract().header("Location");
         Assertions.assertNotNull(findCookie(cookieFilter.getCookieStore(), "q_session_apple"));
         // add user (GET /oidc-success)
-        follow(url + "/_renarde/security/oidc-success", cookieFilter).statusCode(200);
+        follow(location.replace("https://", "http://"), cookieFilter).statusCode(200);
 
         // can access secure page
         given().when()
