@@ -125,6 +125,65 @@ public class RenardeOidcTest {
         verifyLoggedInAndLogout(cookieFilter, "q_session_apple");
     }
 
+    @Test
+    public void appleRevokeTest() {
+        // login using Apple
+        RenardeCookieFilter cookieFilter = new RenardeCookieFilter();
+        ValidatableResponse response = follow("/_renarde/security/login-apple", cookieFilter);
+        JsonPath json = response.statusCode(200)
+                .extract().body().jsonPath();
+        String code = json.get("code");
+        String state = json.get("state");
+
+        // complete registration (POST /oidc-success)
+        String location = given()
+                .when()
+                .filter(cookieFilter)
+                .formParam("state", state)
+                .formParam("code", code)
+                .redirects().follow(false)
+                .contentType("application/x-www-form-urlencoded")
+                .log().ifValidationFails()
+                .post("/_renarde/security/oidc-success")
+                .then()
+                .log().ifValidationFails()
+                .statusCode(302).extract().header("Location");
+        Assertions.assertNotNull(findCookie(cookieFilter.getCookieStore(), "q_session_apple"));
+        // add user (GET /oidc-success)
+        follow(url + "/_renarde/security/oidc-success", cookieFilter).statusCode(200);
+
+        // can access secure page
+        given().when()
+                .filter(cookieFilter)
+                .get("/SecureController/hello")
+                .then()
+                .statusCode(200);
+
+        // Revoke access
+        String logoutCookie = given()
+                .when()
+                .filter(cookieFilter)
+                .redirects().follow(false)
+                .get("/_renarde/security/apple-revoke")
+                .then()
+                .statusCode(303)
+                .extract().headers()
+                .getValues("Set-Cookie")
+                .stream().filter(c -> c.startsWith("QuarkusUser=")).findFirst().get();
+
+        // Cookie is reset
+        Assertions.assertEquals("QuarkusUser=;Version=1;Path=/;Max-Age=0", logoutCookie);
+        // Secure page will redirect to login
+        Assertions.assertTrue(
+                given().when().filter(cookieFilter)
+                        .redirects().follow(false)
+                        .get("/SecureController/hello")
+                        .then()
+                        .statusCode(302).extract().header("Location")
+                        .endsWith("_renarde/security/login"));
+
+    }
+
     private void verifyLoggedInAndLogout(RenardeCookieFilter cookieFilter, String cookieName) {
         // can go to protected page
         given()

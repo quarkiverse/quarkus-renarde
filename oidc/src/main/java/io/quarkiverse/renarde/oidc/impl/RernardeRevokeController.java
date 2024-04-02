@@ -22,6 +22,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import io.quarkiverse.renarde.Controller;
 import io.quarkiverse.renarde.security.RenardeSecurity;
 import io.quarkus.oidc.AccessTokenCredential;
+import io.quarkus.security.Authenticated;
 import io.smallrye.jwt.algorithm.SignatureAlgorithm;
 import io.smallrye.jwt.build.Jwt;
 
@@ -49,8 +50,8 @@ public class RernardeRevokeController extends Controller {
     @Inject
     public RenardeSecurity security;
 
-
     @Path("apple-revoke")
+    @Authenticated
     public Response revokeApple() {
         String clientSecret = Jwt.audience("https://appleid.apple.com")
                 .subject(appleClientId)
@@ -60,14 +61,14 @@ public class RernardeRevokeController extends Controller {
                 .jws()
                 .keyId(appleOidcKeyId)
                 .algorithm(SignatureAlgorithm.ES256)
-                .sign(getPrivateKey(String.format("src/main/resources/%s", appleKeyFile)));
+                .sign(getPrivateKey(appleKeyFile));
         renardeAppleClient.revokeAppleUser(appleClientId, clientSecret, accessToken.getToken(), "access_token");
         return security.makeLogoutResponse();
     }
 
-    private static PrivateKey getPrivateKey(String filename) {
+    private PrivateKey getPrivateKey(String filename) {
         try {
-            String content = Files.readString(Paths.get(filename));
+            String content = Files.readString(Paths.get("target/classes/" + filename));
             String privateKey = content.replace("-----BEGIN PRIVATE KEY-----", "")
                     .replace("-----END PRIVATE KEY-----", "")
                     .replaceAll("\\s+", "");
