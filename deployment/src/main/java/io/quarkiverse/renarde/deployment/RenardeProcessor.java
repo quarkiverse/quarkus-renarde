@@ -60,11 +60,10 @@ import io.quarkiverse.renarde.deployment.ControllerVisitor.ControllerClass;
 import io.quarkiverse.renarde.deployment.ControllerVisitor.ControllerMethod;
 import io.quarkiverse.renarde.deployment.ControllerVisitor.UriPart;
 import io.quarkiverse.renarde.htmx.HxController;
-import io.quarkiverse.renarde.impl.RenardeConfig;
+import io.quarkiverse.renarde.impl.RenardeConfigBean;
 import io.quarkiverse.renarde.impl.RenardeRecorder;
 import io.quarkiverse.renarde.router.Router;
 import io.quarkiverse.renarde.router.RouterMethod;
-import io.quarkiverse.renarde.util.AuthenticationFailedExceptionMapper;
 import io.quarkiverse.renarde.util.Filters;
 import io.quarkiverse.renarde.util.Flash;
 import io.quarkiverse.renarde.util.Globals;
@@ -150,6 +149,8 @@ public class RenardeProcessor {
     public static final DotName DOTNAME_USER_WITH_PASSWORD = DotName
             .createSimple("io.quarkiverse.renarde.security.RenardeUserWithPassword");
     public static final DotName DOTNAME_SECURITY = DotName.createSimple("io.quarkiverse.renarde.security.RenardeSecurity");
+    public static final DotName DOTNAME_AUTHENTICATION_HANDLER = DotName
+            .createSimple("io.quarkiverse.renarde.security.impl.AuthenticationFailedExceptionMapper");
     public static final DotName DOTNAME_RENARDE_FORM_LOGIN_CONTROLLER = DotName
             .createSimple("io.quarkiverse.renarde.security.impl.RenardeFormLoginController");
     public static final DotName DOTNAME_RENARDE_SECURITY_CONTROLLER = DotName
@@ -335,9 +336,12 @@ public class RenardeProcessor {
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(RenardeValidationLocaleResolver.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(JavaExtensions.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(MyValidationInterceptor.class));
-        additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(AuthenticationFailedExceptionMapper.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(RenardeJWTAuthMechanism.class));
-        additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(RenardeConfig.class));
+        additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(RenardeConfigBean.class));
+        // If we have the renarde-security module, we'll see this class
+        if (QuarkusClassLoader.isClassPresentAtRuntime(DOTNAME_AUTHENTICATION_HANDLER.toString())) {
+            additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(DOTNAME_AUTHENTICATION_HANDLER.toString()));
+        }
 
         paramConverterBuildItems.produce(new ParamConverterBuildItem(MyParamConverters.class.getName(), Priorities.USER, true));
 
@@ -362,7 +366,10 @@ public class RenardeProcessor {
 
     @BuildStep
     void registerCustomExceptionMappers(BuildProducer<CustomExceptionMapperBuildItem> customExceptionMapper) {
-        customExceptionMapper.produce(new CustomExceptionMapperBuildItem(AuthenticationFailedExceptionMapper.class.getName()));
+        // If we have the renarde-security module, we'll see this class
+        if (QuarkusClassLoader.isClassPresentAtRuntime(DOTNAME_AUTHENTICATION_HANDLER.toString())) {
+            customExceptionMapper.produce(new CustomExceptionMapperBuildItem(DOTNAME_AUTHENTICATION_HANDLER.toString()));
+        }
     }
 
     @BuildStep

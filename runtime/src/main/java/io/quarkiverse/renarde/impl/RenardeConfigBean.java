@@ -15,7 +15,7 @@ import java.util.Properties;
 import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
-public class RenardeConfig {
+public class RenardeConfigBean {
 
     private String loginPage;
     private Map<String, Properties> bundles = new HashMap<>();
@@ -45,7 +45,7 @@ public class RenardeConfig {
         // let's not add a leading slash because this fails in native-image
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         if (cl == null) {
-            cl = RenardeConfig.class.getClassLoader();
+            cl = RenardeConfigBean.class.getClassLoader();
         }
         try {
             Enumeration<URL> resources = cl.getResources(bundlePath);

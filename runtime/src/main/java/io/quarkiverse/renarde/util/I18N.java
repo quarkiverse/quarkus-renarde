@@ -12,7 +12,7 @@ import jakarta.ws.rs.core.Cookie;
 import org.jboss.resteasy.reactive.common.headers.HeaderUtil;
 import org.jboss.resteasy.reactive.server.spi.ResteasyReactiveContainerRequestContext;
 
-import io.quarkiverse.renarde.impl.RenardeConfig;
+import io.quarkiverse.renarde.impl.RenardeConfigBean;
 import io.quarkus.runtime.LocalesBuildTimeConfig;
 import io.vertx.core.http.CookieSameSite;
 import io.vertx.core.http.HttpServerRequest;
@@ -36,7 +36,7 @@ public class I18N {
     LocalesBuildTimeConfig localesConfig;
 
     @Inject
-    RenardeConfig renardeConfig;
+    RenardeConfigBean renardeConfig;
 
     private Locale locale = null;
     private boolean localeOverridden = false;

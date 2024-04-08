@@ -8,7 +8,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import io.netty.handler.codec.http.HttpHeaderNames;
-import io.quarkiverse.renarde.impl.RenardeConfig;
+import io.quarkiverse.renarde.impl.RenardeConfigBean;
 import io.quarkus.smallrye.jwt.runtime.auth.JWTAuthMechanism;
 import io.quarkus.smallrye.jwt.runtime.auth.SmallRyeJwtConfig;
 import io.quarkus.vertx.http.runtime.security.ChallengeData;
@@ -29,7 +29,7 @@ public class RenardeJWTAuthMechanism extends JWTAuthMechanism {
     private static final Logger log = Logger.getLogger(RenardeJWTAuthMechanism.class);
 
     @Inject
-    RenardeConfig config;
+    RenardeConfigBean config;
 
     @ConfigProperty(name = "quarkus.renarde.auth.location-cookie")
     String locationCookie;

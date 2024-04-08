@@ -2,6 +2,7 @@ package io.quarkiverse.renarde.test;
 
 import static io.restassured.RestAssured.given;
 
+import java.net.URI;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -30,6 +31,7 @@ import io.quarkiverse.renarde.util.Flash;
 import io.quarkus.elytron.security.common.BcryptUtil;
 import io.quarkus.security.Authenticated;
 import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.common.http.TestHTTPResource;
 import io.restassured.response.Response;
 import io.smallrye.jwt.build.Jwt;
 
@@ -40,6 +42,9 @@ public class JWTTest {
             .setArchiveProducer(() -> ShrinkWrap.create(JavaArchive.class)
                     .addClasses(MyUser.class, MyUserProvider.class, MyController.class)
                     .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml"));
+
+    @TestHTTPResource
+    URI uri;
 
     @Test
     public void testProtectedPageWithInvalidJwt() throws NoSuchAlgorithmException {
@@ -103,6 +108,7 @@ public class JWTTest {
                 .log().ifValidationFails()
                 // logout
                 .cookie("QuarkusUser")
+                .cookie("quarkus-redirect-location")
                 .statusCode(303)
                 .extract().response();
 
@@ -114,6 +120,13 @@ public class JWTTest {
                 .stream().filter(c -> c.startsWith("QuarkusUser=")).findFirst().get();
 
         Assertions.assertEquals("QuarkusUser=;Version=1;Path=/;Max-Age=0", quarkusUserCookie);
+
+        // Make sure we saved the original URI
+        String quarkusRedirectCookie = response.headers()
+                .getValues("Set-Cookie")
+                .stream().filter(c -> c.startsWith("quarkus-redirect-location=")).findFirst().get();
+
+        Assertions.assertEquals("quarkus-redirect-location=\"" + uri + "\";Version=1;Path=/", quarkusRedirectCookie);
 
         String flash = response.cookie(Flash.FLASH_COOKIE_NAME);
         Map<String, Object> data = Flash.decodeCookieValue(flash);
