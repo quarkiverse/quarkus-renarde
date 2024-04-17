@@ -3,6 +3,8 @@ package io.quarkiverse.renarde.it;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.containsString;
 
+import java.util.List;
+
 import org.apache.http.client.CookieStore;
 import org.apache.http.cookie.Cookie;
 import org.junit.jupiter.api.Assertions;
@@ -127,7 +129,7 @@ public class RenardeOidcTest {
 
     @Test
     public void appleRevokeTest() {
-        // login using Apple
+        // GIVEN a registered apple user
         RenardeCookieFilter cookieFilter = new RenardeCookieFilter();
         ValidatableResponse response = follow("/_renarde/security/login-apple", cookieFilter);
         JsonPath json = response.statusCode(200)
@@ -135,7 +137,6 @@ public class RenardeOidcTest {
         String code = json.get("code");
         String state = json.get("state");
 
-        // complete registration (POST /oidc-success)
         String location = given()
                 .when()
                 .filter(cookieFilter)
@@ -147,20 +148,14 @@ public class RenardeOidcTest {
                 .post("/_renarde/security/oidc-success")
                 .then()
                 .log().ifValidationFails()
-                .statusCode(302).extract().header("Location");
+                .statusCode(302)
+                .extract().header("Location");
         Assertions.assertNotNull(findCookie(cookieFilter.getCookieStore(), "q_session_apple"));
         // add user (GET /oidc-success)
         follow(location.replace("https://", "http://"), cookieFilter).statusCode(200);
 
-        // can access secure page
-        given().when()
-                .filter(cookieFilter)
-                .get("/SecureController/hello")
-                .then()
-                .statusCode(200);
-
-        // Revoke access
-        String logoutCookie = given()
+        // WHEN Revoke access
+        List<String> setCookieHeaderResp = given()
                 .when()
                 .filter(cookieFilter)
                 .redirects().follow(false)
@@ -168,12 +163,21 @@ public class RenardeOidcTest {
                 .then()
                 .statusCode(303)
                 .extract().headers()
-                .getValues("Set-Cookie")
-                .stream().filter(c -> c.startsWith("QuarkusUser=")).findFirst().get();
+                .getValues("Set-Cookie");
 
-        // Cookie is reset
-        Assertions.assertEquals("QuarkusUser=;Version=1;Path=/;Max-Age=0", logoutCookie);
-        // Secure page will redirect to login
+        // THEN Cookie is reset (no more QuarkusUser nor apple session)
+        String userLogoutCookie = setCookieHeaderResp.stream()
+                .filter(c -> c.startsWith("QuarkusUser="))
+                .findFirst()
+                .orElseThrow();
+        Assertions.assertEquals("QuarkusUser=;Version=1;Path=/;Max-Age=0", userLogoutCookie);
+        String userSessionCookie = setCookieHeaderResp.stream()
+                .filter(c -> c.startsWith("q_session_apple="))
+                .findFirst()
+                .orElseThrow();
+        Assertions.assertEquals("q_session_apple=;Version=1;Path=/;Max-Age=0", userSessionCookie);
+
+        // THEN Secure page will redirect to login
         Assertions.assertTrue(
                 given().when().filter(cookieFilter)
                         .redirects().follow(false)
