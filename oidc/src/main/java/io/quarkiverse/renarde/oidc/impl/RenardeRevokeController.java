@@ -27,7 +27,7 @@ import io.smallrye.jwt.algorithm.SignatureAlgorithm;
 import io.smallrye.jwt.build.Jwt;
 
 @Path("_renarde/security")
-public class RernardeRevokeController extends Controller {
+public class RenardeRevokeController extends Controller {
 
     @Inject
     AccessTokenCredential accessToken;
