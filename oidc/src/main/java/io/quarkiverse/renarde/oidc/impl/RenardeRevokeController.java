@@ -25,6 +25,7 @@ import io.quarkus.oidc.AccessTokenCredential;
 import io.quarkus.security.Authenticated;
 import io.smallrye.jwt.algorithm.SignatureAlgorithm;
 import io.smallrye.jwt.build.Jwt;
+import io.vertx.ext.web.RoutingContext;
 
 @Path("_renarde/security")
 public class RenardeRevokeController extends Controller {
@@ -34,6 +35,9 @@ public class RenardeRevokeController extends Controller {
 
     @RestClient
     RenardeAppleClient renardeAppleClient;
+
+    @Inject
+    RoutingContext context;
 
     @ConfigProperty(name = "quarkus.oidc.apple.client-id")
     String appleClientId;
@@ -53,16 +57,27 @@ public class RenardeRevokeController extends Controller {
     @Path("apple-revoke")
     @Authenticated
     public Response revokeApple() {
-        String clientSecret = Jwt.audience("https://appleid.apple.com")
-                .subject(appleClientId)
-                .issuer(appleOidcIssuer)
-                .issuedAt(Instant.now().getEpochSecond())
-                .expiresIn(Duration.ofHours(1))
-                .jws()
-                .keyId(appleOidcKeyId)
-                .algorithm(SignatureAlgorithm.ES256)
-                .sign(getPrivateKey(appleKeyFile));
-        renardeAppleClient.revokeAppleUser(appleClientId, clientSecret, accessToken.getToken(), "access_token");
+        String tenant = context.get("tenant-id");
+        if ("apple".equalsIgnoreCase(tenant)) {
+            // Build secret using apple PK
+            String clientSecret = Jwt.audience("https://appleid.apple.com")
+                    .subject(appleClientId)
+                    .issuer(appleOidcIssuer)
+                    .issuedAt(Instant.now().getEpochSecond())
+                    .expiresIn(Duration.ofHours(1))
+                    .jws()
+                    .keyId(appleOidcKeyId)
+                    .algorithm(SignatureAlgorithm.ES256)
+                    .sign(getPrivateKey(appleKeyFile));
+            // Invalid refresh token
+            if (null != accessToken.getRefreshToken()) {
+                renardeAppleClient.revokeAppleUser(appleClientId, clientSecret, accessToken.getRefreshToken().getToken(),
+                        "refresh_token");
+            }
+            // Invalid access token
+            renardeAppleClient.revokeAppleUser(appleClientId, clientSecret, accessToken.getToken(), "access_token");
+        }
+        // Invalid cookies
         return security.makeLogoutResponse();
     }
 
