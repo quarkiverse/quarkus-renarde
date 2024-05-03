@@ -55,23 +55,45 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-panache-hibernate-common</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.webjars</groupId>
-      <artifactId>bootstrap</artifactId>
-      <version>5.2.3</version>
-    </dependency>
-    <dependency>
-      <groupId>org.webjars.npm</groupId>
-      <artifactId>bootstrap-icons</artifactId>
-      <version>1.10.3</version>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-webjars-locator</artifactId>
-    </dependency>
   </dependencies>
   <build>
     <plugins>
+      <plugin>
+        <groupId>com.github.eirslett</groupId>
+        <artifactId>frontend-maven-plugin</artifactId>
+        <version>1.15.0</version>
+        <executions>
+          <execution>
+            <id>install node</id>
+            <goals>
+              <goal>install-node-and-npm</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>npm install</id>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>npm build</id>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>run build</arguments>
+              <environmentVariables>
+                <TARGET_DIR>${project.build.directory}/classes/META-INF/resources</TARGET_DIR>
+              </environmentVariables>
+            </configuration>
+          </execution>
+        </executions>
+        <configuration>
+          <nodeVersion>v20.12.2</nodeVersion>
+          <installDirectory>target</installDirectory>
+          <workingDirectory>web-libs</workingDirectory>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-extension-maven-plugin</artifactId>

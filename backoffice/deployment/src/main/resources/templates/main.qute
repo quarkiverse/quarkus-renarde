@@ -4,10 +4,9 @@
   <head>
     <title>\{#insert title/}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" media="screen" href="/webjars/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" media="screen" href="/webjars/bootstrap-icons/font/bootstrap-icons.css">
+    <link rel="stylesheet" media="screen" href="/static/bundle/backoffice.css">
     \{#insert moreStyles /}
-    <script src="/webjars/bootstrap/js/bootstrap.min.js" type="text/javascript" charset="UTF-8"></script>
+    <script src="/static/bundle/backoffice.js" type="text/javascript" charset="UTF-8"></script>
     \{#insert moreScripts /}
   </head>
   <body>
