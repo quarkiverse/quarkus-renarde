@@ -34,6 +34,7 @@ public class MockMicrosoftOidcTestResource extends MockOidcTestResource<MockMicr
         router.get("/common/oauth2/v2.0/authorize").handler(this::authorize);
         router.post("/common/oauth2/v2.0/token").handler(bodyHandler).handler(this::accessTokenJson);
         router.get("/common/discovery/v2.0/keys").handler(this::getKeys);
+        router.get("/oidc/userinfo").handler(this::userinfo);
 
         KeyPairGenerator kpg;
         try {
@@ -250,5 +251,20 @@ public class MockMicrosoftOidcTestResource extends MockOidcTestResource<MockMicr
         rc.response()
                 .putHeader("Content-Type", "application/json")
                 .endAndForget(data);
+    }
+
+    private void userinfo(RoutingContext rc) {
+        String data = "{\n"
+                + "\"sub\":\"USERID\",\n" +
+                "\"@odata.context\":\"https://substrate.office.com/profileB2/v2.0/me/$metadata#userinfo\",\n"
+                + "\"givenname\":\"Foo\",\n"
+                + "\"familyname\":\"Bar\",\n"
+                + "\"email\":\"microsoft@example.com\",\n"
+                + "\"picture\":\"https://graph.microsoft.com/v1.0/me/photo/$value\"\n"
+                + "}";
+        rc.response()
+                .putHeader("Content-Type", "application/json")
+                .endAndForget(data);
+
     }
 }

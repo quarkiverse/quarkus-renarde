@@ -33,6 +33,7 @@ public class MockGoogleOidcTestResource extends MockOidcTestResource<MockGoogleO
         router.get("/o/oauth2/v2/auth").handler(this::authorize);
         router.post("/token").handler(bodyHandler).handler(this::accessTokenJson);
         router.get("/oauth2/v3/certs").handler(this::getKeys);
+        router.get("/v1/userinfo").handler(this::userinfo);
 
         KeyPairGenerator kpg;
         try {
@@ -219,6 +220,22 @@ public class MockGoogleOidcTestResource extends MockOidcTestResource<MockGoogleO
                 + "      \"e\": \"" + exponent + "\"\n"
                 + "    },\n"
                 + "  ]\n"
+                + "}";
+        rc.response()
+                .putHeader("Content-Type", "application/json")
+                .endAndForget(data);
+    }
+
+    private void userinfo(RoutingContext rc) {
+        String data = "{\n"
+                + "  \"sub\": \"USERID\",\n"
+                + "  \"name\": \"Foo Bar\",\n"
+                + "  \"given_name\": \"Foo\",\n"
+                + "  \"family_name\": \"Bar\",\n"
+                + "  \"picture\": \"https://example.com/picture\",\n"
+                + "  \"email\": \"google@example.com\",\n"
+                + "  \"email_verified\": true,\n"
+                + "  \"locale\": \"en-GB\"\n"
                 + "}";
         rc.response()
                 .putHeader("Content-Type", "application/json")
