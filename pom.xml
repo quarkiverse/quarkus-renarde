@@ -8,7 +8,7 @@
   </parent>
   <groupId>io.quarkiverse.renarde</groupId>
   <artifactId>quarkus-renarde-parent</artifactId>
-  <version>3.0.11-SNAPSHOT</version>
+  <version>3.0.13-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Quarkus - Renarde - Parent</name>
   <modules>
@@ -37,7 +37,7 @@
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <quarkus.version>3.9.4</quarkus.version>
+    <quarkus.version>3.11.1</quarkus.version>
     <openhtmltopdf.version>1.0.10</openhtmltopdf.version>
     <zxing.version>3.5.1</zxing.version>
   </properties>
