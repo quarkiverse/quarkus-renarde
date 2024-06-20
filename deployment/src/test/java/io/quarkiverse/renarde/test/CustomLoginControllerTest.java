@@ -1,6 +1,11 @@
 package io.quarkiverse.renarde.test;
 
+import static io.restassured.RestAssured.given;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
 import java.net.URL;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Set;
 
@@ -24,12 +29,12 @@ import io.quarkiverse.renarde.security.LoginPage;
 import io.quarkiverse.renarde.security.RenardeSecurity;
 import io.quarkiverse.renarde.security.RenardeUser;
 import io.quarkiverse.renarde.security.RenardeUserProvider;
-import io.quarkiverse.renarde.test.CustomLoginControllerTest.MyUser;
 import io.quarkus.elytron.security.common.BcryptUtil;
 import io.quarkus.security.Authenticated;
 import io.quarkus.test.QuarkusUnitTest;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.restassured.RestAssured;
+import io.smallrye.jwt.build.Jwt;
 
 public class CustomLoginControllerTest {
 
@@ -76,6 +81,41 @@ public class CustomLoginControllerTest {
                 .statusCode(303)
                 .cookie("QuarkusUser")
                 .header("Location", url + "protected");
+    }
+
+    @Test
+    public void testLoginPageWithInvalidJwt() {
+
+        String token = Jwt.issuer("https://example.com/issuer")
+                .upn("user")
+                .issuedAt(Instant.now())
+                .expiresIn(Duration.ofDays(10))
+                .innerSign().encrypt();
+
+        given()
+                .when()
+                .cookie("QuarkusUser", token)
+                .log().ifValidationFails()
+                .redirects().follow(false)
+                .get("/login")
+                .then()
+                .log().ifValidationFails()
+                .statusCode(200)
+                .body(Matchers.is("fake login page"));
+
+        // invalid issuer
+        token = Jwt.issuer("https://example.com/other-issuer")
+                .upn("user")
+                .innerSign().encrypt();
+
+        var response = given()
+                .redirects().follow(false)
+                .when()
+                .cookie("QuarkusUser", token)
+                .get("/login").then()
+                .statusCode(303)
+                .extract().response();
+        assertFalse(response.headers().hasHeaderWithName("QuarkusUser"));
     }
 
     public static class MyController extends Controller {
