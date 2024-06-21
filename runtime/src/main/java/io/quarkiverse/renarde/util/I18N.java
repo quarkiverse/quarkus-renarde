@@ -42,7 +42,7 @@ public class I18N {
     private boolean localeOverridden = false;
 
     public void set(String language) {
-    	setForCurrentRequest(language);
+        setForCurrentRequest(language);
         localeOverridden = true;
     }
 
