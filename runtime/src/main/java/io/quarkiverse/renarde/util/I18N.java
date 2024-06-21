@@ -42,6 +42,11 @@ public class I18N {
     private boolean localeOverridden = false;
 
     public void set(String language) {
+    	setForCurrentRequest(language);
+        localeOverridden = true;
+    }
+
+    public void setForCurrentRequest(String language) {
         Objects.requireNonNull(language);
         // check that we support it
         Locale found = findSupportedLocale(language);
@@ -49,7 +54,6 @@ public class I18N {
             throw new IllegalArgumentException(
                     "Language " + language + " not supported, please add it to the 'quarkus.locales' configuration");
         }
-        localeOverridden = true;
         this.locale = found;
     }
 
