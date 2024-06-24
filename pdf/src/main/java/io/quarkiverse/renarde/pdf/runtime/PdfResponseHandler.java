@@ -1,7 +1,9 @@
 package io.quarkiverse.renarde.pdf.runtime;
 
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.logging.Level;
 
 import jakarta.ws.rs.container.ContainerResponseContext;
@@ -11,6 +13,9 @@ import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.server.ServerResponseFilter;
 import org.jboss.resteasy.reactive.server.core.BlockingOperationSupport;
 
+import com.openhtmltopdf.java2d.api.DefaultPageProcessor;
+import com.openhtmltopdf.java2d.api.FSPageOutputStreamSupplier;
+import com.openhtmltopdf.java2d.api.Java2DRendererBuilder;
 import com.openhtmltopdf.pdfboxout.PdfBoxRenderer;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.openhtmltopdf.util.Diagnostic;
@@ -76,18 +81,33 @@ public class PdfResponseHandler {
         Object entity = responseContext.getEntity();
         if (responseContext.getStatus() == 200
                 && entity instanceof String
-                && responseContext.getMediaType() != null
-                && responseContext.getMediaType().equals(Pdf.APPLICATION_PDF_TYPE)) {
-            String baseURI = uriInfo.getBaseUri().toString();
-            // this is all blocking because it can do blocking HTTP calls
-            if (BlockingOperationSupport.isBlockingAllowed()) {
-                renderPdf((String) entity, baseURI, responseContext);
-                return Uni.createFrom().nullItem();
-            } else {
-                return Uni.createFrom().<Void> item(() -> {
+                && responseContext.getMediaType() != null) {
+            if (responseContext.getMediaType().equals(Pdf.APPLICATION_PDF_TYPE)) {
+                String baseURI = uriInfo.getBaseUri().toString();
+                // this is all blocking because it can do blocking HTTP calls
+                if (BlockingOperationSupport.isBlockingAllowed()) {
                     renderPdf((String) entity, baseURI, responseContext);
-                    return null;
-                }).runSubscriptionOn(ExecutorRecorder.getCurrent());
+                    return Uni.createFrom().nullItem();
+                } else {
+                    return Uni.createFrom().<Void> item(() -> {
+                        renderPdf((String) entity, baseURI, responseContext);
+                        return null;
+                    }).runSubscriptionOn(ExecutorRecorder.getCurrent());
+                }
+            } else if (responseContext.getMediaType().equals(Pdf.IMAGE_PNG_TYPE)) {
+                String baseURI = uriInfo.getBaseUri().toString();
+                // this is all blocking because it can do blocking HTTP calls
+                if (BlockingOperationSupport.isBlockingAllowed()) {
+                    renderPng((String) entity, baseURI, responseContext);
+                    return Uni.createFrom().nullItem();
+                } else {
+                    return Uni.createFrom().<Void> item(() -> {
+                        renderPng((String) entity, baseURI, responseContext);
+                        return null;
+                    }).runSubscriptionOn(ExecutorRecorder.getCurrent());
+                }
+            } else {
+                return Uni.createFrom().nullItem();
             }
         } else {
             return Uni.createFrom().nullItem();
@@ -114,5 +134,35 @@ public class PdfResponseHandler {
             throw new RuntimeException(e);
         }
         responseContext.setEntity(out.toByteArray(), null, Pdf.APPLICATION_PDF_TYPE);
+    }
+
+    private void renderPng(String entity, String baseURI, ContainerResponseContext responseContext) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        FSPageOutputStreamSupplier osSupplier = (pageNo) -> {
+            if (pageNo == 0) {
+                return out;
+            } else {
+                System.err.println(
+                        "Rendering PDF to image needs more than one page: this means your content overflows the page size, there will be clipping, and the pages after the first will be discarded");
+                return OutputStream.nullOutputStream();
+            }
+        };
+
+        DefaultPageProcessor pageProcessor = new DefaultPageProcessor(osSupplier, BufferedImage.TYPE_INT_RGB, "png");
+
+        Java2DRendererBuilder builder = new Java2DRendererBuilder();
+        builder.withHtmlContent(entity, baseURI);
+        builder.useFastMode();
+        builder.useEnvironmentFonts(true); // But see note below.
+
+        builder.toPageProcessor(pageProcessor);
+        try {
+            builder.runPaged();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        responseContext.setEntity(out.toByteArray(), null, Pdf.IMAGE_PNG_TYPE);
     }
 }

@@ -4,7 +4,7 @@
   <parent>
     <groupId>io.quarkiverse.renarde</groupId>
     <artifactId>quarkus-renarde-parent</artifactId>
-    <version>3.0.15-SNAPSHOT</version>
+    <version>3.0.17-SNAPSHOT</version>
   </parent>
   <artifactId>quarkus-renarde-pdf</artifactId>
   <name>Quarkus - Renarde - PDF</name>
@@ -13,17 +13,34 @@
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-core</artifactId>
     </dependency>
+    <!-- This imports quarkus awt, not sure it's needed but it works -->
+    <dependency>
+      <groupId>io.quarkiverse.pdfbox</groupId>
+      <artifactId>quarkus-pdfbox</artifactId>
+      <version>${quarkiverse.pdfbox.version}</version>
+      <exclusions>
+         <exclusion>
+             <groupId>commons-logging</groupId>
+             <artifactId>commons-logging</artifactId>
+         </exclusion>
+	  </exclusions>
+    </dependency>
   	<dependency>
-  		<groupId>com.openhtmltopdf</groupId>
+  		<groupId>io.github.openhtmltopdf</groupId>
   		<artifactId>openhtmltopdf-core</artifactId>
   		<version>${openhtmltopdf.version}</version>
   	</dependency>
   	<dependency>
-  		<groupId>com.openhtmltopdf</groupId>
+  		<groupId>io.github.openhtmltopdf</groupId>
   		<artifactId>openhtmltopdf-pdfbox</artifactId>
   		<version>${openhtmltopdf.version}</version>
   	</dependency>
-    <dependency>
+  	<dependency>
+  		<groupId>io.github.openhtmltopdf</groupId>
+  		<artifactId>openhtmltopdf-java2d</artifactId>
+  		<version>${openhtmltopdf.version}</version>
+  	</dependency>
+  	<dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>quarkus-renarde</artifactId>
         <version>${project.version}</version>

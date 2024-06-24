@@ -5,6 +5,7 @@ import static io.restassured.RestAssured.given;
 import java.io.IOException;
 import java.net.URL;
 
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -28,7 +29,7 @@ public class RenardePdfTest {
                 .statusCode(200)
                 .contentType("application/pdf")
                 .extract().body().asByteArray();
-        PDDocument pdf = PDDocument.load(bytes);
+        PDDocument pdf = Loader.loadPDF(bytes);
         Assertions.assertEquals("Hello", pdf.getDocumentInformation().getTitle());
         Assertions.assertEquals(1, pdf.getNumberOfPages());
         PDRectangle mediaBox = pdf.getPage(0).getMediaBox();
@@ -47,7 +48,7 @@ public class RenardePdfTest {
                 .statusCode(200)
                 .contentType("application/pdf")
                 .extract().body().asByteArray();
-        PDDocument pdf = PDDocument.load(bytes);
+        PDDocument pdf = Loader.loadPDF(bytes);
         Assertions.assertEquals(1, pdf.getNumberOfPages());
         PDRectangle mediaBox = pdf.getPage(0).getMediaBox();
         Assertions.assertEquals(210, pointsToMm(mediaBox.getWidth()));
