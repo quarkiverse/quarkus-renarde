@@ -183,7 +183,7 @@ public class RenardeSecurity {
     }
 
     public Response makeRedirectToLogin(String message) {
-        if (request.uri().equals(config.getLoginPage())) {
+        if (request.getHeader(jwtCookie) != null && request.uri().equals(config.getLoginPage())) {
             // this would cause a redirect loop, not sure how to handle, but not by redirecting
             log.errorf("Redirect loop at %s, giving up on clearing bad JWT cookie", config.getLoginPage());
             return Response.serverError().build();
