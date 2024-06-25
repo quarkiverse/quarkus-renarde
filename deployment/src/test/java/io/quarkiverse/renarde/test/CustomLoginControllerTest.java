@@ -1,7 +1,7 @@
 package io.quarkiverse.renarde.test;
 
 import static io.restassured.RestAssured.given;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.net.URL;
 import java.time.Duration;
@@ -115,7 +115,14 @@ public class CustomLoginControllerTest {
                 .get("/login").then()
                 .statusCode(303)
                 .extract().response();
-        assertFalse(response.headers().hasHeaderWithName("QuarkusUser"));
+
+        String redirectUrl = response.getHeader("Location");
+        assertEquals("http://localhost:8081/login", redirectUrl);
+
+        String quarkusUserCookie = response.headers()
+                .getValues("Set-Cookie")
+                .stream().filter(c -> c.startsWith("QuarkusUser=")).findFirst().get();
+        assertEquals("QuarkusUser=;Version=1;Path=/;Max-Age=0", quarkusUserCookie);
     }
 
     public static class MyController extends Controller {
