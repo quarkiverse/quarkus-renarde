@@ -202,7 +202,9 @@ public class RenardeProcessor {
             // These are needed at runtime for native image, and missing from quarkiverse-pdfbox
             nativeImageResourceBuildItem.produce(
                     new NativeImageResourceBuildItem(List.of("resources/css/XhtmlNamespaceHandler.css",
-                            "resources/schema/openhtmltopdf/catalog-special.xml")));
+                            "resources/schema/openhtmltopdf/catalog-special.xml",
+                            "resources/schema/openhtmltopdf/char-entities-xhtml-only.ent",
+                            "resources/schema/openhtmltopdf/char-entities-xhtml-mathml.ent")));
             resource.produce(new NativeImageResourceDirectoryBuildItem("org/apache/pdfbox/resources/ttf"));
 
         }
