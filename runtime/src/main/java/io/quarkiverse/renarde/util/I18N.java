@@ -50,7 +50,7 @@ public class I18N {
         Objects.requireNonNull(language);
         // check that we support it
         Locale found = findSupportedLocale(language);
-        if (locale == null) {
+        if (found == null) {
             throw new IllegalArgumentException(
                     "Language " + language + " not supported, please add it to the 'quarkus.locales' configuration");
         }
