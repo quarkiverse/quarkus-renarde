@@ -242,7 +242,7 @@ public class RenardeProcessor {
         }
         // Apparently, no OIDC capability to check
         for (String provider : SUPPORTED_OIDC_PROVIDERS) {
-            if (config.getOptionalValue("quarkus.oidc." + provider + ".enabled", Boolean.class).orElse(true) &&
+            if (config.getOptionalValue("quarkus.oidc." + provider + ".tenant-enabled", Boolean.class).orElse(true) &&
                     (config.getOptionalValue("quarkus.oidc." + provider + ".provider", String.class).isPresent()
                             || config.getOptionalValue("quarkus.oidc." + provider + ".client-id", String.class).isPresent())
                     && !config.getOptionalValue("quarkus.oidc." + provider + ".authentication.redirect-path", String.class)
@@ -848,7 +848,7 @@ public class RenardeProcessor {
             // if we have a single provider it's easy
             String oidcLoginPage = null;
             for (String provider : SUPPORTED_OIDC_PROVIDERS) {
-                if (config.getOptionalValue("quarkus.oidc." + provider + ".enabled", Boolean.class).orElse(true) &&
+                if (config.getOptionalValue("quarkus.oidc." + provider + ".tenant-enabled", Boolean.class).orElse(true) &&
                         (config.getOptionalValue("quarkus.oidc." + provider + ".provider", String.class).isPresent()
                                 || config.getOptionalValue("quarkus.oidc." + provider + ".client-id", String.class)
                                         .isPresent())) {
