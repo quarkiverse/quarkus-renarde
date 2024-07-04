@@ -3,8 +3,10 @@ package io.quarkiverse.renarde.barcode;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Base64;
+import java.util.Map;
 
 import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
 import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
@@ -22,7 +24,7 @@ public class Barcode {
 
     public static BitMatrix code128(String value, int width, int height) {
         Code128Writer writer = new Code128Writer();
-        return writer.encode(value, BarcodeFormat.CODE_128, width, height);
+        return writer.encode(value, BarcodeFormat.CODE_128, width, height, getHints());
     }
 
     public static String code128Img(String value, int width, int height) {
@@ -31,7 +33,7 @@ public class Barcode {
 
     public static BitMatrix code39(String value, int width, int height) {
         Code39Writer writer = new Code39Writer();
-        return writer.encode(value, BarcodeFormat.CODE_39, width, height);
+        return writer.encode(value, BarcodeFormat.CODE_39, width, height, getHints());
     }
 
     public static String code39Img(String value, int width, int height) {
@@ -40,7 +42,7 @@ public class Barcode {
 
     public static BitMatrix code93(String value, int width, int height) {
         Code93Writer writer = new Code93Writer();
-        return writer.encode(value, BarcodeFormat.CODE_93, width, height);
+        return writer.encode(value, BarcodeFormat.CODE_93, width, height, getHints());
     }
 
     public static String code93Img(String value, int width, int height) {
@@ -49,7 +51,7 @@ public class Barcode {
 
     public static BitMatrix ean13(String value, int width, int height) {
         EAN13Writer writer = new EAN13Writer();
-        return writer.encode(value, BarcodeFormat.EAN_13, width, height);
+        return writer.encode(value, BarcodeFormat.EAN_13, width, height, getHints());
     }
 
     public static String ean13Img(String value, int width, int height) {
@@ -58,7 +60,7 @@ public class Barcode {
 
     public static BitMatrix ean8(String value, int width, int height) {
         EAN8Writer writer = new EAN8Writer();
-        return writer.encode(value, BarcodeFormat.EAN_8, width, height);
+        return writer.encode(value, BarcodeFormat.EAN_8, width, height, getHints());
     }
 
     public static String ean8Img(String value, int width, int height) {
@@ -67,7 +69,7 @@ public class Barcode {
 
     public static BitMatrix upcA(String value, int width, int height) {
         UPCAWriter writer = new UPCAWriter();
-        return writer.encode(value, BarcodeFormat.UPC_A, width, height);
+        return writer.encode(value, BarcodeFormat.UPC_A, width, height, getHints());
     }
 
     public static String upcAImg(String value, int width, int height) {
@@ -76,7 +78,7 @@ public class Barcode {
 
     public static BitMatrix upcE(String value, int width, int height) {
         UPCEWriter writer = new UPCEWriter();
-        return writer.encode(value, BarcodeFormat.UPC_E, width, height);
+        return writer.encode(value, BarcodeFormat.UPC_E, width, height, getHints());
     }
 
     public static String upcEImg(String value, int width, int height) {
@@ -86,7 +88,7 @@ public class Barcode {
     public static BitMatrix qrCode(String value, int width, int height) {
         QRCodeWriter writer = new QRCodeWriter();
         try {
-            return writer.encode(value, BarcodeFormat.QR_CODE, width, height);
+            return writer.encode(value, BarcodeFormat.QR_CODE, width, height, getHints());
         } catch (WriterException e) {
             throw new RuntimeException(e);
         }
@@ -98,7 +100,7 @@ public class Barcode {
 
     public static BitMatrix dataMatrix(String value, int width, int height) {
         DataMatrixWriter writer = new DataMatrixWriter();
-        return writer.encode(value, BarcodeFormat.DATA_MATRIX, width, height);
+        return writer.encode(value, BarcodeFormat.DATA_MATRIX, width, height, getHints());
     }
 
     public static String dataMatrixImg(String value, int width, int height) {
@@ -129,5 +131,9 @@ public class Barcode {
 
     public static String dataUriImg(String dataUri) {
         return "<img src='" + dataUri + "'/>";
+    }
+
+    private static Map<EncodeHintType, ?> getHints() {
+        return Map.of(EncodeHintType.CHARACTER_SET, "UTF-8");
     }
 }

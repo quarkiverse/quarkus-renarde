@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Base64;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.BinaryBitmap;
+import com.google.zxing.DecodeHintType;
 import com.google.zxing.MultiFormatReader;
 import com.google.zxing.NotFoundException;
 import com.google.zxing.Result;
@@ -39,12 +41,12 @@ public class BarCodesTest {
 
     @Test
     public void qrCode() throws IOException, NotFoundException {
-        testBarcode(new QuteQrCode(), "qrcode", "STEF", BarcodeFormat.QR_CODE);
+        testBarcode(new QuteQrCode(), "qrcode", "STÉF", BarcodeFormat.QR_CODE);
     }
 
     @Test
     public void dataMatrix() throws IOException, NotFoundException {
-        testBarcode(new QuteDataMatrix(), "datamatrix", "STEF", BarcodeFormat.DATA_MATRIX);
+        testBarcode(new QuteDataMatrix(), "datamatrix", "STÉF", BarcodeFormat.DATA_MATRIX);
     }
 
     @Test
@@ -155,7 +157,8 @@ public class BarCodesTest {
         // Try reading the barcode except for Data Matrix and UPC E
         if (format != BarcodeFormat.DATA_MATRIX
                 && format != BarcodeFormat.UPC_E) {
-            Result result = new MultiFormatReader().decode(binaryBitmap);
+            Map<DecodeHintType, ?> hints = Map.of(DecodeHintType.CHARACTER_SET, "UTF-8");
+            Result result = new MultiFormatReader().decode(binaryBitmap, hints);
             Assertions.assertEquals(format, result.getBarcodeFormat());
             Assertions.assertEquals(text, result.getText());
         }
