@@ -3,6 +3,7 @@ package io.quarkiverse.renarde.transporter.test;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -71,8 +72,10 @@ public class TransporterTest {
         Assertions.assertEquals(2, importedOrders.size());
         Assertions.assertEquals(1, importedOrders.get(0).id);
         Assertions.assertEquals("a", importedOrders.get(0).name);
+        Assertions.assertEquals(orders.get(0).date, importedOrders.get(0).date);
         Assertions.assertEquals(2, importedOrders.get(1).id);
         Assertions.assertEquals("b", importedOrders.get(1).name);
+        Assertions.assertEquals(orders.get(1).date, importedOrders.get(1).date);
 
         @SuppressWarnings("unchecked")
         List<User> importedUsers = (List<User>) imported.get(User.class);
@@ -179,12 +182,15 @@ public class TransporterTest {
         @ManyToOne
         public User one;
 
+        public Date date;
+
         public Order() {
         }
 
         public Order(Long id, String name) {
             this.id = id;
             this.name = name;
+            this.date = new Date();
         }
     }
 

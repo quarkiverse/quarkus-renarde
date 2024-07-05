@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.sql.Blob;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -27,8 +26,9 @@ public class TransporterUtil {
             ValueTransformer transformer) throws IOException {
         java.util.Date transformed = (java.util.Date) transformer.transform(entityType, name, value);
         if (transformed != null) {
+            // make sure we serialise to UTC
             String iso = DateTimeFormatter.ISO_LOCAL_DATE_TIME
-                    .format(LocalDateTime.ofInstant(transformed.toInstant(), ZoneId.systemDefault()));
+                    .format(LocalDateTime.ofInstant(transformed.toInstant(), ZoneOffset.UTC));
             gen.writeStringField(name, iso);
         }
     }
@@ -126,6 +126,7 @@ public class TransporterUtil {
         if (iso == null)
             return null;
         LocalDateTime localDateTime = LocalDateTime.parse(iso);
+        // we serialise to UTC
         return java.util.Date.from(localDateTime.toInstant(ZoneOffset.UTC));
     }
 
