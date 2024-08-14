@@ -8,6 +8,7 @@ metadata:
   guide: "https://quarkiverse.github.io/quarkiverse-docs/quarkus-renarde/dev/index.html"
   categories:
   - "web"
+  status: "stable"
   codestart:
     name: "renarde"
     languages:
