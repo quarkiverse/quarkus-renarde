@@ -4,4 +4,4 @@
 [[extension-configuration-reference]]
 == Configuration Reference
 
-include::includes/quarkus-web-bundler.adoc[leveloffset=+1, opts=optional]
+include::includes/quarkus-renarde.adoc[leveloffset=+1, opts=optional]

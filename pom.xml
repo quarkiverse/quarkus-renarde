@@ -37,7 +37,7 @@
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <quarkus.version>3.12.0.CR1</quarkus.version>
+    <quarkus.version>3.14.0.CR1</quarkus.version>
     <openhtmltopdf.version>1.1.16</openhtmltopdf.version>
     <zxing.version>3.5.1</zxing.version>
     <quarkiverse.pdfbox.version>1.0.0</quarkiverse.pdfbox.version>
@@ -60,6 +60,11 @@
           <groupId>io.quarkus</groupId>
           <artifactId>quarkus-maven-plugin</artifactId>
           <version>${quarkus.version}</version>
+        </plugin>
+        <plugin>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-config-doc-maven-plugin</artifactId>
+            <version>${quarkus.version}</version>
         </plugin>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>

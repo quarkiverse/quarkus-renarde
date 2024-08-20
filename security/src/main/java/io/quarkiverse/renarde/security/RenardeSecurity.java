@@ -163,12 +163,12 @@ public class RenardeSecurity {
 
     public Response makeRedirectAfterLogin(URI uri) {
         Map<String, jakarta.ws.rs.core.Cookie> cookies = headers.getCookies();
-        jakarta.ws.rs.core.Cookie redirectCookie = cookies.get(renardeConfig.auth.locationCookie);
+        jakarta.ws.rs.core.Cookie redirectCookie = cookies.get(renardeConfig.auth().locationCookie());
         NewCookie newCookie = null;
         if (redirectCookie != null) {
             // consume it
             String value = redirectCookie.getValue();
-            newCookie = invalidateCookie(renardeConfig.auth.locationCookie);
+            newCookie = invalidateCookie(renardeConfig.auth().locationCookie());
             uri = URI.create(value);
         }
         ResponseBuilder response = Response.seeOther(uri);
