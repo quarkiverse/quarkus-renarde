@@ -6,8 +6,9 @@ include::./includes/attributes.adoc[]
 [#models]
 == Models
 
-By convention, you can place your model classes in the `model` package, but anywhere else works just as well.We
-recommend using {quarkus-guides-url}/hibernate-orm-panache[Hibernate ORM with Panache].Here's an example entity for our sample Todo application:
+By convention, you can place your model classes in the `model` package, but anywhere else works just as well.
+We recommend using {quarkus-guides-url}/hibernate-orm-panache[Hibernate ORM with Panache].
+Here's an example entity for our sample Todo application:
 
 [source,java]
 ----
@@ -42,10 +43,9 @@ public class Todo extends PanacheEntity {
 [#controllers]
 == Controllers
 
-By convention, you can place your controllers in the `rest` package, but anywhere else works just as well.You
-have to extend the `Controller` class in order to benefit from extra easy endpoint declarations and reverse-routing,
-but that superclass also gives you useful methods.We usually have one controller per model class, so we tend to use
-the plural entity name for the corresponding controller:
+By convention, you can place your controllers in the `rest` package, but anywhere else works just as well.
+You have to extend the `Controller` class in order to benefit from extra easy endpoint declarations and reverse-routing, but that superclass also gives you useful methods.
+We usually have one controller per model class, so we tend to use the plural entity name for the corresponding controller:
 
 [source,java]
 ----
