@@ -15,8 +15,8 @@ public class CSRF {
 
     public static String makeCSRFToken() {
         Optional<String> tokenSignatureKey = ConfigProvider.getConfig()
-                .getOptionalValue("quarkus.csrf-reactive.token-signature-key", String.class);
-        Optional<Integer> tokenSize = ConfigProvider.getConfig().getOptionalValue("quarkus.csrf-reactive.token-size",
+                .getOptionalValue("quarkus.rest-csrf.token-signature-key", String.class);
+        Optional<Integer> tokenSize = ConfigProvider.getConfig().getOptionalValue("quarkus.rest-csrf.token-size",
                 Integer.class);
         byte[] tokenBytes = new byte[tokenSize.orElse(16)];
         secureRandom.nextBytes(tokenBytes);
@@ -27,12 +27,12 @@ public class CSRF {
     }
 
     public static String getTokenCookieName() {
-        return ConfigProvider.getConfig().getOptionalValue("quarkus.csrf-reactive.cookie-name", String.class)
+        return ConfigProvider.getConfig().getOptionalValue("quarkus.rest-csrf.cookie-name", String.class)
                 .orElse("csrf-token");
     }
 
     public static String getTokenFormName() {
-        return ConfigProvider.getConfig().getOptionalValue("quarkus.csrf-reactive.form-field-name", String.class)
+        return ConfigProvider.getConfig().getOptionalValue("quarkus.rest-csrf.form-field-name", String.class)
                 .orElse("csrf-token");
     }
 }
