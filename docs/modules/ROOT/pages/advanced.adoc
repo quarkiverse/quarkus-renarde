@@ -347,8 +347,8 @@ Naturally, you can also pass any required parameters.
 </dependency>
 ----
 
-Often you will need your actions to send email notifications.You can use Qute for this too, by declaring your
-emails in an `Emails` class:
+Often you will need your actions to send email notifications.
+You can use Qute for this too, by declaring your emails in an `Emails` class:
 
 [source,java]
 ----
@@ -626,6 +626,7 @@ Alternatively, you can use `hx-headers` on the <body> to make all hx requests se
 ----
 
 Some example projects with Quarkus Renarde and htmx:
+
 - https://github.com/ia3andy/renotes[a demo note-taking web app]
 - https://github.com/ia3andy/quarkus-blast[a board game]
 
