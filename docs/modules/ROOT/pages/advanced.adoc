@@ -41,11 +41,13 @@ Creating forms in Renarde is easy: let's see an example of how to do it in Qute:
 {/form}
 ----
 
-Here we're defining a form whose action will go to `Register.complete(newUser.confirmationCode)` and
-which contains several form elements, which are just tags to make composition easier. For example `formElement` is
-a custom Qute tag for Bootstrap which defines layout for the form element and displays any associated error:
+Here we're defining a form whose action will go to `Login.complete(newUser.confirmationCode)` and
+which contains several form elements, which are just tags to make composition easier.
+
+For example `formElement` is a custom Qute tag (see xref:concepts.adoc#_user_tags[User tags]) for Bootstrap which defines layout for the form element and displays any associated error:
 
 [source,html]
+.content of the `templates/tags/formElement.html`
 ----
 <div class="mb-3">
     <label class="form-label" for="{name}">{label}</label>
@@ -59,6 +61,7 @@ a custom Qute tag for Bootstrap which defines layout for the form element and di
 The `input` user tag is also designed for Bootstrap as an abstraction:
 
 [source,html]
+.content of the `templates/tags/input.html`
 ----
 <input name="{name}"
  type="{type ?: 'text'}"
@@ -72,7 +75,7 @@ As you can see, we have default values for certain attributes, a special error c
 error, and we default the value to the one preserved in the flash scope, which is filled whenever validation
 fails, so that the user can see the validation error without losing their form values.
 
-As for the `form` Renarde tag, it is also fairly simple, and only includes an authenticity token for CSRF protection.
+As for the `form` xref:concepts.adoc#_renarde_tags[Renarde tag], it is also fairly simple, and only includes an authenticity token for CSRF protection.
 
 [source,html]
 ----
