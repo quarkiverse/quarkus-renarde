@@ -525,24 +525,26 @@ This system uses this line separator: {lineSeparator}
 
 === External CSS, JavaScript libraries
 
-You can use webjars to provide third-party JavaScript or CSS. For example, here is how you can import Bootstrap
-and Bootstrap-icons in your `pom.xml`:
+You can use jars created by https://mvnpm.org/[mvnpm.org] to provide third-party JavaScript or CSS hosted on the https://www.npmjs.com/[NPM Registry].
+For example, here is how you can import Bootstrap and Bootstrap-icons in your `pom.xml`:
 
 [source,xml]
 ----
 <dependency>
-  <groupId>org.webjars</groupId>
+  <groupId>org.mvnpm</groupId>
   <artifactId>bootstrap</artifactId>
-  <version>5.1.3</version>
+  <version>5.3.3</version>
+  <scope>provided</scope>
 </dependency>
 <dependency>
-  <groupId>org.webjars.npm</groupId>
+  <groupId>org.mvnpm</groupId>
   <artifactId>bootstrap-icons</artifactId>
-  <version>1.7.0</version>
+  <version>1.11.3</version>
+  <scope>provided</scope>
 </dependency>
 <dependency>
   <groupId>io.quarkus</groupId>
-  <artifactId>quarkus-webjars-locator</artifactId>
+  <artifactId>quarkus-web-dependency-locator</artifactId>
 </dependency>
 ----
 
@@ -551,10 +553,10 @@ After that, you can include them in your Qute templates with:
 [source,html]
 ----
 <head>
-    <link rel="stylesheet" media="screen" href="/webjars/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" media="screen" href="/webjars/bootstrap-icons/font/bootstrap-icons.css">
-    <script src="/webjars/bootstrap/js/bootstrap.min.js" type="text/javascript" charset="UTF-8"></script>
+    <link rel="stylesheet" media="screen" href="/_static/bootstrap/dist/css/bootstrap.css">
+    <link rel="stylesheet" media="screen" href="/_static/bootstrap-icons/font/bootstrap-icons.css">
+    <script src="/_static/bootstrap/js/bootstrap.min.js" type="text/javascript" charset="UTF-8"></script>
 </head>
 ----
 
-Look at https://mvnrepository.com/artifact/org.webjars for the list of available options.
+Check the https://quarkus.io/guides/web-dependency-locator[web-dependency-locator] extension guide for more information.
