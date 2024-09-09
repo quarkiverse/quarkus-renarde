@@ -4,6 +4,6 @@ type: code
 tags: extension-codestart
 metadata:
   title: Renarde
-  description: This is a small Renarde webapp
+  description: This is a small Renarde webapp. Once the quarkus app is started visit http://localhost:8080/renarde
   path: /renarde
   related-guide-section: https://quarkiverse.github.io/quarkiverse-docs/quarkus-renarde/dev/index.html
