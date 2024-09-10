@@ -17,7 +17,6 @@
     <module>security</module>
     <module>oidc</module>
     <module>oidc-tests</module>
-    <module>docs</module>
     <module>jpa</module>
     <module>pdf</module>
     <module>barcode</module>
@@ -79,6 +78,18 @@
     </pluginManagement>
   </build>
   <profiles>
+    <profile>
+      <id>docs</id>
+      <activation>
+        <property>
+          <name>performRelease</name>
+          <value>!true</value>
+        </property>
+      </activation>
+      <modules>
+        <module>docs</module>
+      </modules>
+    </profile>
     <profile>
       <id>it</id>
       <activation>
