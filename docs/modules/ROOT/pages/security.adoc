@@ -10,7 +10,7 @@ a mix of both.
 == CSRF
 
 Renarde comes with built-in support for https://owasp.org/www-community/attacks/csrf[Cross-Site Request Forgery (CSRF)] protection,
-via the (already imported) {quarkus-guides-url}/security-csrf-prevention[`quarkus-csrf-reactive`] module dependency.
+via the (already imported) {quarkus-guides-url}/security-csrf-prevention[`quarkus-rest-csrf`] module dependency.
 
 To be safe, make sure that all your `GET`, `HEAD` and `OPTIONS` endpoints do not alter application state, and
 always include a CSRF token to your `POST`, `PUT`, `DELETE` (and other) endpoints. On your endpoint side, you

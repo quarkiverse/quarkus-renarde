@@ -26,7 +26,7 @@ public class CsrfDisabledTest {
             .setArchiveProducer(() -> ShrinkWrap.create(JavaArchive.class)
                     .addClasses(MyController.class)
                     .addAsResource(new StringAsset("{#authenticityToken/}"), "templates/MyController/csrf.txt")
-                    .addAsResource(new StringAsset("quarkus.csrf-reactive.enabled=false"), "application.properties")
+                    .addAsResource(new StringAsset("quarkus.rest-csrf.enabled=false"), "application.properties")
                     .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml"));
 
     @TestHTTPResource
