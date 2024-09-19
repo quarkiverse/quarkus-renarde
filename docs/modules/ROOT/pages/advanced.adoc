@@ -47,7 +47,7 @@ which contains several form elements, which are just tags to make composition ea
 For example `formElement` is a custom Qute tag (see xref:concepts.adoc#_user_tags[User tags]) for Bootstrap which defines layout for the form element and displays any associated error:
 
 [source,html]
-.content of the `templates/tags/formElement.html`
+.content of the `templates/tags/formElement.html` file
 ----
 <div class="mb-3">
     <label class="form-label" for="{name}">{label}</label>
@@ -61,7 +61,7 @@ For example `formElement` is a custom Qute tag (see xref:concepts.adoc#_user_tag
 The `input` user tag is also designed for Bootstrap as an abstraction:
 
 [source,html]
-.content of the `templates/tags/input.html`
+.content of the `templates/tags/input.html` file
 ----
 <input name="{name}"
  type="{type ?: 'text'}"
@@ -123,7 +123,7 @@ public static class FormData {
 }
 ----
 
-Check out the {quarkus-guides-url}/resteasy-reactive#handling-multipart-form-data[RESTEasy Reactive documentation]
+Check out the {quarkus-guides-url}/rest#multipart[Quarkus REST documentation]
 for more information about form parameters and multi-part.
 
 === Validation
