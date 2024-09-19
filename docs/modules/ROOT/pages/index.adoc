@@ -9,7 +9,7 @@ include::./includes/attributes.adoc[]
 image::renarde.svg[alt=Renarde,width=100,float="right"]
 
 Renarde image:renarde-head.svg[width=15em] is a server-side Web Framework based on Quarkus, {quarkus-guides-url}/qute-reference[Qute],
-{quarkus-guides-url}/hibernate-orm-panache[Hibernate] and {quarkus-guides-url}/resteasy-reactive[RESTEasy Reactive].
+{quarkus-guides-url}/hibernate-orm-panache[Hibernate] and {quarkus-guides-url}/rest[Quarkus REST].
 
 
 [source,xml,subs=attributes+]
