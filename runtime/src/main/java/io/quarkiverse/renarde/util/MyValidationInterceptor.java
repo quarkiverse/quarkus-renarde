@@ -2,6 +2,7 @@ package io.quarkiverse.renarde.util;
 
 import java.util.Set;
 
+import io.quarkiverse.renarde.Controller;
 import jakarta.annotation.Priority;
 import jakarta.inject.Inject;
 import jakarta.interceptor.AroundConstruct;
@@ -35,8 +36,12 @@ public class MyValidationInterceptor extends AbstractMethodValidationInterceptor
                 ctx.getMethod(), ctx.getParameters());
 
         if (!violations.isEmpty()) {
-            // just collect them and go on
-            validation.addErrors(violations);
+            if(ctx.getTarget() instanceof Controller){
+                // just collect them and go on
+                validation.addErrors(violations);
+            }else{
+                throw new ResteasyReactiveViolationException(violations);
+            }
         }
 
         Object result = ctx.proceed();
