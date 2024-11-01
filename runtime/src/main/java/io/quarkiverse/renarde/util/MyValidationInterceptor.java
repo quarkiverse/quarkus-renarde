@@ -2,7 +2,6 @@ package io.quarkiverse.renarde.util;
 
 import java.util.Set;
 
-import io.quarkiverse.renarde.Controller;
 import jakarta.annotation.Priority;
 import jakarta.inject.Inject;
 import jakarta.interceptor.AroundConstruct;
@@ -13,6 +12,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import jakarta.validation.executable.ExecutableValidator;
 
+import io.quarkiverse.renarde.Controller;
 import io.quarkus.hibernate.validator.runtime.interceptor.AbstractMethodValidationInterceptor;
 import io.quarkus.hibernate.validator.runtime.jaxrs.JaxrsEndPointValidated;
 import io.quarkus.hibernate.validator.runtime.jaxrs.ResteasyReactiveViolationException;
@@ -36,10 +36,10 @@ public class MyValidationInterceptor extends AbstractMethodValidationInterceptor
                 ctx.getMethod(), ctx.getParameters());
 
         if (!violations.isEmpty()) {
-            if(ctx.getTarget() instanceof Controller){
+            if (ctx.getTarget() instanceof Controller) {
                 // just collect them and go on
                 validation.addErrors(violations);
-            }else{
+            } else {
                 throw new ResteasyReactiveViolationException(violations);
             }
         }
