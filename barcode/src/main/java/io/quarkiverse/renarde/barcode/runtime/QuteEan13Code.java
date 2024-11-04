@@ -1,6 +1,6 @@
 package io.quarkiverse.renarde.barcode.runtime;
 
-import io.quarkiverse.renarde.barcode.Barcode;
+import io.quarkiverse.barcode.zxing.ZebraCrossing;
 import io.quarkus.qute.EngineConfiguration;
 import io.quarkus.qute.SectionHelperFactory;
 
@@ -8,6 +8,6 @@ import io.quarkus.qute.SectionHelperFactory;
 public class QuteEan13Code extends QuteBarCode implements SectionHelperFactory<QuteBarCode.CustomSectionHelper> {
 
     public QuteEan13Code() {
-        super("ean13", Barcode::ean13Img);
+        super("ean13", ZebraCrossing::ean13Img);
     }
 }

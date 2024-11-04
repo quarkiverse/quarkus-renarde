@@ -1,6 +1,6 @@
 package io.quarkiverse.renarde.barcode.runtime;
 
-import io.quarkiverse.renarde.barcode.Barcode;
+import io.quarkiverse.barcode.zxing.ZebraCrossing;
 import io.quarkus.qute.EngineConfiguration;
 import io.quarkus.qute.SectionHelperFactory;
 
@@ -8,6 +8,6 @@ import io.quarkus.qute.SectionHelperFactory;
 public class QuteDataMatrix extends QuteBarCode implements SectionHelperFactory<QuteBarCode.CustomSectionHelper> {
 
     public QuteDataMatrix() {
-        super("datamatrix", Barcode::dataMatrixImg);
+        super("datamatrix", ZebraCrossing::dataMatrixImg);
     }
 }
