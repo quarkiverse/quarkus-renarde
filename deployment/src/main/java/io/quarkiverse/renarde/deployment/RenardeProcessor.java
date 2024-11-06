@@ -896,7 +896,7 @@ public class RenardeProcessor {
                                 String language;
                                 if (name.startsWith("messages.")) {
                                     // default language
-                                    language = locales.defaultLocale.getLanguage();
+                                    language = locales.defaultLocale.orElse(Locale.getDefault()).getLanguage();
                                 } else {
                                     // messages_lang.properties
                                     language = name.substring(9, name.length() - 11);

@@ -93,7 +93,7 @@ public class I18N {
      * @return the current locale, as obtained via a cookie override, or HTTP headers, or the default.
      */
     public Locale getLocale() {
-        return locale != null ? locale : localesConfig.defaultLocale;
+        return locale != null ? locale : localesConfig.defaultLocale.orElse(Locale.getDefault());
     }
 
     void readLanguageCookie(ResteasyReactiveContainerRequestContext requestContext) {
@@ -122,7 +122,7 @@ public class I18N {
             }
         }
         // we didn't find any match between our locales and the user's so → default value
-        locale = localesConfig.defaultLocale;
+        locale = localesConfig.defaultLocale.orElse(Locale.getDefault());
     }
 
     void setLanguageCookie() {
