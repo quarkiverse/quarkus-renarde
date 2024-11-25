@@ -12,6 +12,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import jakarta.validation.executable.ExecutableValidator;
 
+import io.quarkiverse.renarde.Controller;
 import io.quarkus.hibernate.validator.runtime.interceptor.AbstractMethodValidationInterceptor;
 import io.quarkus.hibernate.validator.runtime.jaxrs.JaxrsEndPointValidated;
 import io.quarkus.hibernate.validator.runtime.jaxrs.ResteasyReactiveViolationException;
@@ -35,8 +36,12 @@ public class MyValidationInterceptor extends AbstractMethodValidationInterceptor
                 ctx.getMethod(), ctx.getParameters());
 
         if (!violations.isEmpty()) {
-            // just collect them and go on
-            validation.addErrors(violations);
+            if (ctx.getTarget() instanceof Controller) {
+                // just collect them and go on
+                validation.addErrors(violations);
+            } else {
+                throw new ResteasyReactiveViolationException(violations);
+            }
         }
 
         Object result = ctx.proceed();
