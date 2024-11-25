@@ -128,6 +128,8 @@ for more information about form parameters and multi-part.
 
 === Validation
 
+Note: This only applies to Renarde Controllers (not to regular non-Renarde REST endpoints).
+
 You can place your usual {quarkus-guides-url}/validation[Hibernate Validation] annotations on the controller methods that receive user data, but
 keep in mind that you have to check for validation errors in your method before you do any action that modifies your state.
 This allows you to check more things than you can do with just annotations, with richer logic:
