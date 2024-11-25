@@ -25,6 +25,6 @@ public class RenardeOidcTenantProvider implements RenardeTenantProvider {
 
     @Override
     public Set<String> getTenants() {
-        return oidcConfig.namedTenants.keySet();
+        return oidcConfig.namedTenants().keySet();
     }
 }
