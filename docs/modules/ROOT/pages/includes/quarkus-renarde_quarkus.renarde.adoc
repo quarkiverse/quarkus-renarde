@@ -8,6 +8,10 @@ h|Type
 h|Default
 
 a|icon:lock[title=Fixed at build time] [[quarkus-renarde_quarkus-renarde-auth-location-cookie]] [.property-path]##link:#quarkus-renarde_quarkus-renarde-auth-location-cookie[`quarkus.renarde.auth.location-cookie`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.renarde.auth.location-cookie+++[]
+endif::add-copy-button-to-config-props[]
+
 
 [.description]
 --
