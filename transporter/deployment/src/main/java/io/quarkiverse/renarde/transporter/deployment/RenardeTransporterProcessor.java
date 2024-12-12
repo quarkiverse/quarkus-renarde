@@ -62,7 +62,7 @@ import io.quarkus.gizmo.WhileLoop;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.deployment.EntityModel;
-import io.quarkus.panache.common.deployment.HibernateMetamodelForFieldAccessBuildItem;
+import io.quarkus.panache.hibernate.common.deployment.HibernateMetamodelForFieldAccessBuildItem;
 
 public class RenardeTransporterProcessor {
 

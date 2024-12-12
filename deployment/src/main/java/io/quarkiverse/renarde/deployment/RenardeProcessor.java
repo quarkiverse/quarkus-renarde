@@ -896,7 +896,7 @@ public class RenardeProcessor {
                                 String language;
                                 if (name.startsWith("messages.")) {
                                     // default language
-                                    language = locales.defaultLocale.orElse(Locale.getDefault()).getLanguage();
+                                    language = locales.defaultLocale().orElse(Locale.getDefault()).getLanguage();
                                 } else {
                                     // messages_lang.properties
                                     language = name.substring(9, name.length() - 11);
@@ -923,7 +923,7 @@ public class RenardeProcessor {
             recorder.addLanguageBundle(beanContainerBuildItem.getValue(), entry.getKey(), entry.getValue().toString());
         }
 
-        for (Locale locale : locales.locales) {
+        for (Locale locale : locales.locales()) {
             String lang = locale.getLanguage();
             if (!languageToPath.containsKey(lang)) {
                 logger.warnf(

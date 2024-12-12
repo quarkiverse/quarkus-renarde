@@ -69,7 +69,7 @@ import io.quarkus.gizmo.ResultHandle;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.deployment.EntityField;
 import io.quarkus.panache.common.deployment.EntityModel;
-import io.quarkus.panache.common.deployment.HibernateMetamodelForFieldAccessBuildItem;
+import io.quarkus.panache.hibernate.common.deployment.HibernateMetamodelForFieldAccessBuildItem;
 import io.quarkus.qute.Engine;
 import io.quarkus.qute.ReflectionValueResolver;
 import io.quarkus.qute.Template;
