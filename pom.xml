@@ -36,7 +36,7 @@
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <quarkus.version>3.17.0.CR1</quarkus.version>
+    <quarkus.version>3.17.5</quarkus.version>
     <openhtmltopdf.version>1.1.16</openhtmltopdf.version>
     <quarkiverse.pdfbox.version>1.0.0</quarkiverse.pdfbox.version>
     <quarkiverse.zxing.version>0.0.2</quarkiverse.zxing.version>
