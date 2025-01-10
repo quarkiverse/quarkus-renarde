@@ -35,6 +35,7 @@ public class MockAppleOidcTestResource extends MockOidcTestResource<MockAppleOid
         router.get("/auth/authorize").handler(this::authorize);
         router.post("/auth/token").handler(bodyHandler).handler(this::accessTokenJson);
         router.get("/auth/keys").handler(this::getKeys);
+        router.post("/auth/revoke").handler(this::revoke);
 
         KeyPairGenerator kpg;
         try {
@@ -73,6 +74,7 @@ public class MockAppleOidcTestResource extends MockOidcTestResource<MockAppleOid
     public Map<String, String> start() {
         Map<String, String> ret = super.start();
         ret.put("quarkus.oidc.apple.credentials.jwt.key-file", "test.oidc-apple-key.pem");
+        ret.put("quarkus.rest-client.RenardeAppleClient.url", baseURI);
         return ret;
     }
 
@@ -244,5 +246,21 @@ public class MockAppleOidcTestResource extends MockOidcTestResource<MockAppleOid
         rc.response()
                 .putHeader("Content-Type", "application/json")
                 .endAndForget(data);
+    }
+
+    /**
+     * POST /auth/revoke
+     * Host: appleid.apple.com
+     * Content-Type: application/x-www-form-urlencoded
+     *
+     * client_id=$1
+     * &client_secret=$2
+     * &token=$3
+     * &token_type_hint=access_token
+     *
+     * https://developer.apple.com/documentation/sign_in_with_apple/revoke_tokens/
+     */
+    private void revoke(RoutingContext rc) {
+        rc.response().setStatusCode(200).endAndForget();
     }
 }
