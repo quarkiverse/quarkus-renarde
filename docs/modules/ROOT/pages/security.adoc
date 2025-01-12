@@ -84,6 +84,17 @@ public void test() {
 }
 ----
 
+=== Disable CSRF for non Form Endpoints
+You can set the following configuration value to disable CSRF protection for non-form endpoints, such as REST APIs, in Quarkus:
+
+[source,properties]
+----
+# disable csrf validation for non form endpoints
+quarkus.csrf-reactive.require-form-url-encoded=false
+----
+
+This configuration ensures that CSRF protection is only applied to form submissions, allowing REST API endpoints to operate without CSRF checks.
+
 [#custom_authentication_with_jwt]
 == Custom authentication with JWT
 
