@@ -90,7 +90,7 @@ You can set the following configuration value to disable CSRF protection for non
 [source,properties]
 ----
 # disable csrf validation for non form endpoints
-quarkus.csrf-reactive.require-form-url-encoded=false
+quarkus.rest-csrf.require-form-url-encoded=false
 ----
 
 This configuration ensures that CSRF protection is only applied to form submissions, allowing REST API endpoints to operate without CSRF checks.
