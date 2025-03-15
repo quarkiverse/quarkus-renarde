@@ -2,6 +2,7 @@ package io.quarkiverse.renarde.test;
 
 import java.net.URL;
 
+import jakarta.inject.Named;
 import jakarta.ws.rs.Path;
 
 import org.hamcrest.Matchers;
@@ -90,8 +91,34 @@ public class HxControllerTest {
                 .statusCode(400);
     }
 
+    @Test
+    public void testHxRequest() {
+        RestAssured
+                .given()
+                .when()
+                .header(HxController.HX_REQUEST_HEADER, "true")
+                .get("/hxRequest").then()
+                .statusCode(200)
+                .body(Matchers.is("isHxRequest: true"));
+        RestAssured
+                .given()
+                .when()
+                .get("/hxRequest").then()
+                .statusCode(200)
+                .body(Matchers.is("isHxRequest: false"));
+    }
+
     @Path("/")
     public static class MyHxController extends HxController {
+
+        @Named("isHxRequest")
+        protected boolean isHxRequest() {
+            return super.isHxRequest();
+        }
+
+        public String hxRequest() {
+            return Qute.fmt("isHxRequest: {inject:isHxRequest}").render();
+        }
 
         public TemplateInstance oob() {
             return HxController.concatTemplates(Qute.fmt("a")
