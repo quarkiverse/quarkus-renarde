@@ -86,7 +86,7 @@ public class CustomLoginControllerTest {
     @Test
     public void testLoginPageWithInvalidJwt() {
 
-        String token = Jwt.issuer("https://example.com/issuer")
+        String token = Jwt.issuer("https://quarkus.io/issuer")
                 .upn("user")
                 .issuedAt(Instant.now())
                 .expiresIn(Duration.ofDays(10))
@@ -104,7 +104,7 @@ public class CustomLoginControllerTest {
                 .body(Matchers.is("fake login page"));
 
         // invalid issuer
-        token = Jwt.issuer("https://example.com/other-issuer")
+        token = Jwt.issuer("https://quarkus.io/other-issuer")
                 .upn("user")
                 .innerSign().encrypt();
 

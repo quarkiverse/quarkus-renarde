@@ -1,19 +1,14 @@
 package io.quarkiverse.renarde.deployment;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,7 +17,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -89,8 +83,6 @@ import io.quarkus.arc.deployment.GeneratedBeanGizmoAdaptor;
 import io.quarkus.arc.deployment.UnremovableBeanBuildItem;
 import io.quarkus.arc.processor.BuiltinScope;
 import io.quarkus.bootstrap.classloading.QuarkusClassLoader;
-import io.quarkus.bootstrap.workspace.ArtifactSources;
-import io.quarkus.bootstrap.workspace.SourceDir;
 import io.quarkus.deployment.ApplicationArchive;
 import io.quarkus.deployment.Capabilities;
 import io.quarkus.deployment.Capability;
@@ -113,7 +105,6 @@ import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceDirectoryB
 import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
 import io.quarkus.deployment.execannotations.ExecutionModelAnnotationsAllowedBuildItem;
 import io.quarkus.deployment.logging.LogCleanupFilterBuildItem;
-import io.quarkus.deployment.pkg.builditem.CurateOutcomeBuildItem;
 import io.quarkus.deployment.util.AsmUtil;
 import io.quarkus.gizmo.BytecodeCreator;
 import io.quarkus.gizmo.ClassCreator;
@@ -132,6 +123,8 @@ import io.quarkus.resteasy.reactive.spi.CustomExceptionMapperBuildItem;
 import io.quarkus.resteasy.reactive.spi.ParamConverterBuildItem;
 import io.quarkus.runtime.LocalesBuildTimeConfig;
 import io.quarkus.runtime.StartupEvent;
+import io.quarkus.smallrye.jwt.deployment.GenerateEncryptedDevModeJwtKeysBuildItem;
+import io.quarkus.smallrye.jwt.deployment.GeneratePersistentDevModeJwtKeysBuildItem;
 import io.quarkus.smallrye.jwt.runtime.auth.JWTAuthMechanism;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
@@ -234,8 +227,6 @@ public class RenardeProcessor {
             // this allows me to create an exception mapper for auth failures (expired token, invalid user)
             // even with this I can't use an exception mapper apparently, but need to register a reactive route
             defineUnlessPresent("quarkus.http.auth.proactive", "false", config, runtimeConfigurationBuildItem);
-            // not sure this one matters, just has to be set to any value AFAICT
-            defineUnlessPresent("mp.jwt.verify.issuer", "https://example.com/issuer", config, runtimeConfigurationBuildItem);
             // those are the better defaults
             defineUnlessPresent("mp.jwt.token.header", "Cookie", config, runtimeConfigurationBuildItem);
             defineUnlessPresent("mp.jwt.token.cookie", "QuarkusUser", config, runtimeConfigurationBuildItem);
@@ -263,83 +254,13 @@ public class RenardeProcessor {
         }
     }
 
+    // This is now handled by Quarkus Core, with build-item-based customisations
     @BuildStep
-    void setupJWT(LaunchModeBuildItem launchMode, Capabilities capabilities,
-            BuildProducer<RunTimeConfigurationDefaultBuildItem> runtimeConfigurationBuildItem,
-            CurateOutcomeBuildItem curateOutcomeBuildItem)
-            throws IOException, NoSuchAlgorithmException {
-        if (launchMode.getLaunchMode().isDevOrTest()
-                && capabilities.isPresent(Capability.JWT)) {
-            // make sure we have minimal config
-            final Config config = ConfigProvider.getConfig();
-
-            // PRIVATE
-            Optional<String> decryptKeyLocationOpt = config.getOptionalValue("mp.jwt.decrypt.key.location", String.class);
-            Optional<String> signKeyLocationOpt = config.getOptionalValue("smallrye.jwt.sign.key.location", String.class);
-            // PUBLIC
-            Optional<String> verifyKeyOpt = config.getOptionalValue("mp.jwt.verify.publickey", String.class);
-            Optional<String> verifyKeyLocationOpt = config.getOptionalValue("mp.jwt.verify.publickey.location", String.class);
-            Optional<String> encryptKeyLocationOpt = config.getOptionalValue("smallrye.jwt.encrypt.key.location", String.class);
-            if (!decryptKeyLocationOpt.isPresent()
-                    && !signKeyLocationOpt.isPresent()
-                    && !verifyKeyOpt.isPresent()
-                    && !verifyKeyLocationOpt.isPresent()
-                    && !encryptKeyLocationOpt.isPresent()) {
-                // FIXME: folder
-
-                File buildDir = null;
-                ArtifactSources src = curateOutcomeBuildItem.getApplicationModel().getAppArtifact().getSources();
-                if (src != null) { // shouldn't be null in dev mode
-                    Collection<SourceDir> srcDirs = src.getResourceDirs();
-                    if (srcDirs.isEmpty()) {
-                        // in the module has no resources dir?
-                        srcDirs = src.getSourceDirs();
-                    }
-                    if (!srcDirs.isEmpty()) {
-                        // pick the first resources output dir
-                        Path resourcesOutputDir = srcDirs.iterator().next().getOutputDir();
-                        buildDir = resourcesOutputDir.toFile();
-                    }
-                }
-                if (buildDir == null) {
-                    // the module doesn't have any sources nor resources, stick to the build dir
-                    buildDir = new File(
-                            curateOutcomeBuildItem.getApplicationModel().getAppArtifact().getWorkspaceModule().getBuildDir(),
-                            "classes");
-                }
-
-                buildDir.mkdirs();
-                File privateKey = new File(buildDir, "dev.privateKey.pem");
-                File publicKey = new File(buildDir, "dev.publicKey.pem");
-                if (!privateKey.exists() && !publicKey.exists()) {
-                    KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
-                    kpg.initialize(2048);
-                    KeyPair kp = kpg.generateKeyPair();
-
-                    logger.infof("Generating private/public keys for DEV/TEST in %s and %s", privateKey, publicKey);
-                    try (FileWriter fw = new FileWriter(privateKey)) {
-                        fw.append("-----BEGIN PRIVATE KEY-----\n");
-                        fw.append(Base64.getMimeEncoder().encodeToString(kp.getPrivate().getEncoded()));
-                        fw.append("\n");
-                        fw.append("-----END PRIVATE KEY-----\n");
-                    }
-                    try (FileWriter fw = new FileWriter(publicKey)) {
-                        fw.append("-----BEGIN PUBLIC KEY-----\n");
-                        fw.append(Base64.getMimeEncoder().encodeToString(kp.getPublic().getEncoded()));
-                        fw.append("\n");
-                        fw.append("-----END PUBLIC KEY-----\n");
-                    }
-                }
-                runtimeConfigurationBuildItem
-                        .produce(new RunTimeConfigurationDefaultBuildItem("mp.jwt.decrypt.key.location", privateKey.getName()));
-                runtimeConfigurationBuildItem.produce(
-                        new RunTimeConfigurationDefaultBuildItem("smallrye.jwt.sign.key.location", privateKey.getName()));
-                runtimeConfigurationBuildItem.produce(
-                        new RunTimeConfigurationDefaultBuildItem("mp.jwt.verify.publickey.location", publicKey.getName()));
-                runtimeConfigurationBuildItem.produce(
-                        new RunTimeConfigurationDefaultBuildItem("smallrye.jwt.encrypt.key.location", publicKey.getName()));
-            }
-        }
+    void generatePersistendJwtTokensInDevMode(
+            BuildProducer<GeneratePersistentDevModeJwtKeysBuildItem> generatePersistentDevModeJwtKeysBuildItemBuildProducer,
+            BuildProducer<GenerateEncryptedDevModeJwtKeysBuildItem> generateEncryptedDevModeJwtKeysBuildItemBuildProducer) {
+        generatePersistentDevModeJwtKeysBuildItemBuildProducer.produce(new GeneratePersistentDevModeJwtKeysBuildItem());
+        generateEncryptedDevModeJwtKeysBuildItemBuildProducer.produce(new GenerateEncryptedDevModeJwtKeysBuildItem());
     }
 
     @BuildStep
