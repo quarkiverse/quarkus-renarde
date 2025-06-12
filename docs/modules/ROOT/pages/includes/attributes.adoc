@@ -1,4 +1,4 @@
-:quarkus-version: 999-SNAPSHOT
+:quarkus-version: 3.23.3
 :quarkus-renarde-version: 3.0.20
 :maven-version: 3.8.1+
 
