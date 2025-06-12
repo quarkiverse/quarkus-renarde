@@ -16,9 +16,9 @@ import java.util.UUID;
 import org.eclipse.microprofile.jwt.Claims;
 
 import io.smallrye.jwt.build.Jwt;
-import io.vertx.mutiny.ext.web.Router;
-import io.vertx.mutiny.ext.web.RoutingContext;
-import io.vertx.mutiny.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
 
 public class MockAppleOidcTestResource extends MockOidcTestResource<MockAppleOidc> {
 
@@ -115,7 +115,7 @@ public class MockAppleOidcTestResource extends MockOidcTestResource<MockAppleOid
                 + " ]\n"
                 + "}";
         rc.response().putHeader("Content-Type", "application/json");
-        rc.endAndForget(data);
+        rc.end(data);
     }
 
     /*
@@ -136,13 +136,13 @@ public class MockAppleOidcTestResource extends MockOidcTestResource<MockAppleOid
         String redirect_uri = rc.request().params().get("redirect_uri");
         // make sure we'ret getting HTTPS (required by apple)
         if (!redirect_uri.startsWith("https://")) {
-            rc.response().setStatusCode(400).sendAndForget("HTTPS is required");
+            rc.response().setStatusCode(400).send("HTTPS is required");
             return;
         }
         UUID code = UUID.randomUUID();
         rc.response()
                 .putHeader("Content-Type", "application/json")
-                .endAndForget("{\n"
+                .end("{\n"
                         + "  \"code\":\"" + code + "\",\n"
                         + "  \"state\":\"" + state + "\"\n"
                         + "}");
@@ -211,7 +211,7 @@ public class MockAppleOidcTestResource extends MockOidcTestResource<MockAppleOid
                 + " }  ";
         rc.response()
                 .putHeader("Content-Type", "application/json")
-                .endAndForget(data);
+                .end(data);
     }
 
     /*
@@ -243,6 +243,6 @@ public class MockAppleOidcTestResource extends MockOidcTestResource<MockAppleOid
                 + "}";
         rc.response()
                 .putHeader("Content-Type", "application/json")
-                .endAndForget(data);
+                .end(data);
     }
 }
