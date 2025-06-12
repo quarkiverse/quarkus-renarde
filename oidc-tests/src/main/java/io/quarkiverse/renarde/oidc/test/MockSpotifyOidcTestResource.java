@@ -10,9 +10,9 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.UUID;
 
-import io.vertx.mutiny.ext.web.Router;
-import io.vertx.mutiny.ext.web.RoutingContext;
-import io.vertx.mutiny.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
 
 public class MockSpotifyOidcTestResource extends MockOidcTestResource<MockTwitterOidc> {
 
@@ -178,7 +178,7 @@ public class MockSpotifyOidcTestResource extends MockOidcTestResource<MockTwitte
                 + "   ]\n"
                 + "}";
         rc.response().putHeader("Content-Type", "application/json");
-        rc.endAndForget(data);
+        rc.end(data);
     }
 
     /*
@@ -213,7 +213,7 @@ public class MockSpotifyOidcTestResource extends MockOidcTestResource<MockTwitte
         rc.response()
                 .putHeader("Location", redirect.toASCIIString())
                 .setStatusCode(302)
-                .endAndForget();
+                .end();
     }
 
     /*
@@ -243,7 +243,7 @@ public class MockSpotifyOidcTestResource extends MockOidcTestResource<MockTwitte
         UUID rtoken = UUID.randomUUID();
         rc.response()
                 .putHeader("Content-Type", "application/json")
-                .endAndForget("{\n"
+                .end("{\n"
                         + "   \"access_token\":\"" + atoken + "\",\n"
                         + "   \"token_type\":\"Bearer\",\n"
                         + "   \"expires_in\":3600,\n"
@@ -277,7 +277,7 @@ public class MockSpotifyOidcTestResource extends MockOidcTestResource<MockTwitte
     private void getUser(RoutingContext rc) {
         rc.response()
                 .putHeader("Content-Type", "application/json")
-                .endAndForget("{\n"
+                .end("{\n"
                         + "  \"display_name\" : \"Foo Bar\",\n"
                         + "  \"external_urls\" : {\n"
                         + "    \"spotify\" : \"https://open.spotify.com/user/USERID\"\n"
@@ -330,6 +330,6 @@ public class MockSpotifyOidcTestResource extends MockOidcTestResource<MockTwitte
                 + "}";
         rc.response()
                 .putHeader("Content-Type", "application/json")
-                .endAndForget(data);
+                .end(data);
     }
 }

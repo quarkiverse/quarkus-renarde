@@ -7,14 +7,15 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import org.eclipse.microprofile.context.spi.ContextManagerProvider;
 
 import io.quarkus.test.common.QuarkusTestResourceConfigurableLifecycleManager;
+import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
-import io.vertx.mutiny.core.Vertx;
-import io.vertx.mutiny.core.http.HttpServer;
-import io.vertx.mutiny.ext.web.Router;
+import io.vertx.ext.web.Router;
 
 public abstract class MockOidcTestResource<ConfigAnnotation extends Annotation>
         implements QuarkusTestResourceConfigurableLifecycleManager<ConfigAnnotation> {
@@ -39,7 +40,11 @@ public abstract class MockOidcTestResource<ConfigAnnotation extends Annotation>
         httpServer.requestHandler(router);
         registerRoutes(router);
 
-        httpServer.listenAndAwait();
+        try {
+            httpServer.listen().toCompletionStage().toCompletableFuture().get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
         int port = httpServer.actualPort();
 
         Map<String, String> ret = new HashMap<>();
@@ -58,7 +63,8 @@ public abstract class MockOidcTestResource<ConfigAnnotation extends Annotation>
         System.err.println("Closing " + getClass() + " from TCCL: " + Thread.currentThread().getContextClassLoader()
                 + " and CMP CL: " + ContextManagerProvider.class.getClassLoader());
         try {
-            httpServer.closeAndAwait();
+            // we don't need to wait
+            httpServer.close();
         } catch (Throwable t) {
             t.printStackTrace();
             // do not bubble up

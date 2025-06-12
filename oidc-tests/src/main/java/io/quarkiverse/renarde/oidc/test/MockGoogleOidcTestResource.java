@@ -14,9 +14,9 @@ import java.util.UUID;
 import org.eclipse.microprofile.jwt.Claims;
 
 import io.smallrye.jwt.build.Jwt;
-import io.vertx.mutiny.ext.web.Router;
-import io.vertx.mutiny.ext.web.RoutingContext;
-import io.vertx.mutiny.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
 
 public class MockGoogleOidcTestResource extends MockOidcTestResource<MockGoogleOidc> {
 
@@ -105,7 +105,7 @@ public class MockGoogleOidcTestResource extends MockOidcTestResource<MockGoogleO
                 + " ]\n"
                 + "}";
         rc.response().putHeader("Content-Type", "application/json");
-        rc.endAndForget(data);
+        rc.end(data);
     }
 
     /*
@@ -135,7 +135,7 @@ public class MockGoogleOidcTestResource extends MockOidcTestResource<MockGoogleO
         rc.response()
                 .putHeader("Location", redirect.toASCIIString())
                 .setStatusCode(302)
-                .endAndForget();
+                .end();
     }
 
     /*
@@ -202,7 +202,7 @@ public class MockGoogleOidcTestResource extends MockOidcTestResource<MockGoogleO
                 + "}\n";
         rc.response()
                 .putHeader("Content-Type", "application/json")
-                .endAndForget(data);
+                .end(data);
     }
 
     private void getKeys(RoutingContext rc) {
@@ -223,7 +223,7 @@ public class MockGoogleOidcTestResource extends MockOidcTestResource<MockGoogleO
                 + "}";
         rc.response()
                 .putHeader("Content-Type", "application/json")
-                .endAndForget(data);
+                .end(data);
     }
 
     private void userinfo(RoutingContext rc) {
@@ -239,6 +239,6 @@ public class MockGoogleOidcTestResource extends MockOidcTestResource<MockGoogleO
                 + "}";
         rc.response()
                 .putHeader("Content-Type", "application/json")
-                .endAndForget(data);
+                .end(data);
     }
 }
