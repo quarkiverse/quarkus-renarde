@@ -57,7 +57,12 @@ public abstract class MockOidcTestResource<ConfigAnnotation extends Annotation>
         System.err.println("Closing OIDC Mock: " + name);
         System.err.println("Closing " + getClass() + " from TCCL: " + Thread.currentThread().getContextClassLoader()
                 + " and CMP CL: " + ContextManagerProvider.class.getClassLoader());
-        httpServer.closeAndAwait();
+        try {
+            httpServer.closeAndAwait();
+        } catch (Throwable t) {
+            t.printStackTrace();
+            // do not bubble up
+        }
     }
 
     protected String hashAccessToken(String string) {
