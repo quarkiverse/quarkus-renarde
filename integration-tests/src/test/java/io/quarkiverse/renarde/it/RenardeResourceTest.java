@@ -238,39 +238,22 @@ public class RenardeResourceTest {
                 .then()
                 .statusCode(302)
                 .header("Location", baseURI + "_renarde/security/login");
-        ValidatableResponse response;
-        // depends on Quarkus main or release
-        try {
-            response = given()
-                    .redirects().follow(false)
-                    .filter(cookieFilter)
-                    .formParam("username", "FroMage")
-                    .formParam("password", "1q2w3e")
-                    .post("/_renarde/security/login")
-                    .then()
-                    .statusCode(303)
-                    .cookie("QuarkusUser",
-                            RestAssuredMatchers.detailedCookie()
-                                    .sameSite("Lax")
-                                    .httpOnly(true))
-                    .header("Location", baseURI + "SecureController/hello");
-        } catch (AssertionError x) {
-            response = given()
-                    .redirects().follow(false)
-                    .filter(cookieFilter)
-                    .formParam("username", "FroMage")
-                    .formParam("password", "1q2w3e")
-                    .post("/_renarde/security/login")
-                    .then()
-                    .statusCode(303)
-                    .cookie("QuarkusUser",
-                            RestAssuredMatchers.detailedCookie()
-                                    .sameSite("LAX")
-                                    .httpOnly(true))
-                    .header("Location", baseURI + "SecureController/hello");
-        }
+        ValidatableResponse response = given()
+                .redirects().follow(false)
+                .filter(cookieFilter)
+                .formParam("username", "FroMage")
+                .formParam("password", "1q2w3e")
+                .post("/_renarde/security/login")
+                .then()
+                .statusCode(303)
+                .cookie("QuarkusUser",
+                        RestAssuredMatchers.detailedCookie()
+                                .sameSite("Lax")
+                                .httpOnly(true))
+                .header("Location", baseURI + "SecureController/hello");
         given()
                 .filter(cookieFilter)
+                .redirects().follow(false)
                 .get("/SecureController/hello")
                 .then()
                 .statusCode(200)
