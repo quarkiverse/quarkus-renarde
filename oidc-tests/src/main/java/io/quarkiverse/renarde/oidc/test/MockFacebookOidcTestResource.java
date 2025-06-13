@@ -15,9 +15,9 @@ import java.util.UUID;
 import org.eclipse.microprofile.jwt.Claims;
 
 import io.smallrye.jwt.build.Jwt;
-import io.vertx.mutiny.ext.web.Router;
-import io.vertx.mutiny.ext.web.RoutingContext;
-import io.vertx.mutiny.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
 
 public class MockFacebookOidcTestResource extends MockOidcTestResource<MockFacebookOidc> {
 
@@ -94,7 +94,7 @@ public class MockFacebookOidcTestResource extends MockOidcTestResource<MockFaceb
                 + "   ]\n"
                 + "}";
         rc.response().putHeader("Content-Type", "application/json");
-        rc.endAndForget(data);
+        rc.end(data);
     }
 
     /*
@@ -114,7 +114,7 @@ public class MockFacebookOidcTestResource extends MockOidcTestResource<MockFaceb
         String redirect_uri = rc.request().params().get("redirect_uri");
         // make sure we'ret getting HTTPS (required by facebook)
         if (!redirect_uri.startsWith("https://")) {
-            rc.response().setStatusCode(400).sendAndForget("HTTPS is required");
+            rc.response().setStatusCode(400).send("HTTPS is required");
             return;
         }
         UUID code = UUID.randomUUID();
@@ -127,7 +127,7 @@ public class MockFacebookOidcTestResource extends MockOidcTestResource<MockFaceb
         rc.response()
                 .putHeader("Location", redirect.toASCIIString())
                 .setStatusCode(302)
-                .endAndForget();
+                .end();
     }
 
     /*
@@ -192,7 +192,7 @@ public class MockFacebookOidcTestResource extends MockOidcTestResource<MockFaceb
                 + "} ";
         rc.response()
                 .putHeader("Content-Type", "application/json")
-                .endAndForget(data);
+                .end(data);
     }
 
     private void getKeys(RoutingContext rc) {
@@ -213,6 +213,6 @@ public class MockFacebookOidcTestResource extends MockOidcTestResource<MockFaceb
                 + "}";
         rc.response()
                 .putHeader("Content-Type", "application/json")
-                .endAndForget(data);
+                .end(data);
     }
 }

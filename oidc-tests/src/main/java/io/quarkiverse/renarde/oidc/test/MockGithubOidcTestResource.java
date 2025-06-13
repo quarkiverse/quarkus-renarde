@@ -5,9 +5,9 @@ import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.UUID;
 
-import io.vertx.mutiny.ext.web.Router;
-import io.vertx.mutiny.ext.web.RoutingContext;
-import io.vertx.mutiny.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
 
 public class MockGithubOidcTestResource extends MockOidcTestResource<MockGithubOidc> {
 
@@ -57,7 +57,7 @@ public class MockGithubOidcTestResource extends MockOidcTestResource<MockGithubO
         rc.response()
                 .putHeader("Location", redirect.toASCIIString())
                 .setStatusCode(302)
-                .endAndForget();
+                .end();
     }
 
     /*
@@ -76,11 +76,11 @@ public class MockGithubOidcTestResource extends MockOidcTestResource<MockGithubO
         if ("application/x-www-form-urlencoded".equals(rc.request().getHeader("Accept"))) {
             rc.response()
                     .putHeader("Content-Type", "application/x-www-form-urlencoded")
-                    .endAndForget("access_token=" + token + "&scope=repo%2Cgist&token_type=bearer");
+                    .end("access_token=" + token + "&scope=repo%2Cgist&token_type=bearer");
         } else {
             rc.response()
                     .putHeader("Content-Type", "application/json")
-                    .endAndForget("{\n"
+                    .end("{\n"
                             + "  \"access_token\":\"" + token + "\",\n"
                             + "  \"scope\":\"repo,gist\",\n"
                             + "  \"token_type\":\"bearer\"\n"
@@ -96,7 +96,7 @@ public class MockGithubOidcTestResource extends MockOidcTestResource<MockGithubO
     private void getUser(RoutingContext rc) {
         rc.response()
                 .putHeader("Content-Type", "application/json")
-                .endAndForget("{\n"
+                .end("{\n"
                         + "  \"login\": \"GithubUser\",\n"
                         + "  \"id\": 1234,\n"
                         + "  \"node_id\": \"MDQ6VXNlcjE=\",\n"
@@ -153,7 +153,7 @@ public class MockGithubOidcTestResource extends MockOidcTestResource<MockGithubO
     private void getEmails(RoutingContext rc) {
         rc.response()
                 .putHeader("Content-Type", "application/json")
-                .endAndForget("[\n"
+                .end("[\n"
                         + "  {\n"
                         + "    \"email\": \"github@example.com\",\n"
                         + "    \"verified\": true,\n"
