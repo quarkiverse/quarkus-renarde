@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
@@ -91,6 +92,7 @@ public abstract class HxController extends Controller {
     /**
      * Check if this request has the htmx flag (header or flash data)
      */
+    @Named("isHxRequest")
     protected boolean isHxRequest() {
         final boolean hxRequest = Objects.equals(flash.get(HX_REQUEST_HEADER), true);
         if (hxRequest) {
