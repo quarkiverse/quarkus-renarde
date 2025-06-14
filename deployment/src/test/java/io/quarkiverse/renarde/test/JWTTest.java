@@ -49,7 +49,7 @@ public class JWTTest {
     @Test
     public void testProtectedPageWithInvalidJwt() throws NoSuchAlgorithmException {
         // canary: valid
-        String token = Jwt.issuer("https://example.com/issuer")
+        String token = Jwt.issuer("https://quarkus.io/issuer")
                 .upn("user")
                 .issuedAt(Instant.now())
                 .expiresIn(Duration.ofDays(10))
@@ -65,14 +65,14 @@ public class JWTTest {
                 .log().ifValidationFails()
                 .statusCode(200);
         // expired
-        token = Jwt.issuer("https://example.com/issuer")
+        token = Jwt.issuer("https://quarkus.io/issuer")
                 .upn("user")
                 .issuedAt(Instant.now().minus(20, ChronoUnit.DAYS))
                 .expiresIn(Duration.ofDays(10))
                 .innerSign().encrypt();
         assertRedirectWithMessage(token, "Login expired, you've been logged out");
         // invalid issuer
-        token = Jwt.issuer("https://example.com/other-issuer")
+        token = Jwt.issuer("https://quarkus.io/other-issuer")
                 .upn("user")
                 .issuedAt(Instant.now())
                 .expiresIn(Duration.ofDays(10))
@@ -82,14 +82,14 @@ public class JWTTest {
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
         kpg.initialize(2048);
         KeyPair kp = kpg.generateKeyPair();
-        token = Jwt.issuer("https://example.com/issuer")
+        token = Jwt.issuer("https://quarkus.io/issuer")
                 .upn("user")
                 .issuedAt(Instant.now())
                 .expiresIn(Duration.ofDays(10))
                 .innerSign(kp.getPrivate()).encrypt(kp.getPublic());
         assertRedirectWithMessage(token, "Invalid session (bad signature), you've been logged out");
         // invalid user
-        token = Jwt.issuer("https://example.com/issuer")
+        token = Jwt.issuer("https://quarkus.io/issuer")
                 .upn("cheesy")
                 .issuedAt(Instant.now())
                 .expiresIn(Duration.ofDays(10))

@@ -20,23 +20,27 @@ public class CSRFFilter implements OrderedFilter {
     public static void install() {
         // only install ourselves once
         for (Filter filter : RestAssured.filters()) {
-            if (filter.getClass() == CSRFFilter.class) {
+            // I really tried to find the proper CL, but had up to 3 instances with different CL. This works.
+            if (filter.getClass().getName().equals(CSRFFilter.class.getName())) {
                 return;
             }
         }
         RestAssured.filters(new CSRFFilter());
     }
 
-    public static void deinstall() {
+    public static void deinstall() throws ClassNotFoundException {
         boolean needsDeinstall = false;
         for (Filter filter : RestAssured.filters()) {
-            if (filter.getClass() == CSRFFilter.class) {
+            // I really tried to find the proper CL, but had up to 3 instances with different CL. This works.
+            if (filter.getClass().getName().equals(CSRFFilter.class.getName())) {
                 needsDeinstall = true;
                 break;
             }
         }
         if (needsDeinstall) {
-            List<Filter> newFilters = RestAssured.filters().stream().filter(filter -> filter.getClass() != CSRFFilter.class)
+            List<Filter> newFilters = RestAssured.filters().stream()
+                    // I really tried to find the proper CL, but had up to 3 instances with different CL. This works.
+                    .filter(filter -> !filter.getClass().getName().equals(CSRFFilter.class.getName()))
                     .collect(Collectors.toList());
             RestAssured.replaceFiltersWith(newFilters);
         }
