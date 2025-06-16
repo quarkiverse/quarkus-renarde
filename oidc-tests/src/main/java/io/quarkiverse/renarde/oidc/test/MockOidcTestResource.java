@@ -9,8 +9,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-import org.eclipse.microprofile.context.spi.ContextManagerProvider;
-
 import io.quarkus.test.common.QuarkusTestResourceConfigurableLifecycleManager;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
