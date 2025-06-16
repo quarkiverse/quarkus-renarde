@@ -184,6 +184,8 @@ public class TransporterTest {
 
         public Date date;
 
+        public boolean booleanPrimitive;
+
         public Order() {
         }
 

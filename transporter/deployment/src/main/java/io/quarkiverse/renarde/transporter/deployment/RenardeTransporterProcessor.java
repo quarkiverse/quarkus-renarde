@@ -434,7 +434,7 @@ public class RenardeTransporterProcessor {
                     for (ModelField modelField : modelFields) {
                         fieldNameSwitch.caseOf(modelField.name, t -> {
                             AssignableResultHandle var = variables.get(modelField.name);
-                            boolean needsCast = true;
+                            boolean needsCast = false;
                             Class<?> additionalParameterType = null;
                             ResultHandle additionalParameterValue = null;
                             String returnDescriptor = modelField.entityField.descriptor;
