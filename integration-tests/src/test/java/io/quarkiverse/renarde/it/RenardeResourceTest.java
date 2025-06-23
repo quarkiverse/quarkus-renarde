@@ -172,7 +172,7 @@ public class RenardeResourceTest {
                 .then()
                 .statusCode(200)
                 .body(is(
-                        "Email: must be a well-formed email address\n\n\nManual: Required\n\n\nRequired: must not be blank\n\n\n"));
+                        "Email: Must be a well-formed email address.\n\n\nManual: Required.\n\n\nRequired: Required.\n\n\n"));
     }
 
     @Test
@@ -203,7 +203,7 @@ public class RenardeResourceTest {
                 .then()
                 .statusCode(200)
                 .body(is(
-                        "Email: must be a well-formed email address\n\n\nManual: Required\n\n\nRequired: must not be blank\n\n\n"));
+                        "Email: Must be a well-formed email address.\n\n\nManual: Required.\n\n\nRequired: Required.\n\n\n"));
     }
 
     @Test

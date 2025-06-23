@@ -5,7 +5,7 @@
 {@boolean multiple}
 
 {#let val=inject:flash.get(name).or(value??)}
-<select {#if multiple??}multiple{/if} class="form-control" name="{name}">
+<select {#if multiple??}multiple{/if} class="form-control {#ifError name}is-invalid{/ifError}" name="{name}">
   {#if multiple??}
    {! this is a workaround for && not working below !}
   {#else if nullable??}

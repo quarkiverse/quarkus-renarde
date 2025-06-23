@@ -1,12 +1,13 @@
 package io.quarkiverse.renarde.util;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
@@ -23,79 +24,90 @@ public class Validation {
     @Inject
     Flash flash;
 
-    private List<Error> errors = new ArrayList<>();
+    private Map<String, Error> errors = new TreeMap<>();
 
     public boolean hasErrors() {
         return !errors.isEmpty();
     }
 
     public void keep() {
-        for (Error error : errors) {
-            flash.flash("error." + error.field, error.message);
+        for (Error error : errors.values()) {
+            flash.flash("error." + error.field, error.getMessage("\f"));
         }
     }
 
     public void required(String field, Object value) {
         if (value == null || (value instanceof String && ((String) value).isEmpty()))
-            addError(field, "Required");
+            addError(field, "Required.");
     }
 
     public void addError(String field, String message) {
-        errors.add(new Error(field, message));
+        Error error = errors.get(field);
+        if (error == null) {
+            error = new Error(field, message);
+            errors.put(field, error);
+        } else {
+            error.addMessage(message);
+        }
     }
 
     // Called from ifError.html
     public boolean hasError(String field) {
-        for (Error error : errors) {
-            if (error.field.equals(field))
-                return true;
-        }
-        return false;
+        return errors.containsKey(field);
     }
 
     // Called from error.html
     public String getError(String field) {
-        for (Error error : errors) {
-            if (error.field.equals(field))
-                return error.message;
-        }
-        return null;
+        Error error = errors.get(field);
+        return error != null ? error.getMessage() : null;
     }
 
     public static class Error {
 
         public final String field;
-        public final String message;
+        public final Set<String> messages = new TreeSet<>();
 
         public Error(String field, String message) {
             this.field = field;
-            this.message = message;
+            this.messages.add(message);
+        }
+
+        public String getMessage() {
+            return getMessage(" ");
+        }
+
+        public String getMessage(String delimiter) {
+            return String.join(delimiter, messages);
+        }
+
+        public void addMessage(String message) {
+            messages.add(message);
         }
 
         @Override
         public String toString() {
-            return "[Error field=" + field + ", message=" + message + "]";
+            return "[Error field=" + field + ", message=" + messages + "]";
         }
     }
 
     public void minSize(String field, String value, int size) {
         if (value == null || value.length() < size)
-            addError(field, "Must be at least " + size + " characters long");
+            addError(field, "Must be at least " + size + " characters long.");
     }
 
     public void maxSize(String field, String value, int size) {
         if (value == null || value.length() > size)
-            addError(field, "Must be at most " + size + " characters long");
+            addError(field, "Must be at most " + size + " characters long.");
     }
 
     public void equals(String field, Object a, Object b) {
         if (!Objects.equals(a, b))
-            addError(field, "Must be equal");
+            addError(field, "Must be equal.");
     }
 
     public void future(String field, Date date) {
         if (!date.after(new Date()))
-            addError(field, "Must be in the future");
+            addError(field, "Must be in the future.");
     }
 
     public void addErrors(Set<ConstraintViolation<Object>> violations) {
@@ -105,15 +117,29 @@ public class Validation {
             while (iterator.hasNext()) {
                 lastNode = iterator.next().getName();
             }
-            addError(lastNode, violation.getMessage());
+            addError(lastNode, adaptBeanValidationMessage(violation.getMessage()));
         }
+    }
+
+    private String adaptBeanValidationMessage(String message) {
+        // FIXME: this is not I18N but a good start
+        switch (message) {
+            case "must not be blank":
+            case "must not be null":
+            case "must not be empty":
+                message = "Required";
+        }
+        return JavaExtensions.capitalised(message) + ".";
     }
 
     public void loadErrorsFromFlash() {
         for (Entry<String, Object> entry : flash.values().entrySet()) {
             if (entry.getKey().startsWith("error.")) {
                 String field = entry.getKey().substring(6);
-                addError(field, (String) entry.getValue());
+                String value = (String) entry.getValue();
+                for (String error : value.split("\f")) {
+                    addError(field, error);
+                }
             }
         }
     }

@@ -239,14 +239,14 @@ public class LanguageTest {
                 .post("/validation").then()
                 .statusCode(200)
                 .body(Matchers.is(
-                        "must not be empty"));
+                        "Required."));
         RestAssured
                 .given()
                 .cookie(I18N.LOCALE_COOKIE_NAME, "fr")
                 .post("/validation").then()
                 .statusCode(200)
                 .body(Matchers.is(
-                        "ne doit pas être vide"));
+                        "Ne doit pas être vide."));
     }
 
     public static class MyController extends Controller {

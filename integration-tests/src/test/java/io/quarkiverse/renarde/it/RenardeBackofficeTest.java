@@ -31,11 +31,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.quarkiverse.renarde.jpa.NamedBlob;
+import io.quarkiverse.renarde.oidc.test.RenardeCookieFilter;
 import io.quarkiverse.renarde.util.JavaExtensions;
 import io.quarkus.hibernate.orm.panache.Panache;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
+import model.ConstraintedEntity;
 import model.CustomIdEntity;
 import model.CustomIdOneToManyEntity;
 import model.ExampleEntity;
@@ -46,6 +48,7 @@ import model.ManyToOneEntity;
 import model.OneToManyEntity;
 import model.OneToOneNotOwningEntity;
 import model.OneToOneOwningEntity;
+import model.RelatedConstraintedEntity;
 
 @QuarkusTest
 public class RenardeBackofficeTest {
@@ -59,6 +62,8 @@ public class RenardeBackofficeTest {
     @Transactional
     @BeforeEach
     public void before() {
+        ConstraintedEntity.deleteAll();
+        RelatedConstraintedEntity.deleteAll();
         ManyToOneEntity.deleteAll();
         ExampleEntity.deleteAll();
         OneToOneOwningEntity.deleteAll();
@@ -86,6 +91,8 @@ public class RenardeBackofficeTest {
 
         new ManyToManyNotOwningEntity().persist();
         new ManyToManyNotOwningEntity().persist();
+
+        new RelatedConstraintedEntity().persist();
     }
 
     @Test
@@ -147,7 +154,7 @@ public class RenardeBackofficeTest {
                 document.select("input[name='primitiveChar'][type='text'][minlength=1][maxlength=1]").size());
         Assertions.assertEquals(1, document.select("input[name='string']").size());
         Assertions.assertEquals(1, document.select("input[name='requiredString']").size());
-        Assertions.assertEquals("This field is required",
+        Assertions.assertEquals("This field is required.",
                 document.select("input[name='requiredString'] ~ small.form-text").text());
         Assertions.assertEquals(1, document.select("textarea[name='lobString']").size());
         Assertions.assertEquals(1, document.select("textarea[name='longString1']").size());
@@ -312,6 +319,90 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(1, entity.jsonRecords.get(0).getSomething());
         Assertions.assertEquals(ExampleEnum.B, entity.jsonRecords.get(1).getExampleEnum());
         Assertions.assertEquals(2, entity.jsonRecords.get(1).getSomething());
+    }
+
+    @Test
+    public void testBackofficeFailedValidation() {
+        Assertions.assertEquals(0, ConstraintedEntity.count());
+        RenardeCookieFilter cookieFilter = new RenardeCookieFilter();
+
+        // we do the redirect manually because RestAssured does not store cookies during redirects
+        given()
+                .filter(cookieFilter)
+                .when()
+                .multiPart("urlString", "a")
+                .multiPart("lengthString", "a")
+                .multiPart("sizeString", "a")
+                .multiPart("action", "CreateAndCreateAnother")
+                .redirects().follow(false)
+                .post("/_renarde/backoffice/ConstraintedEntity/create")
+                .then()
+                .statusCode(303)
+                .header("Location", Matchers.endsWith("/_renarde/backoffice/ConstraintedEntity/create"));
+        // reload for errors
+        String html = given()
+                .filter(cookieFilter)
+                .when()
+                .redirects().follow(false)
+                .get("/_renarde/backoffice/ConstraintedEntity/create")
+                .then()
+                .statusCode(200)
+                .extract().body().asString();
+        Document document = Jsoup.parse(html);
+        System.err.println(html);
+        checkInvalidItem(document, "input", "nonNullableString", "This field is required.", "Required.");
+        checkInvalidItem(document, "input", "nonEmptyString", "This field is required.", "Required.");
+        checkInvalidItem(document, "input", "nonNullString", "This field is required.", "Required.");
+        checkInvalidItem(document, "input", "nonBlankString", "This field is required.", "Required.");
+        checkInvalidItem(document, "input", "urlString", "This field must be a URL.", "Must be a valid URL.");
+        checkInvalidItem(document, "input", "sizeString", "This field must be between 2 and 100 characters.",
+                "Size must be between 2 and 100.");
+        checkInvalidItem(document, "input", "lengthString", "This field must be between 2 and 100 characters.",
+                "Length must be between 2 and 100.");
+        checkInvalidItem(document, "select", "relatedEntity", "This field is required.", "Required.");
+
+        Assertions.assertEquals(0, ConstraintedEntity.count());
+
+        RelatedConstraintedEntity relatedEntity = RelatedConstraintedEntity.<RelatedConstraintedEntity> listAll().get(0);
+
+        // now make sure we can create a valid one
+        given()
+                .filter(cookieFilter)
+                .when()
+                .multiPart("nonNullableString", "a")
+                .multiPart("nonEmptyString", "b")
+                .multiPart("nonNullString", "c")
+                .multiPart("nonBlankString", "d")
+                .multiPart("urlString", "http://example.com")
+                .multiPart("lengthString", "abc")
+                .multiPart("sizeString", "def")
+                .multiPart("relatedEntity", relatedEntity.id)
+                .multiPart("action", "CreateAndCreateAnother")
+                .redirects().follow(false)
+                .post("/_renarde/backoffice/ConstraintedEntity/create")
+                .then()
+                .statusCode(303)
+                .header("Location", Matchers.endsWith("/_renarde/backoffice/ConstraintedEntity/create"));
+
+        Assertions.assertEquals(1, ConstraintedEntity.count());
+        ConstraintedEntity entity = ConstraintedEntity.<ConstraintedEntity> listAll().get(0);
+        Assertions.assertEquals("a", entity.nonNullableString);
+        Assertions.assertEquals("b", entity.nonEmptyString);
+        Assertions.assertEquals("c", entity.nonNullString);
+        Assertions.assertEquals("d", entity.nonBlankString);
+        Assertions.assertEquals("http://example.com", entity.urlString);
+        Assertions.assertEquals("abc", entity.lengthString);
+        Assertions.assertEquals("def", entity.sizeString);
+        Assertions.assertEquals(relatedEntity, entity.relatedEntity);
+    }
+
+    private void checkInvalidItem(Document document, String type, String name, String help, String invalid) {
+        Assertions.assertEquals(1, document.select(type + "[name='" + name + "'][class='form-control is-invalid']").size());
+        Assertions.assertEquals(help,
+                document.select(type + "[name='" + name + "'] ~ small.form-text").text());
+        Assertions.assertEquals(invalid,
+                document.select(type + "[name='" + name + "'] ~ span.invalid-feedback").text());
+
     }
 
     @Test
@@ -593,7 +684,7 @@ public class RenardeBackofficeTest {
                 document.select("input[name='primitiveChar'][type='text'][minlength=1][maxlength=1][value='a']").size());
         Assertions.assertEquals(1, document.select("input[name='string'][value='aString']").size());
         Assertions.assertEquals(1, document.select("input[name='requiredString'][value='aString']").size());
-        Assertions.assertEquals("This field is required",
+        Assertions.assertEquals("This field is required.",
                 document.select("input[name='requiredString'] ~ small.form-text").text());
         Assertions.assertEquals("aString", document.select("textarea[name='lobString']").text());
         Assertions.assertEquals("aString", document.select("textarea[name='longString1']").text());

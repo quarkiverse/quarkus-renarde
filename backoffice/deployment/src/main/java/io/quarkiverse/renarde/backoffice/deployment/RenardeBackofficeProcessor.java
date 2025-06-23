@@ -564,7 +564,7 @@ public class RenardeBackofficeProcessor {
                     i++;
                 }
                 m.getParameterAnnotations(i + offset).addAnnotation(RestForm.class).addValue("value", field.name);
-                for (Class<? extends Annotation> validationAnnotation : field.validation) {
+                for (AnnotationInstance validationAnnotation : field.validation) {
                     m.getParameterAnnotations(i + offset).addAnnotation(validationAnnotation);
                 }
                 parameterNames[i + offset] = field.name;
