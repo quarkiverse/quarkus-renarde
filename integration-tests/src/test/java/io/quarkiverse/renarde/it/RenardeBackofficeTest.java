@@ -22,7 +22,6 @@ import jakarta.ws.rs.core.MediaType;
 
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
-import org.hibernate.engine.jdbc.BlobProxy;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -631,11 +630,8 @@ public class RenardeBackofficeTest {
         entity.manyToManyNotOwning.add(manyToManyOwning.get(0));
         entity.manyToManyNotOwning.add(manyToManyOwning.get(1));
         entity.arrayBlob = "not touched".getBytes();
-        entity.sqlBlob = BlobProxy.generateProxy("to update".getBytes());
-        entity.namedBlob = new NamedBlob();
-        entity.namedBlob.name = "named.pdf";
-        entity.namedBlob.contents = BlobProxy.generateProxy("to update as well".getBytes());
-        entity.namedBlob.mimeType = "application/pdf";
+        entity.sqlBlob = Panache.getSession().getLobHelper().createBlob("to update".getBytes());
+        entity.namedBlob = new NamedBlob("named.pdf", "application/pdf", "to update as well".getBytes());
         entity.jsonRecords = Arrays.asList(new ExampleEntity.JsonRecord(ExampleEnum.A, 2));
         // oneToMany is not owning
         ExampleEntity damnit = entity;

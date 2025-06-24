@@ -21,7 +21,6 @@ import java.util.TreeMap;
 
 import jakarta.ws.rs.core.Response;
 
-import org.hibernate.engine.jdbc.BlobProxy;
 import org.hibernate.engine.spi.ManagedEntity;
 import org.jboss.resteasy.reactive.common.util.types.TypeSignatureParser;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
@@ -32,6 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkiverse.renarde.jpa.NamedBlob;
 import io.quarkiverse.renarde.util.FileUtils;
 import io.quarkiverse.renarde.util.JavaExtensions;
+import io.quarkus.hibernate.orm.panache.Panache;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.qute.TemplateData;
@@ -229,7 +229,7 @@ public class BackUtil {
         if (!isSet(fileUpload))
             return null;
         try {
-            return BlobProxy.generateProxy(Files.readAllBytes(fileUpload.filePath()));
+            return Panache.getSession().getLobHelper().createBlob(Files.readAllBytes(fileUpload.filePath()));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -245,7 +245,7 @@ public class BackUtil {
             byte[] bytes = Files.readAllBytes(fileUpload.filePath());
             if (blob.mimeType == null || blob.mimeType.isEmpty())
                 blob.mimeType = FileUtils.getMimeType(blob.name, bytes);
-            blob.contents = BlobProxy.generateProxy(bytes);
+            blob.contents = Panache.getSession().getLobHelper().createBlob(bytes);
             return blob;
         } catch (IOException e) {
             throw new UncheckedIOException(e);

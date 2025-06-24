@@ -9,14 +9,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.engine.jdbc.BlobProxy;
-
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 
 import io.quarkiverse.renarde.transporter.InstanceResolver;
 import io.quarkiverse.renarde.transporter.ValueTransformer;
+import io.quarkus.hibernate.orm.panache.Panache;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 
 public class TransporterUtil {
@@ -166,7 +165,7 @@ public class TransporterUtil {
     public static Blob deserializeBlob(JsonParser p) throws IOException {
         p.nextToken();
         byte[] value = p.getBinaryValue();
-        return value != null ? BlobProxy.generateProxy(value) : null;
+        return value != null ? Panache.getSession().getLobHelper().createBlob(value) : null;
     }
 
     public static List<? extends PanacheEntity> deserializeMultiRelation(JsonParser p, InstanceResolver resolver)

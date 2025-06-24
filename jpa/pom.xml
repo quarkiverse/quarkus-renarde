@@ -14,12 +14,12 @@
         <artifactId>quarkus-core</artifactId>
     </dependency>
     <dependency>
-        <groupId>jakarta.persistence</groupId>
-        <artifactId>jakarta.persistence-api</artifactId>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-hibernate-orm-panache</artifactId>
     </dependency>
     <dependency>
-        <groupId>org.hibernate.orm</groupId>
-        <artifactId>hibernate-core</artifactId>
+        <groupId>jakarta.persistence</groupId>
+        <artifactId>jakarta.persistence-api</artifactId>
     </dependency>
     <dependency>
         <groupId>${project.groupId}</groupId>

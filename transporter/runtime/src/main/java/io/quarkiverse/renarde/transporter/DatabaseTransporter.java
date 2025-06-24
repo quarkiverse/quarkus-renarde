@@ -215,7 +215,7 @@ public class DatabaseTransporter {
     //			speaker.title = title;
     //			speaker.twitterAccount = twitterAccount;
     //			speaker.star = star;
-    //			speaker.photo = photo != null ? BlobProxy.generateProxy(photo) : null;
+    //			speaker.photo = photo != null ? Panache.getSession().getLobHelper().createBlob(photo) : null;
     //			return speaker;
     //		}
     //	}

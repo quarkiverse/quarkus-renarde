@@ -9,7 +9,7 @@ import jakarta.persistence.Embeddable;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Lob;
 
-import org.hibernate.engine.jdbc.BlobProxy;
+import io.quarkus.hibernate.orm.panache.Panache;
 
 /**
  * You can use this in your entity to represent named blobs, don't forget to use {@link Embedded} on
@@ -50,11 +50,11 @@ public class NamedBlob {
     }
 
     public NamedBlob(String name, String mimeType, byte[] contents) {
-        this(name, mimeType, BlobProxy.generateProxy(contents));
+        this(name, mimeType, Panache.getSession().getLobHelper().createBlob(contents));
     }
 
     public NamedBlob(String name, String mimeType, InputStream contents, long length) {
-        this(name, mimeType, BlobProxy.generateProxy(contents, length));
+        this(name, mimeType, Panache.getSession().getLobHelper().createBlob(contents, length));
     }
 
     /**
