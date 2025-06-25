@@ -3,6 +3,7 @@
 {@java.lang.String id}
 {@java.lang.String placeholder}
 {@java.lang.String value}
+{@boolean required}
 {@long min}
 {@long max}
 {@double step}
@@ -24,6 +25,7 @@
  {/if}
  {#if id??}id="{id}"{/if}
  {#if placeholder??}placeholder="{placeholder}"{/if}
+ {#if required??}required{/if}
  class="{#if type?? == "checkbox"}form-check-input{#else}form-control{/if} {#ifError name}is-invalid{/ifError}"
  />
  

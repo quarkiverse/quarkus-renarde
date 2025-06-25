@@ -2,7 +2,7 @@
 {@java.lang.String label}
 {@java.lang.String help}
 <div class="form-group">
-  <label for="{name}">{label}</label>
+  <label for="{name}">{label}{#if required??} <b>*</b>{/if}</label>
   {nested-content}
   {#ifError name}
     <span class="invalid-feedback">​{#error name/}</span>​
