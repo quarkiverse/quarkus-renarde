@@ -2,6 +2,7 @@
 {@java.lang.String id}
 {@java.lang.String placeholder}
 {@java.lang.String value}
+{@boolean required}
 {@long rows}
 {@long cols}
 <textarea name="{name}" 
@@ -13,6 +14,7 @@
  {/if}
  {#if id??}id="{id}"{/if}
  {#if placeholder??}placeholder="{placeholder}"{/if}
+ {#if required??}required{/if}
  class="form-control {#ifError name}is-invalid{/ifError}"
  >{inject:flash.get(name) ?: value??}</textarea>
  

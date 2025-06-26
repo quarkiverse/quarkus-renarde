@@ -29,39 +29,39 @@
 </h2>
 \{#form entity.{entityId}.toString() enctype="multipart/form-data"}
  {#for field in fields}
- \{#crud_field name="{field.name}" label="{field.label}" help="{field.help}"}
+ \{#crud_field name="{field.name}" label="{field.label}" help="{field.help}" {#if field.required}required=true{/if}}
   {#switch field.type}
    {#case Timestamp}
-    \{#crud_input name="{field.name}" type="datetime-local" value=entity.{field.name}.htmlNormalised??/}
+    \{#crud_input name="{field.name}" {#if field.required}required=true{/if} type="datetime-local" value=entity.{field.name}.htmlNormalised??/}
    {#case DateTimeLocal}
-    \{#crud_input name="{field.name}" type="datetime-local" value=entity.{field.name}.htmlNormalised??/}
+    \{#crud_input name="{field.name}" {#if field.required}required=true{/if} type="datetime-local" value=entity.{field.name}.htmlNormalised??/}
    {#case Date}
-    \{#crud_input name="{field.name}" type="date" value=entity.{field.name}.htmlNormalised??/}
+    \{#crud_input name="{field.name}" {#if field.required}required=true{/if} type="date" value=entity.{field.name}.htmlNormalised??/}
    {#case Time}
-    \{#crud_input name="{field.name}" type="time" value=entity.{field.name}.htmlNormalised??/}
+    \{#crud_input name="{field.name}" {#if field.required}required=true{/if} type="time" value=entity.{field.name}.htmlNormalised??/}
    {#case Checkbox}
     <div class="form-check">
-     \{#crud_input name="{field.name}" id="{field.name}" type="checkbox" value=entity.{field.name}/}
+     \{#crud_input name="{field.name}" id="{field.name}" {#if field.required}required=true{/if} type="checkbox" value=entity.{field.name}/}
      <label class="form-check-label" for="{field.name}">{field.label}</label>
     </div>
    {#case Relation}
-    \{#crud_select name="{field.name}" value=entity.{field.name}.{field.relationIdFieldName}.toString()?? values={field.name}PossibleValues nullable=true/}
+    \{#crud_select name="{field.name}" value=entity.{field.name}.{field.relationIdFieldName}.toString()?? values={field.name}PossibleValues {#if field.required}required=true{#else}nullable=true{/if}/}
    {#case MultiRelation}
-    \{#crud_select name="{field.name}" value={field.name}CurrentValues values={field.name}PossibleValues nullable=true multiple=true/}
+    \{#crud_select name="{field.name}" value={field.name}CurrentValues values={field.name}PossibleValues {#if field.required}required=true{#else}nullable=true{/if} multiple=true/}
    {#case MultiMultiRelation}
-    \{#crud_select name="{field.name}" value={field.name}CurrentValues values={field.name}PossibleValues nullable=true multiple=true/}
+    \{#crud_select name="{field.name}" value={field.name}CurrentValues values={field.name}PossibleValues {#if field.required}required=true{#else}nullable=true{/if} multiple=true/}
    {#case Enum}
-    \{#crud_select name="{field.name}" value=entity.{field.name}.name()?? values={field.name}PossibleValues nullable=true/}
+    \{#crud_select name="{field.name}" value=entity.{field.name}.name()?? values={field.name}PossibleValues {#if field.required}required=true{#else}nullable=true{/if}/}
    {#case Number}
-    \{#crud_input name="{field.name}" value=entity.{field.name} type="number" {#if field.min}min="{field.min}"{/if} {#if field.max}max="{field.max}"{/if} step="{field.step}"/}
+    \{#crud_input name="{field.name}" value=entity.{field.name} {#if field.required}required=true{/if} type="number" {#if field.min}min="{field.min}"{/if} {#if field.max}max="{field.max}"{/if} step="{field.step}"/}
    {#case Text}
-    \{#crud_input name="{field.name}" value=entity.{field.name} type="text" {#if field.min}min="{field.min}"{/if} {#if field.max}max="{field.max}"{/if}/}
+    \{#crud_input name="{field.name}" value=entity.{field.name} {#if field.required}required=true{/if} type="text" {#if field.min}min="{field.min}"{/if} {#if field.max}max="{field.max}"{/if}/}
    {#case LargeText}
-    \{#crud_textarea name="{field.name}" value=entity.{field.name} rows="10"/}
+    \{#crud_textarea name="{field.name}" {#if field.required}required=true{/if} value=entity.{field.name} rows="10"/}
    {#case JSON}
-    \{#crud_textarea name="{field.name}" value=io_quarkiverse_renarde_backoffice_impl_BackUtil:toJson(entity.{field.name}) rows="10"/}
+    \{#crud_textarea name="{field.name}" {#if field.required}required=true{/if} value=io_quarkiverse_renarde_backoffice_impl_BackUtil:toJson(entity.{field.name}) rows="10"/}
    {#case Binary}
-    \{#crud_input name="{field.name}" type="file"/}
+    \{#crud_input name="{field.name}" {#if field.required}required=true{/if} type="file"/}
     \{#if entity.{field.name}}
       <div class="form-check">
        \{#crud_input name="{field.name}$unset" id="{field.name}$unset" type="checkbox"/}
@@ -77,7 +77,7 @@
        \{entity.{field.name}.mimeType})
     \{/if}
    {#else}
-    \{#crud_input name="{field.name}" value=entity.{field.name}/}
+    \{#crud_input name="{field.name}" {#if field.required}required=true{/if} value=entity.{field.name}/}
   {/switch}
  \{/crud_field}
  {/for}
