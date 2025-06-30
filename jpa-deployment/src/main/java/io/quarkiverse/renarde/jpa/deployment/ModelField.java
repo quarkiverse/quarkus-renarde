@@ -147,15 +147,10 @@ public class ModelField {
             this.type = Type.Text;
             min = 1;
             max = 1;
-        } else if (entityField.descriptor.equals("Ljava/lang/Double;")) {
-            this.type = Type.Number;
-            // this allows floats in number fields
-            step = 0.00001;
-        } else if (entityField.descriptor.equals("D")) {
-            this.type = Type.Number;
-            // this allows floats in number fields
-            step = 0.00001;
-        } else if (entityField.descriptor.equals("F")) {
+        } else if (entityField.descriptor.equals("D")
+                || entityField.descriptor.equals("Ljava/lang/Double;")
+                || entityField.descriptor.equals("F")
+                || entityField.descriptor.equals("Ljava/lang/Float;")) {
             this.type = Type.Number;
             // this allows floats in number fields
             step = 0.00001;
@@ -280,8 +275,10 @@ public class ModelField {
                         || supportedValidationAnnotation == DOTNAME_NOT_NULL
                         || supportedValidationAnnotation == DOTNAME_NOT_BLANK) {
                     // don't add it twice
+                    required = true;
                     if (!requiredAdded) {
                         help += "This field is required. ";
+                        requiredAdded = true;
                     }
                 } else if (supportedValidationAnnotation == DOTNAME_URL) {
                     help += "This field must be a URL. ";

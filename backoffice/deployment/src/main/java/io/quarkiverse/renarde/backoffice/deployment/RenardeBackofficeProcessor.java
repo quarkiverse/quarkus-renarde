@@ -682,6 +682,10 @@ public class RenardeBackofficeProcessor {
                     value = m.invokeStaticMethod(
                             MethodDescriptor.ofMethod(BackUtil.class, "doubleWrapperField", Double.class, String.class),
                             parameterValue);
+                } else if (field.entityField.descriptor.equals("Ljava/lang/Float;")) {
+                    value = m.invokeStaticMethod(
+                            MethodDescriptor.ofMethod(BackUtil.class, "floatWrapperField", Float.class, String.class),
+                            parameterValue);
                 } else if (field.type == ModelField.Type.Number) {
                     Class<?> primitiveClass;
                     switch (field.entityField.descriptor) {

@@ -121,6 +121,10 @@ public class BackUtil {
         return isSet(value) ? Long.valueOf(value) : 0;
     }
 
+    public static Float floatWrapperField(String value) {
+        return isSet(value) ? Float.valueOf(value) : 0;
+    }
+
     public static float floatField(String value) {
         return isSet(value) ? Float.valueOf(value) : 0;
     }
