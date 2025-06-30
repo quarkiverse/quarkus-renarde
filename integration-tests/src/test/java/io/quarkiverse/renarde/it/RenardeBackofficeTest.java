@@ -149,7 +149,7 @@ public class RenardeBackofficeTest {
                 .size());
         Assertions.assertEquals(1, document.select(
                 "input[name='wrapperLong'][type='number'][min=" + Long.MIN_VALUE + "][max=" + Long.MAX_VALUE + "][step=1.0]")
-            .size());
+                .size());
         Assertions.assertEquals(1, document.select("input[name='primitiveFloat'][type='number'][step=1.0E-5]").size());
         Assertions.assertEquals(1, document.select("input[name='wrapperFloat'][type='number'][step=1.0E-5]").size());
         Assertions.assertEquals(1, document.select("input[name='primitiveDouble'][type='number'][step=1.0E-5]").size());
@@ -688,16 +688,16 @@ public class RenardeBackofficeTest {
                 .size());
         Assertions.assertEquals(1, document.select(
                 "input[name='wrapperLong'][type='number'][min=" + Long.MIN_VALUE + "][max=" + Long.MAX_VALUE
-                    + "][step=1.0][value=4]")
-            .size());
+                        + "][step=1.0][value=4]")
+                .size());
         Assertions.assertEquals(1,
                 document.select("input[name='primitiveFloat'][type='number'][step=1.0E-5][value=5.0]").size());
         Assertions.assertEquals(1,
-            document.select("input[name='wrapperFloat'][type='number'][step=1.0E-5][value=5.0]").size());
+                document.select("input[name='wrapperFloat'][type='number'][step=1.0E-5][value=5.0]").size());
         Assertions.assertEquals(1,
                 document.select("input[name='primitiveDouble'][type='number'][step=1.0E-5][value=6.0]").size());
         Assertions.assertEquals(1,
-            document.select("input[name='wrapperDouble'][type='number'][step=1.0E-5][value=6.0]").size());
+                document.select("input[name='wrapperDouble'][type='number'][step=1.0E-5][value=6.0]").size());
         Assertions.assertEquals(1,
                 document.select("input[name='primitiveChar'][type='text'][minlength=1][maxlength=1][value='a']").size());
         Assertions.assertEquals(1, document.select("input[name='string'][value='aString']").size());
