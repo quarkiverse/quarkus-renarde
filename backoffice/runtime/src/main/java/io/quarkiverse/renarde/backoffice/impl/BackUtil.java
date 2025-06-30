@@ -109,8 +109,20 @@ public class BackUtil {
         return isSet(value) ? Integer.valueOf(value) : null;
     }
 
+    public static Long longWrapperField(String value) {
+        return isSet(value) ? Long.valueOf(value) : null;
+    }
+
+    public static Double doubleWrapperField(String value) {
+        return isSet(value) ? Double.valueOf(value) : null;
+    }
+
     public static long longField(String value) {
         return isSet(value) ? Long.valueOf(value) : 0;
+    }
+
+    public static Float floatWrapperField(String value) {
+        return isSet(value) ? Float.valueOf(value) : 0;
     }
 
     public static float floatField(String value) {

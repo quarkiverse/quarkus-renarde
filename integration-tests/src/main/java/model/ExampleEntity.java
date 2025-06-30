@@ -37,8 +37,11 @@ public class ExampleEntity extends PanacheEntity {
     public int primitiveInt;
     public Integer wrapperInt;
     public long primitiveLong;
+    public Long wrapperLong;
     public float primitiveFloat;
+    public Float wrapperFloat;
     public double primitiveDouble;
+    public Double wrapperDouble;
     public char primitiveChar;
     @Enumerated
     public ExampleEnum enumeration;

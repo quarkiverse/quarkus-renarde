@@ -147,8 +147,13 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(1, document.select(
                 "input[name='primitiveLong'][type='number'][min=" + Long.MIN_VALUE + "][max=" + Long.MAX_VALUE + "][step=1.0]")
                 .size());
+        Assertions.assertEquals(1, document.select(
+                "input[name='wrapperLong'][type='number'][min=" + Long.MIN_VALUE + "][max=" + Long.MAX_VALUE + "][step=1.0]")
+                .size());
         Assertions.assertEquals(1, document.select("input[name='primitiveFloat'][type='number'][step=1.0E-5]").size());
+        Assertions.assertEquals(1, document.select("input[name='wrapperFloat'][type='number'][step=1.0E-5]").size());
         Assertions.assertEquals(1, document.select("input[name='primitiveDouble'][type='number'][step=1.0E-5]").size());
+        Assertions.assertEquals(1, document.select("input[name='wrapperDouble'][type='number'][step=1.0E-5]").size());
         Assertions.assertEquals(1,
                 document.select("input[name='primitiveChar'][type='text'][minlength=1][maxlength=1]").size());
         Assertions.assertEquals(1, document.select("input[name='string']").size());
@@ -228,8 +233,11 @@ public class RenardeBackofficeTest {
                 .multiPart("primitiveInt", "3")
                 .multiPart("wrapperInt", "3")
                 .multiPart("primitiveLong", "4")
+                .multiPart("wrapperLong", "4")
                 .multiPart("primitiveFloat", "5")
+                .multiPart("wrapperFloat", "5")
                 .multiPart("primitiveDouble", "6")
+                .multiPart("wrapperDouble", "6")
                 .multiPart("primitiveChar", "a")
                 .multiPart("string", "aString")
                 .multiPart("requiredString", "aString")
@@ -274,8 +282,11 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(3, entity.primitiveInt);
         Assertions.assertEquals(3, entity.wrapperInt);
         Assertions.assertEquals(4, entity.primitiveLong);
+        Assertions.assertEquals(4, entity.wrapperLong);
         Assertions.assertEquals(5, entity.primitiveFloat);
+        Assertions.assertEquals(5, entity.wrapperFloat);
         Assertions.assertEquals(6, entity.primitiveDouble);
+        Assertions.assertEquals(6, entity.wrapperDouble);
         Assertions.assertEquals('a', entity.primitiveChar);
         Assertions.assertEquals(date, entity.date);
         Assertions.assertEquals(localDateTime, entity.localDateTime);
@@ -349,16 +360,16 @@ public class RenardeBackofficeTest {
                 .extract().body().asString();
         Document document = Jsoup.parse(html);
         System.err.println(html);
-        checkInvalidItem(document, "input", "nonNullableString", "This field is required.", "Required.");
-        checkInvalidItem(document, "input", "nonEmptyString", "This field is required.", "Required.");
-        checkInvalidItem(document, "input", "nonNullString", "This field is required.", "Required.");
-        checkInvalidItem(document, "input", "nonBlankString", "This field is required.", "Required.");
-        checkInvalidItem(document, "input", "urlString", "This field must be a URL.", "Must be a valid URL.");
+        checkInvalidItem(document, "input", "nonNullableString", "This field is required.", "Required.", true);
+        checkInvalidItem(document, "input", "nonEmptyString", "This field is required.", "Required.", true);
+        checkInvalidItem(document, "input", "nonNullString", "This field is required.", "Required.", true);
+        checkInvalidItem(document, "input", "nonBlankString", "This field is required.", "Required.", true);
+        checkInvalidItem(document, "input", "urlString", "This field must be a URL.", "Must be a valid URL.", false);
         checkInvalidItem(document, "input", "sizeString", "This field must be between 2 and 100 characters.",
-                "Size must be between 2 and 100.");
+                "Size must be between 2 and 100.", false);
         checkInvalidItem(document, "input", "lengthString", "This field must be between 2 and 100 characters.",
-                "Length must be between 2 and 100.");
-        checkInvalidItem(document, "select", "relatedEntity", "This field is required.", "Required.");
+                "Length must be between 2 and 100.", false);
+        checkInvalidItem(document, "select", "relatedEntity", "This field is required.", "Required.", true);
 
         Assertions.assertEquals(0, ConstraintedEntity.count());
 
@@ -395,13 +406,13 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(relatedEntity, entity.relatedEntity);
     }
 
-    private void checkInvalidItem(Document document, String type, String name, String help, String invalid) {
+    private void checkInvalidItem(Document document, String type, String name, String help, String invalid, boolean required) {
         Assertions.assertEquals(1, document.select(type + "[name='" + name + "'][class='form-control is-invalid']").size());
         Assertions.assertEquals(help,
                 document.select(type + "[name='" + name + "'] ~ small.form-text").text());
         Assertions.assertEquals(invalid,
                 document.select(type + "[name='" + name + "'] ~ span.invalid-feedback").text());
-
+        Assertions.assertEquals(document.select(type + "[name='" + name + "']").hasAttr("required"), required);
     }
 
     @Test
@@ -605,8 +616,11 @@ public class RenardeBackofficeTest {
         entity.primitiveInt = 3;
         entity.wrapperInt = 3;
         entity.primitiveLong = 4;
+        entity.wrapperLong = 4L;
         entity.primitiveFloat = 5;
+        entity.wrapperFloat = 5F;
         entity.primitiveDouble = 6;
+        entity.wrapperDouble = 6D;
         entity.primitiveChar = 'a';
         entity.string = "aString";
         entity.lobString = "aString";
@@ -672,10 +686,18 @@ public class RenardeBackofficeTest {
                 "input[name='primitiveLong'][type='number'][min=" + Long.MIN_VALUE + "][max=" + Long.MAX_VALUE
                         + "][step=1.0][value=4]")
                 .size());
+        Assertions.assertEquals(1, document.select(
+                "input[name='wrapperLong'][type='number'][min=" + Long.MIN_VALUE + "][max=" + Long.MAX_VALUE
+                        + "][step=1.0][value=4]")
+                .size());
         Assertions.assertEquals(1,
                 document.select("input[name='primitiveFloat'][type='number'][step=1.0E-5][value=5.0]").size());
         Assertions.assertEquals(1,
+                document.select("input[name='wrapperFloat'][type='number'][step=1.0E-5][value=5.0]").size());
+        Assertions.assertEquals(1,
                 document.select("input[name='primitiveDouble'][type='number'][step=1.0E-5][value=6.0]").size());
+        Assertions.assertEquals(1,
+                document.select("input[name='wrapperDouble'][type='number'][step=1.0E-5][value=6.0]").size());
         Assertions.assertEquals(1,
                 document.select("input[name='primitiveChar'][type='text'][minlength=1][maxlength=1][value='a']").size());
         Assertions.assertEquals(1, document.select("input[name='string'][value='aString']").size());
@@ -769,8 +791,11 @@ public class RenardeBackofficeTest {
                 .multiPart("primitiveInt", "13")
                 .multiPart("wrapperInt", "13")
                 .multiPart("primitiveLong", "14")
+                .multiPart("wrapperLong", "14")
                 .multiPart("primitiveFloat", "15")
+                .multiPart("wrapperFloat", "15")
                 .multiPart("primitiveDouble", "16")
+                .multiPart("wrapperDouble", "16")
                 .multiPart("primitiveChar", "b")
                 .multiPart("string", "otherString")
                 .multiPart("requiredString", "otherString")
@@ -813,8 +838,11 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals(13, entity.primitiveInt);
         Assertions.assertEquals(13, entity.wrapperInt);
         Assertions.assertEquals(14, entity.primitiveLong);
+        Assertions.assertEquals(14, entity.wrapperLong);
         Assertions.assertEquals(15, entity.primitiveFloat);
+        Assertions.assertEquals(15, entity.wrapperFloat);
         Assertions.assertEquals(16, entity.primitiveDouble);
+        Assertions.assertEquals(16, entity.wrapperDouble);
         Assertions.assertEquals('b', entity.primitiveChar);
         Assertions.assertEquals(otherDate, entity.date);
         Assertions.assertEquals(otherLocalDateTime, entity.localDateTime);

@@ -93,6 +93,7 @@ public class ModelField {
     public long min, max;
     public double step;
     public String help;
+    public boolean required;
 
     // For processor
     public EntityField entityField;
@@ -113,6 +114,7 @@ public class ModelField {
         this.signature = field.genericSignature();
         AnnotationInstance oneToOne = field.annotation(DOTNAME_ONETOONE);
         AnnotationInstance column = field.annotation(DOTNAME_COLUMN);
+        AnnotationInstance notNull = field.annotation(DOTNAME_NOT_NULL);
         AnnotationInstance jdbcTypeCode = field.annotation(DOTNAME_JDBC_TYPE_CODE);
         this.id = field.annotation(DOTNAME_ID) != null;
         this.generatedValue = field.annotation(DOTNAME_GENERATED_VALUE) != null;
@@ -145,11 +147,10 @@ public class ModelField {
             this.type = Type.Text;
             min = 1;
             max = 1;
-        } else if (entityField.descriptor.equals("D")) {
-            this.type = Type.Number;
-            // this allows floats in number fields
-            step = 0.00001;
-        } else if (entityField.descriptor.equals("F")) {
+        } else if (entityField.descriptor.equals("D")
+                || entityField.descriptor.equals("Ljava/lang/Double;")
+                || entityField.descriptor.equals("F")
+                || entityField.descriptor.equals("Ljava/lang/Float;")) {
             this.type = Type.Number;
             // this allows floats in number fields
             step = 0.00001;
@@ -224,10 +225,6 @@ public class ModelField {
                         }
                     }
                 }
-                if (this.inverseField == null) {
-                    throw new RuntimeException(
-                            "Failed to find owning side of @ManyToMany from " + field + " in relation type " + relationClass);
-                }
                 this.relationOwner = true;
             }
             FieldInfo relationIdField = findRelationIdField(relationClass, index);
@@ -266,6 +263,7 @@ public class ModelField {
                         && !field.hasAnnotation(DOTNAME_NOT_BLANK)) {
             validation.add(AnnotationInstance.create(DOTNAME_NOT_BLANK, null, Collections.emptyList()));
             help += "This field is required. ";
+            required = true;
             requiredAdded = true;
         }
         for (DotName supportedValidationAnnotation : new DotName[] { DOTNAME_NOT_EMPTY, DOTNAME_NOT_NULL, DOTNAME_NOT_BLANK,
@@ -277,8 +275,10 @@ public class ModelField {
                         || supportedValidationAnnotation == DOTNAME_NOT_NULL
                         || supportedValidationAnnotation == DOTNAME_NOT_BLANK) {
                     // don't add it twice
+                    required = true;
                     if (!requiredAdded) {
                         help += "This field is required. ";
+                        requiredAdded = true;
                     }
                 } else if (supportedValidationAnnotation == DOTNAME_URL) {
                     help += "This field must be a URL. ";
