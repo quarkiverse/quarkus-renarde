@@ -4,7 +4,7 @@
   <parent>
     <groupId>io.quarkiverse.renarde</groupId>
     <artifactId>quarkus-renarde-parent</artifactId>
-    <version>3.1.1</version>
+    <version>3.1.2-SNAPSHOT</version>
   </parent>
   <artifactId>quarkus-renarde-integration-tests</artifactId>
   <name>Quarkus - Renarde - Integration Tests</name>
