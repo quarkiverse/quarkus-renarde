@@ -28,6 +28,7 @@ import io.quarkus.mailer.Mail;
 import io.quarkus.mailer.MailTemplate.MailTemplateInstance;
 import io.quarkus.mailer.MockMailbox;
 import io.quarkus.qute.CheckedTemplate;
+import io.quarkus.qute.Qute;
 import io.quarkus.qute.TemplateInstance;
 import io.quarkus.qute.i18n.Message;
 import io.quarkus.qute.i18n.MessageBundle;
@@ -249,6 +250,16 @@ public class LanguageTest {
                         "Ne doit pas être vide."));
     }
 
+    @Test
+    public void testMissingMessageKey() {
+        RestAssured
+                .given()
+                .get("/message").then()
+                .statusCode(200)
+                .body(Matchers.is(
+                        "english message:english hello message:my_greeting_missing:my.params_missing:english message:english hello message:my_greeting_missing:my.params_missing"));
+    }
+
     public static class MyController extends Controller {
 
         @CheckedTemplate
@@ -312,6 +323,16 @@ public class LanguageTest {
         public String lang(@RestForm String l) {
             i18n.set(l);
             return i18n.getLanguage();
+        }
+
+        @Path("/message")
+        public String message() {
+            return "%s:%s:%s:%s:%s".formatted(
+                    Qute.engine().parse(
+                            "{m:my_greeting}:{m:my.params('hello')}:{m:my_greeting_missing}:{m:my.params_missing('hello')}")
+                            .render(),
+                    i18n.getMessage("my_greeting"), i18n.formatMessage("my.params", "hello"),
+                    i18n.getMessage("my_greeting_missing"), i18n.formatMessage("my.params_missing"));
         }
     }
 
