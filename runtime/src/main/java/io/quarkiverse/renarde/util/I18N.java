@@ -137,11 +137,16 @@ public class I18N {
     }
 
     public String getMessage(String key) {
-        return renardeConfig.getMessage(get(), key);
+        String message = message(key);
+        return message != null ? message : key;
     }
 
     public String formatMessage(String key, Object... params) {
-        String message = getMessage(key);
+        String message = message(key);
         return message != null ? String.format(message, params) : key;
+    }
+
+    private String message(String key) {
+        return renardeConfig.getMessage(getLanguage(), key);
     }
 }
