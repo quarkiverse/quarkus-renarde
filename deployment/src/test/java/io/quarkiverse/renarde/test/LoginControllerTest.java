@@ -1,6 +1,10 @@
 package io.quarkiverse.renarde.test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -71,6 +75,24 @@ public class LoginControllerTest {
                 .statusCode(303)
                 .cookie("QuarkusUser")
                 .header("Location", url.toString());
+
+        String encodedLocationCookie = "http://localhost:8080/admin?url=http%3A%2F%2Flocalhost%3A8080%2Fadmin%2Fpage%3Fparam1%3Dvalue1%26param2%3Dvalue2&param3=value3";
+
+        assertEquals(
+                "http://localhost:8080/admin?url=http://localhost:8080/admin/page?param1=value1&param2=value2&param3=value3",
+                URLDecoder.decode(encodedLocationCookie, StandardCharsets.UTF_8));
+
+        RestAssured
+                .given()
+                .redirects().follow(false)
+                .when()
+                .param("username", "user")
+                .param("password", "secret")
+                .cookie("quarkus-redirect-location", encodedLocationCookie)
+                .post("/_renarde/security/login").then()
+                .statusCode(303)
+                .cookie("QuarkusUser")
+                .header("Location", encodedLocationCookie);
     }
 
     @Test
