@@ -6,10 +6,14 @@ import static org.apache.http.client.params.CookiePolicy.BROWSER_COMPATIBILITY;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
+import java.net.URI;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import jakarta.ws.rs.core.MediaType;
 
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -330,5 +334,38 @@ public class RenardeResourceTest {
                 .then()
                 .statusCode(200)
                 .body(is("OK"));
+    }
+
+    @Test
+    public void testLoginFormEndpoint() {
+        // without redirect_uri param
+        given()
+                .when()
+                .get("/_renarde/security/login")
+                .then()
+                .body(Matchers.not(Matchers.containsString("<input type=\"hidden\" name=\"redirect_uri\"")));
+
+        // with redirect_uri param
+        String queryParam = URI.create("http://localhost:8080/admin/page?param1=value1&param2=value2").toASCIIString();
+
+        given()
+                .when()
+                .queryParam("redirect_uri", queryParam)
+                .get("/_renarde/security/login")
+                .then()
+                .body(Matchers
+                        .containsString("<input type=\"hidden\" name=\"redirect_uri\" value=\"%s\"/>".formatted(queryParam)));
+
+        // with redirect_uri param that includes a URL as one of its query parameters
+        String innerUrl = URLEncoder.encode("http://localhost:8080/other/page?param1=value1&param2=value2",
+                StandardCharsets.UTF_8);
+        queryParam = "http://localhost:8080/admin/page?url=" + URLEncoder.encode(innerUrl, StandardCharsets.UTF_8);
+        given()
+                .when()
+                .queryParam("redirect_uri", queryParam)
+                .get("/_renarde/security/login")
+                .then()
+                .body(Matchers
+                        .containsString("<input type=\"hidden\" name=\"redirect_uri\" value=\"%s\"/>".formatted(queryParam)));
     }
 }
