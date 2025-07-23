@@ -4,6 +4,7 @@
   <div class="card-body">
     <h5 class="card-title">Login required</h5>
 	{#form uri:RenardeFormLoginController.login()}
+	  	{#if redirectQueryParam}<input type="hidden" name="{global:REDIRECT_URI}" value="{redirectQueryParam.raw}"/>{/if}
 		<div class="mb-3">
 			<label for="username" class="form-label">User name</label>
 			<input name="username" id="username" placeholder="User name" value="{inject:flash.get('username')}" class="form-control {#ifError 'username'}is-invalid{/ifError}"/>

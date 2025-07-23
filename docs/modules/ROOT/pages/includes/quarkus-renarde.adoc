@@ -7,9 +7,30 @@ h|[.header-title]##Configuration property##
 h|Type
 h|Default
 
-a|icon:lock[title=Fixed at build time] [[quarkus-renarde_quarkus-renarde-auth-location-cookie]] [.property-path]##link:#quarkus-renarde_quarkus-renarde-auth-location-cookie[`quarkus.renarde.auth.location-cookie`]##
+a|icon:lock[title=Fixed at build time] [[quarkus-renarde_quarkus-renarde-auth-redirect-type]] [.property-path]##link:#quarkus-renarde_quarkus-renarde-auth-redirect-type[`quarkus.renarde.auth.redirect.type`]##
 ifdef::add-copy-button-to-config-props[]
-config_property_copy_button:+++quarkus.renarde.auth.location-cookie+++[]
+config_property_copy_button:+++quarkus.renarde.auth.redirect.type+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Specifies the redirect strategy to use. Defaults to `cookie`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_RENARDE_AUTH_REDIRECT_TYPE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_RENARDE_AUTH_REDIRECT_TYPE+++`
+endif::add-copy-button-to-env-var[]
+--
+a|`cookie`, `query`
+|`cookie`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-renarde_quarkus-renarde-auth-redirect-cookie]] [.property-path]##link:#quarkus-renarde_quarkus-renarde-auth-redirect-cookie[`quarkus.renarde.auth.redirect.cookie`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.renarde.auth.redirect.cookie+++[]
 endif::add-copy-button-to-config-props[]
 
 
@@ -19,10 +40,10 @@ Option to control the name of the cookie used to redirect the user back to where
 
 
 ifdef::add-copy-button-to-env-var[]
-Environment variable: env_var_with_copy_button:+++QUARKUS_RENARDE_AUTH_LOCATION_COOKIE+++[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_RENARDE_AUTH_REDIRECT_COOKIE+++[]
 endif::add-copy-button-to-env-var[]
 ifndef::add-copy-button-to-env-var[]
-Environment variable: `+++QUARKUS_RENARDE_AUTH_LOCATION_COOKIE+++`
+Environment variable: `+++QUARKUS_RENARDE_AUTH_REDIRECT_COOKIE+++`
 endif::add-copy-button-to-env-var[]
 --
 |string
