@@ -2,6 +2,8 @@ package io.quarkiverse.renarde.security;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -26,6 +28,7 @@ import io.quarkiverse.renarde.configuration.RenardeConfig;
 import io.quarkiverse.renarde.impl.RenardeConfigBean;
 import io.quarkiverse.renarde.util.Flash;
 import io.quarkiverse.renarde.util.RedirectException;
+import io.quarkiverse.renarde.util.RenardeJWTAuthMechanism;
 import io.quarkus.security.identity.SecurityIdentity;
 import io.smallrye.jwt.build.Jwt;
 import io.vertx.core.http.HttpServerRequest;
@@ -44,8 +47,11 @@ public class RenardeSecurity {
     @ConfigProperty(name = "quarkus.oidc.authentication.cookie-suffix", defaultValue = "q_session")
     String oidcCookie;
 
-    @ConfigProperty(name = "quarkus.renarde.auth.location-cookie")
+    @ConfigProperty(name = "quarkus.renarde.auth.redirect.cookie")
     String locationCookie;
+
+    @ConfigProperty(name = "quarkus.renarde.auth.redirect.type")
+    RenardeConfig.RenardeAuthConfig.Redirect.Type redirectType;
 
     @Inject
     HttpServerRequest request;
@@ -194,9 +200,20 @@ public class RenardeSecurity {
             // in there being two, which is invalid HTTP
             response.headers().remove(HttpHeaders.LOCATION);
         }
-        ResponseBuilder builder = Response.seeOther(URI.create(config.getLoginPage()));
+
+        String redirectUri;
+        boolean locationCookieEnabled = redirectType == RenardeConfig.RenardeAuthConfig.Redirect.Type.cookie;
+        if (locationCookieEnabled) {
+            redirectUri = config.getLoginPage();
+        } else {
+            redirectUri = "%s?%s=%s".formatted(config.getLoginPage(), RenardeJWTAuthMechanism.REDIRECT_URI,
+                    URLEncoder.encode(request.absoluteURI(), StandardCharsets.UTF_8));
+        }
+
+        ResponseBuilder builder = Response.seeOther(URI.create(redirectUri));
         builder.cookie(makeLogoutCookies());
-        builder.cookie(saveURICookie());
+        if (locationCookieEnabled)
+            builder.cookie(saveURICookie());
 
         flash.flash("message", message);
 
