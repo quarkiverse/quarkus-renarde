@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.net.URL;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
@@ -15,6 +16,7 @@ import jakarta.ws.rs.Path;
 import org.hamcrest.Matchers;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
+import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -29,13 +31,17 @@ import io.quarkus.security.Authenticated;
 import io.quarkus.test.QuarkusUnitTest;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.restassured.RestAssured;
+import io.restassured.response.ExtractableResponse;
+import io.restassured.response.Response;
 
-public class LoginControllerTest {
+public class LoginControllerLocationCookieDisabledTest {
 
     @RegisterExtension
     static final QuarkusUnitTest config = new QuarkusUnitTest()
             .setArchiveProducer(() -> ShrinkWrap.create(JavaArchive.class)
                     .addClasses(MyUser.class, MyUserProvider.class, MyController.class)
+                    .addAsResource(new StringAsset("quarkus.renarde.auth.redirect.type=query"),
+                            "application.properties")
                     .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml"));
 
     @TestHTTPResource
@@ -54,13 +60,22 @@ public class LoginControllerTest {
 
     @Test
     public void testProtectedPageWithoutLogin() {
-        RestAssured
+        String location = RestAssured
                 .given()
                 .redirects().follow(false)
                 .when()
                 .get("/protected").then()
                 .statusCode(302)
-                .header("Location", url + "_renarde/security/login");
+                .extract().header("Location");
+
+        //     expectedEncoded = http://localhost:8081/_renarde/security/login?redirect_uri=http%3A%2F%2Flocalhost%3A8081%2Fprotected
+        String expectedEncoded = url + "_renarde/security/login?redirect_uri="
+                + URLEncoder.encode(url + "protected", StandardCharsets.UTF_8);
+        assertEquals(expectedEncoded, location);
+
+        //     expectedRaw = http://localhost:8081/_renarde/security/login?redirect_uri=http://localhost:8081/protected
+        String expectedRaw = url + "_renarde/security/login?redirect_uri=" + url + "protected";
+        assertEquals(expectedRaw, URLDecoder.decode(location, StandardCharsets.UTF_8));
     }
 
     @Test
@@ -74,13 +89,7 @@ public class LoginControllerTest {
                 .post("/_renarde/security/login").then()
                 .statusCode(303)
                 .cookie("QuarkusUser")
-                .header("Location", url.toString());
-
-        String encodedLocationCookie = "http://localhost:8080/admin?url=http%3A%2F%2Flocalhost%3A8080%2Fadmin%2Fpage%3Fparam1%3Dvalue1%26param2%3Dvalue2&param3=value3";
-
-        assertEquals(
-                "http://localhost:8080/admin?url=http://localhost:8080/admin/page?param1=value1&param2=value2&param3=value3",
-                URLDecoder.decode(encodedLocationCookie, StandardCharsets.UTF_8));
+                .header("Location", url.toString()); // no redirect_uri query param, redirects to root
 
         RestAssured
                 .given()
@@ -88,11 +97,12 @@ public class LoginControllerTest {
                 .when()
                 .param("username", "user")
                 .param("password", "secret")
-                .cookie("quarkus-redirect-location", encodedLocationCookie)
-                .post("/_renarde/security/login").then()
+                .param("redirect_uri", "http://localhost:8080/admin/page?param1=value1&param2=value2")
+                .post("/_renarde/security/login")
+                .then()
                 .statusCode(303)
                 .cookie("QuarkusUser")
-                .header("Location", encodedLocationCookie);
+                .header("Location", "http://localhost:8080/admin/page?param1=value1&param2=value2");
     }
 
     @Test
@@ -108,6 +118,22 @@ public class LoginControllerTest {
                 .header("Location", url + "_renarde/security/login")
                 .extract().cookies();
         Assertions.assertNull(cookies.get("QuarkusUser"));
+
+        ExtractableResponse<Response> response = RestAssured
+                .given()
+                .redirects().follow(false)
+                .when()
+                .param("username", "unknown")
+                .param("password", "secret")
+                .param("redirect_uri", "http://localhost:8080/admin/page?param1=value1&param2=value2")
+                .post("/_renarde/security/login").then().log().ifValidationFails()
+                .statusCode(303)
+                .extract();
+
+        assertEquals(url
+                + "_renarde/security/login?redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fadmin%2Fpage%3Fparam1%3Dvalue1%26param2%3Dvalue2",
+                response.header("Location"));
+        Assertions.assertNull(response.cookies().get("QuarkusUser"));
     }
 
     public static class MyController extends Controller {
@@ -123,11 +149,7 @@ public class LoginControllerTest {
         }
     }
 
-    public static class MyUser implements RenardeUserWithPassword {
-
-        String username;
-        String password;
-
+    public static record MyUser(String username, String password) implements RenardeUserWithPassword {
         @Override
         public Set<String> roles() {
             return Collections.emptySet();
@@ -147,7 +169,6 @@ public class LoginControllerTest {
         public String password() {
             return password;
         }
-
     }
 
     @ApplicationScoped
@@ -156,10 +177,7 @@ public class LoginControllerTest {
         @Override
         public RenardeUser findUser(String tenantId, String authId) {
             if (authId.equals("user")) {
-                MyUser user = new MyUser();
-                user.username = authId;
-                user.password = BcryptUtil.bcryptHash("secret");
-                return user;
+                return new MyUser(authId, BcryptUtil.bcryptHash("secret"));
             }
             return null;
         }
