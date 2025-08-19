@@ -126,7 +126,8 @@ public class JWTTest {
                 .getValues("Set-Cookie")
                 .stream().filter(c -> c.startsWith("quarkus-redirect-location=")).findFirst().get();
 
-        Assertions.assertEquals("quarkus-redirect-location=\"" + uri + "\";Version=1;Path=/", quarkusRedirectCookie);
+        Assertions.assertEquals("quarkus-redirect-location=;Version=1;Path=/;Max-Age=0", quarkusRedirectCookie);
+        //Assertions.assertEquals("quarkus-redirect-location=\"" + uri + "\";Version=1;Path=/", quarkusRedirectCookie);
 
         String flash = response.cookie(Flash.FLASH_COOKIE_NAME);
         Map<String, Object> data = Flash.decodeCookieValue(flash);
