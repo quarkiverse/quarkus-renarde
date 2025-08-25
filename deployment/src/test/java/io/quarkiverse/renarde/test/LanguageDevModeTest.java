@@ -1,7 +1,5 @@
 package io.quarkiverse.renarde.test;
 
-import java.net.URL;
-
 import jakarta.ws.rs.Path;
 
 import org.hamcrest.Matchers;
@@ -9,6 +7,7 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -16,7 +15,6 @@ import io.quarkiverse.renarde.Controller;
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
 import io.quarkus.test.QuarkusDevModeTest;
-import io.quarkus.test.common.http.TestHTTPResource;
 import io.restassured.RestAssured;
 
 public class LanguageDevModeTest {
@@ -34,14 +32,18 @@ public class LanguageDevModeTest {
                             "templates/MyController/typeUnsafe.txt")
 
                     .addAsResource(new StringAsset("quarkus.locales=en,fr\n"
-                            + "quarkus.default-locale=en"), "application.properties")
+                            + "quarkus.default-locale=en\n"
+                            + "quarkus.http.port=8000"), "application.properties")
                     .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml"));
 
-    @TestHTTPResource
-    URL url;
+    @AfterAll
+    static void afterAll() {
+        RestAssured.reset();
+    }
 
     @Test
     public void testAcceptLanguage() {
+        RestAssured.baseURI = "http://localhost:8000";
         RestAssured
                 .given()
                 .header("Accept-Language", "fr")
