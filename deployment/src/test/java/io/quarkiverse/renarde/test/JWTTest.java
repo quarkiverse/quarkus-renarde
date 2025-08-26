@@ -121,12 +121,12 @@ public class JWTTest {
 
         Assertions.assertEquals("QuarkusUser=;Version=1;Path=/;Max-Age=0", quarkusUserCookie);
 
-        // Make sure we saved the original URI
+        // The redirect cookie should now be invalidated
         String quarkusRedirectCookie = response.headers()
                 .getValues("Set-Cookie")
                 .stream().filter(c -> c.startsWith("quarkus-redirect-location=")).findFirst().get();
 
-        Assertions.assertEquals("quarkus-redirect-location=\"" + uri + "\";Version=1;Path=/", quarkusRedirectCookie);
+        Assertions.assertEquals("quarkus-redirect-location=;Version=1;Path=/;Max-Age=0", quarkusRedirectCookie);
 
         String flash = response.cookie(Flash.FLASH_COOKIE_NAME);
         Map<String, Object> data = Flash.decodeCookieValue(flash);

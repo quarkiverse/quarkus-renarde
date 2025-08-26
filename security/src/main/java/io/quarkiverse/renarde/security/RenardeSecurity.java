@@ -161,8 +161,14 @@ public class RenardeSecurity {
         for (String tenant : tenants) {
             cookies.add(invalidateCookie(oidcCookie + "_" + tenant));
         }
+
         // Manual
         cookies.add(invalidateCookie(jwtCookie));
+
+        // Remove the redirect cookie (if it exists and we are using cookie redirection)
+        if (renardeConfig.auth().redirect().type() == RenardeConfig.RenardeAuthConfig.Redirect.Type.cookie) {
+            cookies.add(invalidateCookie(renardeConfig.auth().redirect().cookie()));
+        }
 
         return cookies.toArray(new NewCookie[0]);
     }
