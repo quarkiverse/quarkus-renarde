@@ -26,7 +26,7 @@ Environment variable: `+++QUARKUS_RENARDE_AUTH_REDIRECT_TYPE+++`
 endif::add-copy-button-to-env-var[]
 --
 a|`cookie`, `query`
-|`cookie`
+|`+++cookie+++`
 
 a|icon:lock[title=Fixed at build time] [[quarkus-renarde_quarkus-renarde-auth-redirect-cookie]] [.property-path]##link:#quarkus-renarde_quarkus-renarde-auth-redirect-cookie[`quarkus.renarde.auth.redirect.cookie`]##
 ifdef::add-copy-button-to-config-props[]
@@ -47,7 +47,7 @@ Environment variable: `+++QUARKUS_RENARDE_AUTH_REDIRECT_COOKIE+++`
 endif::add-copy-button-to-env-var[]
 --
 |string
-|`quarkus-redirect-location`
+|`+++quarkus-redirect-location+++`
 
 |===
 
