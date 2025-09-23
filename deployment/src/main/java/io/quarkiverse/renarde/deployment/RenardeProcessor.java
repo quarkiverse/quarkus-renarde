@@ -86,6 +86,7 @@ import io.quarkus.bootstrap.classloading.QuarkusClassLoader;
 import io.quarkus.deployment.ApplicationArchive;
 import io.quarkus.deployment.Capabilities;
 import io.quarkus.deployment.Capability;
+import io.quarkus.deployment.IsLocalDevelopment;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.annotations.ExecutionTime;
@@ -106,6 +107,7 @@ import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildI
 import io.quarkus.deployment.execannotations.ExecutionModelAnnotationsAllowedBuildItem;
 import io.quarkus.deployment.logging.LogCleanupFilterBuildItem;
 import io.quarkus.deployment.util.AsmUtil;
+import io.quarkus.devui.spi.page.CardPageBuildItem;
 import io.quarkus.gizmo.BytecodeCreator;
 import io.quarkus.gizmo.ClassCreator;
 import io.quarkus.gizmo.ClassOutput;
@@ -856,4 +858,12 @@ public class RenardeProcessor {
             logger.infof("Supported locales with messages: %s", languageToPath.keySet());
         }
     }
+
+    @BuildStep(onlyIf = { IsLocalDevelopment.class })
+    public CardPageBuildItem create() {
+        CardPageBuildItem card = new CardPageBuildItem();
+        card.setLogo("renarde-head.svg", "renarde-head.svg");
+        return card;
+    }
+
 }
