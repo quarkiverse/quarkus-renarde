@@ -225,7 +225,8 @@ public class RenardeBackofficeProcessor {
         output.produce(new GeneratedResourceBuildItem(path,
                 rendered.getBytes(StandardCharsets.UTF_8)));
         nativeImageResources.produce(new NativeImageResourceBuildItem(path));
-        templates.produce(new TemplatePathBuildItem(path.substring(10), java.nio.file.Path.of(path), rendered));
+        templates.produce(TemplatePathBuildItem.builder().path(path.substring(10)).fullPath(java.nio.file.Path.of(path))
+                .content(rendered).build());
     }
 
     private void generateEntityController(ClassInfo entityClass, IndexView index, String entityClassName,
