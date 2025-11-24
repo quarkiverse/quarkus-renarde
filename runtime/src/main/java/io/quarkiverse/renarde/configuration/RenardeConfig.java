@@ -45,6 +45,8 @@ public interface RenardeConfig {
         Redirect redirect();
 
         /**
+         * Please do not use and use <code>quarkus.renarde.auth.redirect.cookie</code> instead.
+         *
          * @deprecated use {@link Redirect#cookie()}
          */
         @Deprecated
