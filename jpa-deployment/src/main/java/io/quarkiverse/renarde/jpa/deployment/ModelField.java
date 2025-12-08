@@ -289,6 +289,9 @@ public class ModelField {
                 }
             }
         }
+        if (column != null && column.value("comment") != null && !column.value("comment").asString().isBlank()) {
+            help += column.value("comment").asString();
+        }
         this.entityField = entityField;
     }
 

@@ -18,6 +18,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import org.hibernate.annotations.JdbcTypeCode;
@@ -52,6 +53,13 @@ public class ExampleEntity extends PanacheEntity {
     public LocalTime localTime;
     public LocalDateTime localDateTime;
     public Timestamp timestamp;
+    @Column(comment = "A test comment")
+    public String commentedString;
+    @Column(comment = "A test comment", nullable = false)
+    public String commentedNotNull1String;
+    @NotNull
+    @Column(comment = "A test comment")
+    public String commentedNotNull2String;
 
     @Lob
     public byte[] arrayBlob;
