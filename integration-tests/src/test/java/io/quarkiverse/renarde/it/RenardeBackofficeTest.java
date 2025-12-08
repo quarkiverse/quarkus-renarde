@@ -246,6 +246,8 @@ public class RenardeBackofficeTest {
                 .multiPart("longString2", "aString")
                 .multiPart("longString3", "aString")
                 .multiPart("longString4", "aString")
+                .multiPart("commentedNotNull1String", "aCommentedNotNull1String")
+                .multiPart("commentedNotNull2String", "aCommentedNotNull2String")
                 .multiPart("enumeration", "B")
                 .multiPart("date", JavaExtensions.htmlNormalised(date))
                 .multiPart("timestamp", JavaExtensions.htmlNormalised(localDateTime))
@@ -519,6 +521,8 @@ public class RenardeBackofficeTest {
                 .multiPart("localDateTime", localDateTime.format(JavaExtensions.HTML_NORMALISED_WITHOUT_SECONDS))
                 .multiPart("localTime", localDateTime.format(JavaExtensions.HTML_TIME_WITHOUT_SECONDS))
                 .multiPart("requiredString", "aString")
+                .multiPart("commentedNotNull1String", "aCommentedNotNull1String")
+                .multiPart("commentedNotNull2String", "aCommentedNotNull2String")
                 .multiPart("action", "CreateAndCreateAnother")
                 .redirects().follow(false)
                 .log().ifValidationFails()
@@ -579,7 +583,9 @@ public class RenardeBackofficeTest {
         RequestSpecification requestSpecification = given()
                 .when()
                 .contentType(ContentType.MULTIPART)
-                .multiPart("requiredString", "aString");
+                .multiPart("requiredString", "aString")
+                .multiPart("commentedNotNull1String", "aCommentedNotNull1String")
+                .multiPart("commentedNotNull2String", "aCommentedNotNull2String");
         if (identifiant != null) {
             requestSpecification
                     .multiPart("identifiant", identifiant);
@@ -634,6 +640,9 @@ public class RenardeBackofficeTest {
         entity.localDate = localDateTime.toLocalDate();
         entity.localTime = localDateTime.toLocalTime();
         entity.timestamp = Timestamp.valueOf(localDateTime);
+        entity.commentedString = "aCommentedString";
+        entity.commentedNotNull1String = "aCommentedNotNull1String";
+        entity.commentedNotNull2String = "aCommentedNotNull2String";
         entity.enumeration = ExampleEnum.B;
         entity.oneToOneOwning = oneToOnes.get(0);
         entity.manyToOne = oneToManys.get(0);
@@ -730,6 +739,12 @@ public class RenardeBackofficeTest {
                 + JavaExtensions.htmlNormalised(localDateTime.toLocalTime()) + "']").size());
         Assertions.assertEquals(1, document.select("input[name='timestamp'][type='datetime-local'][value='"
                 + JavaExtensions.htmlNormalised(localDateTime) + "']").size());
+        Assertions.assertEquals("A test comment",
+                document.select("input[name='commentedString'] ~ small.form-text").text());
+        Assertions.assertEquals("This field is required. A test comment",
+                document.select("input[name='commentedNotNull1String'] ~ small.form-text").text());
+        Assertions.assertEquals("This field is required. A test comment",
+                document.select("input[name='commentedNotNull2String'] ~ small.form-text").text());
 
         Elements oneToOneOwning = document.select("select[name='oneToOneOwning']");
         Assertions.assertEquals(1, oneToOneOwning.size());
@@ -804,6 +819,8 @@ public class RenardeBackofficeTest {
                 .multiPart("longString2", "otherString")
                 .multiPart("longString3", "otherString")
                 .multiPart("longString4", "otherString")
+                .multiPart("commentedNotNull1String", "otherCommentedNotNull1String")
+                .multiPart("commentedNotNull2String", "otherCommentedNotNull2String")
                 .multiPart("enumeration", "A")
                 .multiPart("date", JavaExtensions.htmlNormalised(otherDate))
                 .multiPart("localDateTime", JavaExtensions.htmlNormalised(otherLocalDateTime))
@@ -856,6 +873,8 @@ public class RenardeBackofficeTest {
         Assertions.assertEquals("otherString", entity.longString2);
         Assertions.assertEquals("otherString", entity.longString3);
         Assertions.assertEquals("otherString", entity.longString4);
+        Assertions.assertEquals("otherCommentedNotNull1String", entity.commentedNotNull1String);
+        Assertions.assertEquals("otherCommentedNotNull2String", entity.commentedNotNull2String);
         Assertions.assertEquals(ExampleEnum.A, entity.enumeration);
         Assertions.assertEquals(oneToOnes.get(1).id, entity.oneToOneOwning.id);
         Assertions.assertEquals(oneToManys.get(1).id, entity.manyToOne.id);
@@ -889,6 +908,8 @@ public class RenardeBackofficeTest {
         given()
                 .when()
                 .multiPart("requiredString", "otherString")
+                .multiPart("commentedNotNull1String", "aCommentedNotNull1String")
+                .multiPart("commentedNotNull2String", "aCommentedNotNull2String")
                 .multiPart("arrayBlob$unset", "on")
                 .multiPart("sqlBlob$unset", "on")
                 .multiPart("namedBlob$unset", "on")
@@ -1012,6 +1033,8 @@ public class RenardeBackofficeTest {
 
         ExampleEntity entity = new ExampleEntity();
         entity.requiredString = "aString";
+        entity.commentedNotNull1String = "aCommentedNotNull1String";
+        entity.commentedNotNull2String = "aCommentedNotNull2String";
         transact(() -> entity.persist());
 
         Assertions.assertEquals(1, ExampleEntity.count());
@@ -1062,6 +1085,8 @@ public class RenardeBackofficeTest {
 
         ExampleEntity entity = new ExampleEntity();
         entity.requiredString = "aString";
+        entity.commentedNotNull1String = "aCommentedNotNull1String";
+        entity.commentedNotNull2String = "aCommentedNotNull2String";
         entity.arrayBlob = "Hello World".getBytes();
         entity.namedBlob = new NamedBlob("fu.txt", "text/plain", "Stef");
         transact(() -> entity.persist());

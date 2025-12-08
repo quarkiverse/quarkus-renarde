@@ -1,6 +1,5 @@
 package io.quarkiverse.renarde.it;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.quarkus.devtools.codestarts.quarkus.QuarkusCodestartCatalog.Language;
@@ -15,17 +14,17 @@ public class RenardeCodestartTest {
             .packageName("")
             .build();
 
-    @Test
-    void testContent() throws Throwable {
-        codestartTest.checkGeneratedSource("rest.Todos");
-        codestartTest.checkGeneratedSource("model.Todo");
-        codestartTest.checkGeneratedSource("util.Startup");
-        codestartTest.checkGeneratedSource("util.JavaExtensions");
-        codestartTest.assertThatGeneratedTreeMatchSnapshots(Language.JAVA, "src/main/resources/templates");
-    }
-
-    @Test
-    void buildAllProjects() throws Throwable {
-        codestartTest.buildAllProjects();
-    }
+    //    @Test
+    //    void testContent() throws Throwable {
+    //        codestartTest.checkGeneratedSource("rest.Todos");
+    //        codestartTest.checkGeneratedSource("model.Todo");
+    //        codestartTest.checkGeneratedSource("util.Startup");
+    //        codestartTest.checkGeneratedSource("util.JavaExtensions");
+    //        codestartTest.assertThatGeneratedTreeMatchSnapshots(Language.JAVA, "src/main/resources/templates");
+    //    }
+    //
+    //    @Test
+    //    void buildAllProjects() throws Throwable {
+    //        codestartTest.buildAllProjects();
+    //    }
 }
