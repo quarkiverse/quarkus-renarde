@@ -368,4 +368,15 @@ public class RenardeResourceTest {
                 .body(Matchers
                         .containsString("<input type=\"hidden\" name=\"redirect_uri\" value=\"%s\"/>".formatted(queryParam)));
     }
+
+    @Test
+    public void testPatch() {
+        given()
+                .when()
+                .log().all()
+                .patch("/Application/patch")
+                .then()
+                .statusCode(200)
+                .body(is("OK"));
+    }
 }

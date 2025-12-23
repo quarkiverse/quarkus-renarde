@@ -11,6 +11,7 @@ import jakarta.transaction.Transactional.TxType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.MediaType;
@@ -194,6 +195,11 @@ public class Application extends Controller {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @POST
     public String csrfForm4() {
+        return "OK";
+    }
+
+    @PATCH
+    public String patch() {
         return "OK";
     }
 }
