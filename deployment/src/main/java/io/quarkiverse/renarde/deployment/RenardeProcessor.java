@@ -451,7 +451,8 @@ public class RenardeProcessor {
                                     && !isAsync(method.returnType())
                                     && (method.hasAnnotation(ResteasyReactiveDotNames.POST)
                                             || method.hasAnnotation(ResteasyReactiveDotNames.PUT)
-                                            || method.hasAnnotation(ResteasyReactiveDotNames.DELETE))) {
+                                            || method.hasAnnotation(ResteasyReactiveDotNames.DELETE)
+                                            || method.hasAnnotation(ResteasyReactiveDotNames.PATCH))) {
                                 transformationContext.transform().add(DOTNAME_TRANSACTIONAL)
                                         .done();
                             }
@@ -714,7 +715,8 @@ public class RenardeProcessor {
                     && !method.hasAnnotation(ResteasyReactiveDotNames.POST)
                     && !method.hasAnnotation(ResteasyReactiveDotNames.HEAD)
                     && !method.hasAnnotation(ResteasyReactiveDotNames.OPTIONS)
-                    && !method.hasAnnotation(ResteasyReactiveDotNames.DELETE)) {
+                    && !method.hasAnnotation(ResteasyReactiveDotNames.DELETE)
+                    && !method.hasAnnotation(ResteasyReactiveDotNames.PATCH)) {
                 ti.transform().add(ResteasyReactiveDotNames.GET).done();
             }
         }
