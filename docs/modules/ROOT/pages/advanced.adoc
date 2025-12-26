@@ -766,6 +766,88 @@ to set things like document page size, odd/even page margins, etc…:
 
 Note that the default page size is https://en.wikipedia.org/wiki/ISO_216#A_series[A4].
 
+=== Generating images
+
+The best way to generate dynamic images is using Qute templating to render HTML with CSS. Just like for PDF, this is
+simply the easiest way to develop your graphics (using the HTML rendering and browser debug tools) and maintain your
+graphics.
+
+To generate an image, it is exactly the same setup as generating a PDF, except you mark your endpoint as producing
+a PNG:
+
+[source,java]
+----
+public class Application extends Controller {
+
+    @CheckedTemplate
+    public static class Templates {
+        public static native TemplateInstance page();
+    }
+
+    // This will return a PNG file to the caller
+    @Produces(Pdf.IMAGE_PNG)
+    public TemplateInstance png() {
+        return Templates.page();
+    }
+
+    // This will return HTML to the caller
+    public TemplateInstance html() {
+        return Templates.page();
+    }
+}
+----
+
+=== Caveats of HTML rendering and limitations
+
+https://github.com/danfickle/openhtmltopdf[OpenHTMLToPDF], the engine behind the magic, is based on the
+https://github.com/flyingsaucerproject/flyingsaucer[Flying Saucer engine]. It is *not* a browser and never pretends
+to be one. That’s why some designs render beautifully in your browser but fall apart when converted to PDF or PNG.
+
+==== Limited CSS Support
+
+Only CSS 2.1 and a few CSS3 properties are supported.
+The following will not work:
+
+- Flexbox
+- CSS Grid
+- Animations and transitions
+- CSS transforms (`rotate`, `scale`, `translate`)
+- Modern filters (`blur`, `drop-shadow`, `backdrop-filter`)
+- Advanced selectors and pseudo-classes
+
+==== No JavaScript
+
+Anything you generate or animate with JavaScript will be ignored.
+
+==== Partial Transparency
+
+- Effects like:
+- `rgba()`
+- partial opacity
+- semi-transparent shadows
+
+…may look wrong or not render at all.
+
+==== Font Restrictions
+
+- Only `.ttf` fonts are supported.
+- `.otf` files will be ignored, and fallback fonts are limited.
+
+==== Layout Techniques
+
+Browser-era layout systems don’t work here.
+Use:
+
+- tables
+- block-level flow
+- absolute positioning
+
+==== Limited Effects
+
+- Complex `linear-gradient()` or `radial-gradient()` may not appear
+- Shadows with transparency may get flattened
+- Decorative effects might degrade
+
 == Backoffice
 
 WARNING: This is an experimental API and feature, subject to change.
