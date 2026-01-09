@@ -55,7 +55,7 @@ public class RenardeFormLoginController extends Controller {
     public String redirectLocationCookie;
 
     @ConfigProperty(name = "quarkus.renarde.auth.redirect.type")
-    RenardeConfig.RenardeAuthConfig.Redirect.Type redirectType;
+    public RenardeConfig.RenardeAuthConfig.Redirect.Type redirectType;
 
     @Inject
     public HttpHeaders httpHeaders;
