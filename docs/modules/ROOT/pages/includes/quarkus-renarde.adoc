@@ -49,5 +49,28 @@ endif::add-copy-button-to-env-var[]
 |string
 |`+++quarkus-redirect-location+++`
 
+a|icon:lock[title=Fixed at build time] [[quarkus-renarde_quarkus-renarde-auth-location-cookie]] [.property-path]##link:#quarkus-renarde_quarkus-renarde-auth-location-cookie[[.line-through]#`quarkus.renarde.auth.location-cookie`#]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.renarde.auth.location-cookie+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+_This property is deprecated: use `Redirect++#++cookie()`._
+
+Please do not use and use `quarkus.renarde.auth.redirect.cookie` instead.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_RENARDE_AUTH_LOCATION_COOKIE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_RENARDE_AUTH_LOCATION_COOKIE+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|`+++${quarkus.renarde.auth.redirect.cookie}+++`
+
 |===
 
