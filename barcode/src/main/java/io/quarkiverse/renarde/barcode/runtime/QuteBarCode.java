@@ -16,12 +16,12 @@ import io.quarkus.qute.TemplateException;
 public abstract class QuteBarCode implements SectionHelperFactory<QuteBarCode.CustomSectionHelper> {
 
     @FunctionalInterface
-    public static interface BarCodeEncoder {
+    public interface BarCodeEncoder {
         String encode(String value, int width, int height);
     }
 
-    private String name;
-    private BarCodeEncoder encoder;
+    private final String name;
+    private final BarCodeEncoder encoder;
 
     public QuteBarCode(String name, BarCodeEncoder encoder) {
         this.name = name;
@@ -62,10 +62,10 @@ public abstract class QuteBarCode implements SectionHelperFactory<QuteBarCode.Cu
         return new CustomSectionHelper(params, encoder);
     }
 
-    static class CustomSectionHelper implements SectionHelper {
+    public static class CustomSectionHelper implements SectionHelper {
 
-        private Map<String, Expression> params;
-        private BarCodeEncoder encoder;
+        private final Map<String, Expression> params;
+        private final BarCodeEncoder encoder;
 
         public CustomSectionHelper(Map<String, Expression> params, BarCodeEncoder encoder) {
             this.params = params;
