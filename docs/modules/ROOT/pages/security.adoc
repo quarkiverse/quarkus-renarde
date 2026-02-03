@@ -118,7 +118,110 @@ And set those configuration values:
 quarkus.http.auth.proactive=false
 ----
 
-Your entity should extend `RenardeUser` and can look like this:
+=== Out of the box support for form logins
+
+If you don't want to customise your login screen, and are using user/password security, you can opt to implement
+`RenardeUserWithPassword`, and Renarde will take care of the login redirect and use a JWT cookie for your login:
+
+[source,java]
+----
+package model;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
+
+import io.quarkiverse.renarde.security.RenardeUserWithPassword;
+import io.quarkus.hibernate.orm.panache.PanacheEntity;
+
+@Entity
+@Table(name = "user_table")
+public class User extends PanacheEntity implements RenardeUserWithPassword {
+
+    @Column(unique = true)
+    public String userName;
+    public String password;<1>
+
+    @Override
+    public boolean registered(){
+        return true;
+    }
+
+    @Override
+    public Set<String> roles() {
+        return Collections.emptySet();
+    }
+
+    @Override
+    public String userId() {
+        return userName;
+    }
+
+    @Override
+    public String password() {
+        return password;
+    }
+
+    //
+    // Helpers
+
+    public static User findByUserName(String username) {
+        return find("LOWER(userName) = ?1", username.toLowerCase()).firstResult();
+    }
+}
+----
+<1> This assumes BCrypt hashing
+
+Now tell Renarde how to map the JWT cookies to your user model by implementing `RenardeUserProvider`:
+
+[source,java]
+----
+package util;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
+import io.quarkiverse.renarde.security.RenardeSecurity;
+import io.quarkiverse.renarde.security.RenardeUser;
+import io.quarkiverse.renarde.security.RenardeUserProvider;
+import model.User;
+
+@ApplicationScoped
+public class MySecuritySetup implements RenardeUserProvider {
+
+    @Inject
+    RenardeSecurity security;
+
+    @Override
+    public RenardeUser findUser(String tenantId, String id) {
+        return User.findByUserName(id);
+    }
+}
+----
+
+With this, Renarde will make sure that we produce a `user` named bean containing the current user if there is a
+logged-in user. You can then use it in your views with `inject:user` or by injecting it in
+your endpoints.
+
+Renarde also provides a `ControllerWithUser` class which you can extend to access the current user for all controllers
+that need a user.
+
+You will also automatically get a login page with a form when attempting to log in, using your user table.
+
+NOTE: This automatic form is only enabled if you have no `@LoginPage` endpoint, and you have a `RenardeUserWithPassword`
+implementation.
+
+You can now use the `@Authenticated` annotation on your endpoints.
+
+=== Manual user registration and login
+
+If you want to implement a full-fledged user login and registration experience, with passwords, your entity should extend
+`RenardeUser` and can look like this:
 
 [source,java]
 ----
@@ -155,13 +258,14 @@ public class User extends PanacheEntity implements RenardeUser {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     public UserStatus status;
-    
-    public boolean isRegistered(){
+
+    @Override
+    public boolean registered(){
         return status == UserStatus.REGISTERED;
     }
 
     @Override
-    public Set<String> getRoles() {
+    public Set<String> roles() {
         Set<String> roles = new HashSet<>();
         if(isAdmin) {
             roles.add("admin");
@@ -170,7 +274,7 @@ public class User extends PanacheEntity implements RenardeUser {
     }
 
     @Override
-    public String getUserId() {
+    public String userId() {
         return userName;
     }
 
@@ -321,6 +425,7 @@ import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestQuery;
 
 import email.Emails;
+import io.quarkiverse.renarde.security.LoginPage;
 import io.quarkiverse.renarde.security.RenardeSecurity;
 import io.quarkiverse.renarde.router.Router;
 import io.quarkiverse.renarde.util.StringUtils;
@@ -348,6 +453,7 @@ public class Login extends ControllerWithUser<User> {
     /**
      * Login page
      */
+    @LoginPage<1>
     public TemplateInstance login() {
         return Templates.login();
     }
@@ -476,6 +582,7 @@ public class Login extends ControllerWithUser<User> {
     }
 }
 ----
+<1> `@LoginPage` allows you to specify where the user should be redirected when they need to log in.
 
 You can now use the `@Authenticated` and `@RolesAllowed("admin")` annotations on your endpoints.
 
@@ -605,13 +712,14 @@ public class User extends PanacheEntity implements RenardeUser {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     public UserStatus status;
-    
-    public boolean isRegistered(){
+
+    @Override
+    public boolean registered(){
         return status == UserStatus.REGISTERED;
     }
 
     @Override
-    public Set<String> getRoles() {
+    public Set<String> roles() {
         Set<String> roles = new HashSet<>();
         if(isAdmin) {
             roles.add("admin");
@@ -620,7 +728,7 @@ public class User extends PanacheEntity implements RenardeUser {
     }
 
     @Override
-    public String getUserId() {
+    public String userId() {
         return userName;
     }
 
@@ -730,7 +838,7 @@ public class MySecuritySetup implements RenardeUserProvider, RenardeOidcHandler 
 
             // go to registration
             uri = Router.getURI(Login::confirm, user.confirmationCode);
-        } else if(!user.isRegistered()) {
+        } else if(!user.registered()) {
             // user exists, but not fully registered yet
             // go to registration
             uri = Router.getURI(Login::confirm, user.confirmationCode);
@@ -756,7 +864,7 @@ public class MySecuritySetup implements RenardeUserProvider, RenardeOidcHandler 
         }
         // redirect to registration
         URI uri;
-        if(!user.isRegistered()) {
+        if(!user.registered()) {
             uri = Router.getURI(Login::confirm, ((User)user).confirmationCode);
         } else {
             flash.flash("message", "Already logged in");
