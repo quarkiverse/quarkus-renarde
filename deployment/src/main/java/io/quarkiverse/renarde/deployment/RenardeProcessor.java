@@ -747,7 +747,11 @@ public class RenardeProcessor {
             BuildProducer<ExcludedControllerBuildItem> excludedControllerBuildItems,
             BuildProducer<ExcludedTypeBuildItem> excludedTypeBuildItems,
             BuildProducer<BuildTimeConditionBuildItem> buildTimeConditionBuildItems) {
-        if (indexBuildItem.getIndex().getAllKnownImplementors(DOTNAME_USER_WITH_PASSWORD).isEmpty()) {
+        // we can't support this controller unless we have an implementation of RenardeUserWithPassword
+        // but we also disable this if the user has his own @LoginPage, because it's redundant
+        if (indexBuildItem.getIndex().getAllKnownImplementors(DOTNAME_USER_WITH_PASSWORD).isEmpty()
+                // There is always 1 in DOTNAME_RENARDE_FORM_LOGIN_CONTROLLER, which we ignore if the user has another one
+                || indexBuildItem.getIndex().getAnnotations(DOTNAME_LOGIN_PAGE).size() > 1) {
             // for Renarde
             excludedControllerBuildItems.produce(new ExcludedControllerBuildItem(DOTNAME_RENARDE_FORM_LOGIN_CONTROLLER));
             // for RESTEasy Reactive

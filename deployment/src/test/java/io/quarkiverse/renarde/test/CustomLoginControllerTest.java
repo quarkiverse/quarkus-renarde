@@ -29,6 +29,7 @@ import io.quarkiverse.renarde.security.LoginPage;
 import io.quarkiverse.renarde.security.RenardeSecurity;
 import io.quarkiverse.renarde.security.RenardeUser;
 import io.quarkiverse.renarde.security.RenardeUserProvider;
+import io.quarkiverse.renarde.security.RenardeUserWithPassword;
 import io.quarkus.elytron.security.common.BcryptUtil;
 import io.quarkus.security.Authenticated;
 import io.quarkus.test.QuarkusUnitTest;
@@ -156,7 +157,7 @@ public class CustomLoginControllerTest {
         }
     }
 
-    public static class MyUser implements RenardeUser {
+    public static class MyUser implements RenardeUserWithPassword {
 
         String username;
         String password;
@@ -174,6 +175,11 @@ public class CustomLoginControllerTest {
         @Override
         public boolean registered() {
             return true;
+        }
+
+        @Override
+        public String password() {
+            return password;
         }
     }
 
