@@ -159,6 +159,16 @@ public class RenardeProcessor {
 
     private static final String FEATURE = "renarde";
 
+    private static final String[] OPENHTMLTOPDF_NATIVE_RUNTIME = new String[] {
+            // This causes the pdfbox to log at static init time, which creates a JUL which is forbidden
+            "com.openhtmltopdf.resource.FSEntityResolver",
+            // These call java/awt stuff at static init, which may initialise Java2D
+            "com.openhtmltopdf.java2d.image.AWTFSImage",
+            "com.openhtmltopdf.java2d.image.AWTFSImage$NullImage",
+            "com.openhtmltopdf.pdfboxout.PdfBoxFastOutputDevice",
+            // This one initialises fonts at build time
+            "com.openhtmltopdf.pdfboxout.fontstore.AbstractFontStore$BuiltinFontStore",
+    };
     private static final String PDFBOX_PROBLEMATIC_CLASS = "org.apache.pdfbox.pdmodel.encryption.PublicKeySecurityHandler";
     private static final String PDF_RESPONSE_HANDLER_CLASS = "io.quarkiverse.renarde.pdf.runtime.PdfResponseHandler";
 
@@ -176,25 +186,13 @@ public class RenardeProcessor {
             BuildProducer<NativeImageResourceDirectoryBuildItem> resource) {
         // If we have the renarde-pdf module, we'll see this class
         if (QuarkusClassLoader.isClassPresentAtRuntime(PDF_RESPONSE_HANDLER_CLASS)) {
-            // Perhaps try to unify with https://github.com/quarkiverse/quarkus-pdfbox ?
-
             // This one needs to be initialised at runtime on jdk21/graalvm 23.1 because setting the logger starts the java2d disposer thread
             runtimeInitializedClassBuildItem.produce(new RuntimeInitializedClassBuildItem(PDF_RESPONSE_HANDLER_CLASS));
-            // This one starts some crypto stuff
-            runtimeInitializedClassBuildItem.produce(new RuntimeInitializedClassBuildItem(PDFBOX_PROBLEMATIC_CLASS));
-            // This is started by anybody doing graphics at startup time, including pdfbox instantiating an empty image
-            runtimeInitializedClassBuildItem.produce(new RuntimeInitializedClassBuildItem("sun.java2d.Disposer"));
-            // This causes the pdfbox to log at static init time, which creates a JUL which is forbidden
-            runtimeInitializedClassBuildItem
-                    .produce(new RuntimeInitializedClassBuildItem("com.openhtmltopdf.resource.FSEntityResolver"));
-            // These call java/awt stuff at static init, which may initialise Java2D
-            runtimeInitializedClassBuildItem
-                    .produce(new RuntimeInitializedClassBuildItem("com.openhtmltopdf.java2d.image.AWTFSImage"));
-            runtimeInitializedClassBuildItem
-                    .produce(new RuntimeInitializedClassBuildItem("com.openhtmltopdf.java2d.image.AWTFSImage$NullImage"));
-            runtimeInitializedClassBuildItem
-                    .produce(new RuntimeInitializedClassBuildItem("com.openhtmltopdf.pdfboxout.PdfBoxFastOutputDevice"));
-            // These are needed at runtime for native image, and missing from quarkiverse-pdfbox
+            for (String klass : OPENHTMLTOPDF_NATIVE_RUNTIME) {
+                runtimeInitializedClassBuildItem
+                        .produce(new RuntimeInitializedClassBuildItem(klass));
+            }
+            // These are needed at runtime for native image for openhtmltopdf
             nativeImageResourceBuildItem.produce(
                     new NativeImageResourceBuildItem(List.of("resources/css/XhtmlNamespaceHandler.css",
                             "resources/schema/openhtmltopdf/catalog-special.xml",
