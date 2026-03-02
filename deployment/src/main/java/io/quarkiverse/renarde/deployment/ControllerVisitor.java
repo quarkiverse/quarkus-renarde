@@ -228,15 +228,28 @@ public class ControllerVisitor implements BiFunction<String, ClassVisitor, Class
                 visitor.visitVarInsn(Opcodes.ALOAD, 1);
                 visitor.visitIntInsn(Opcodes.BIPUSH, index);
                 visitor.visitInsn(Opcodes.AALOAD);
-                if (parameterType.kind() == Kind.PRIMITIVE) {
-                    unboxOrWidenIfRequired(visitor, parameterType);
-                } else if (parameterType.name().equals(DOTNAME_OPTIONAL)) {
+                if (parameterType.name().equals(DOTNAME_OPTIONAL)) {
                     // wrap into an optional, unless already optional,
                     // because this is called from both Router.getURI with optional values, and Qute which does not have optional values
                     visitor.visitMethodInsn(Opcodes.INVOKESTATIC, Router.class.getName().replace('.', '/'), "ofNullable",
                             "(Ljava/lang/Object;)Ljava/util/Optional;", false);
                 } else {
-                    visitor.visitTypeInsn(Opcodes.CHECKCAST, parameterType.name().toString('/'));
+                    // Boxing is required because LDC cannot load primitive class constants (e.g. int.class)
+                    org.objectweb.asm.Type asmType;
+                    if (parameterType.kind() == Kind.PRIMITIVE) {
+                        asmType = AsmUtil.autobox(org.objectweb.asm.Type.getType(parameterType.descriptor()));
+                    } else {
+                        asmType = org.objectweb.asm.Type.getObjectType(parameterType.name().toString('/'));
+                    }
+                    // Convert String values (e.g. from Qute templates) to the expected type via Router.convertParam(Object, Class)
+                    visitor.visitLdcInsn(asmType);
+                    visitor.visitMethodInsn(Opcodes.INVOKESTATIC, ROUTER_BINARY_NAME, "convertParam",
+                            "(Ljava/lang/Object;Ljava/lang/Class;)Ljava/lang/Object;", false);
+                    if (parameterType.kind() == Kind.PRIMITIVE) {
+                        unboxOrWidenIfRequired(visitor, parameterType);
+                    } else {
+                        visitor.visitTypeInsn(Opcodes.CHECKCAST, parameterType.name().toString('/'));
+                    }
                 }
 
                 visitor.visitJumpInsn(Opcodes.GOTO, end);
