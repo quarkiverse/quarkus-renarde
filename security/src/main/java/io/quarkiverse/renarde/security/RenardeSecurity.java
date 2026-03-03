@@ -155,18 +155,24 @@ public class RenardeSecurity {
         Set<String> tenants = tenantProvider.getTenants();
         List<NewCookie> cookies = new ArrayList<>(tenants.size() + 1);
         // Default tenant
-        cookies.add(invalidateCookie(oidcCookie));
-
+        if (request.getCookie(oidcCookie) != null) {
+            cookies.add(invalidateCookie(oidcCookie));
+        }
         // Named tenants
         for (String tenant : tenants) {
-            cookies.add(invalidateCookie(oidcCookie + "_" + tenant));
+            String cookieName = oidcCookie + "_" + tenant;
+            if (request.getCookie(cookieName) != null) {
+                cookies.add(invalidateCookie(cookieName));
+            }
         }
 
         // Manual
-        cookies.add(invalidateCookie(jwtCookie));
+        if (request.getCookie(jwtCookie) != null) {
+            cookies.add(invalidateCookie(jwtCookie));
+        }
 
-        // Remove the redirect cookie (if it exists and we are using cookie redirection)
-        if (renardeConfig.auth().redirect().type() == RenardeConfig.RenardeAuthConfig.Redirect.Type.cookie) {
+        // Remove the redirect cookie (if it exists)
+        if (request.getCookie(renardeConfig.auth().redirect().cookie()) != null) {
             cookies.add(invalidateCookie(renardeConfig.auth().redirect().cookie()));
         }
 
@@ -215,6 +221,10 @@ public class RenardeSecurity {
             redirectUri = "%s?%s=%s".formatted(config.getLoginPage(), RenardeJWTAuthMechanism.REDIRECT_URI,
                     URLEncoder.encode(request.absoluteURI(), StandardCharsets.UTF_8));
         }
+
+        // Remove any redirect cookie set by the auth challenge (storeInitialLocation in getChallenge),
+        // since saveURICookie() will set it.
+        response.removeCookies(locationCookie, false);
 
         ResponseBuilder builder = Response.seeOther(URI.create(redirectUri));
         builder.cookie(makeLogoutCookies());

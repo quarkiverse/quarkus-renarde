@@ -1,6 +1,7 @@
 package io.quarkiverse.renarde.oidc.impl;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -25,6 +26,7 @@ public class RenardeOidcTenantProvider implements RenardeTenantProvider {
 
     @Override
     public Set<String> getTenants() {
-        return oidcConfig.namedTenants().keySet();
+        return oidcConfig.namedTenants().keySet().stream().filter(tenant -> !"<default>".equals(tenant))
+                .collect(Collectors.toSet());
     }
 }

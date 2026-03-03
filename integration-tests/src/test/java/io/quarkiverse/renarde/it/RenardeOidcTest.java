@@ -3,6 +3,10 @@ package io.quarkiverse.renarde.it;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.containsString;
 
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.apache.http.client.CookieStore;
 import org.apache.http.cookie.Cookie;
 import org.junit.jupiter.api.Assertions;
@@ -135,7 +139,7 @@ public class RenardeOidcTest {
                 .statusCode(200);
 
         // now logout
-        String logoutCookie = given()
+        List<String> setCookies = given()
                 .when()
                 .filter(cookieFilter)
                 .redirects().follow(false)
@@ -147,11 +151,11 @@ public class RenardeOidcTest {
                 // check cookie exists
                 .cookie(cookieName)
                 .extract().headers()
-                .getValues("Set-Cookie")
-                .stream().filter(c -> c.startsWith("QuarkusUser=")).findFirst().get();
+                .getValues("Set-Cookie");
 
-        Assertions.assertEquals("QuarkusUser=;Version=1;Path=/;Max-Age=0", logoutCookie);
-
+        Assertions.assertEquals(Set.of(cookieName, "_renarde_flash", "csrf-token"),
+                setCookies.stream().map(c -> c.split("=", 2)[0]).collect(Collectors.toSet()));
+        Assertions.assertTrue(setCookies.contains(cookieName + "=;Version=1;Path=/;Max-Age=0"));
     }
 
     private Object findCookie(CookieStore cookieStore, String name) {
