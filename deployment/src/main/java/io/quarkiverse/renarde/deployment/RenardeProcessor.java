@@ -522,9 +522,36 @@ public class RenardeProcessor {
                         }
                         methodCreator.invokeStaticMethod(
                                 MethodDescriptor.ofMethod(Router.class, "registerRoute", void.class, String.class,
-                                        RouterMethod.class),
+                                        int.class, RouterMethod.class),
                                 methodCreator.load(simpleControllerName + "." + method.name),
+                                methodCreator.load(method.uriParamCount),
                                 function.getInstance());
+                    }
+                    // Validate: no two overloaded methods should have the same uriParamCount
+                    // with different URI templates. Same-count overloads that produce the
+                    // same URI (e.g. GET login() and POST login(@RestForm ...)) are fine.
+                    Map<String, List<ControllerMethod>> methodsByName = new HashMap<>();
+                    for (ControllerMethod method : controllerClass.getMethods(methodsByClass).values()) {
+                        methodsByName.computeIfAbsent(method.name, k -> new ArrayList<>()).add(method);
+                    }
+                    for (Map.Entry<String, List<ControllerMethod>> entry : methodsByName.entrySet()) {
+                        List<ControllerMethod> overloads = entry.getValue();
+                        if (overloads.size() <= 1)
+                            continue;
+                        // Group by uriParamCount, then check URI templates within each group
+                        Map<Integer, Set<String>> templatesByCount = new HashMap<>();
+                        for (ControllerMethod m : overloads) {
+                            Set<String> templates = templatesByCount.computeIfAbsent(m.uriParamCount,
+                                    k -> new HashSet<>());
+                            templates.add(m.uriTemplate());
+                            if (templates.size() > 1) {
+                                throw new RuntimeException(
+                                        "Ambiguous route \"" + simpleControllerName + "." + entry.getKey()
+                                                + "\": multiple overloads have " + m.uriParamCount
+                                                + " URI parameter(s) but different URI templates. "
+                                                + "Rename one of the methods to disambiguate.");
+                            }
+                        }
                     }
                 }
                 methodCreator.returnValue(null);

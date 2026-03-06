@@ -40,6 +40,7 @@ import io.restassured.RestAssured;
  * Tests that URI building from Qute templates correctly converts String parameter values
  * to the expected types (UUID, int, long, etc.) without ClassCastException.
  */
+// TODO: de mporw na ta valw se ena test mono
 public class ParamConversionTest {
 
     @RegisterExtension
@@ -176,6 +177,65 @@ public class ParamConversionTest {
             RestAssured.given().urlEncodingEnabled(false).when().get(endpoint[0])
                     .then().statusCode(200).body(Matchers.is(endpoint[1]));
         }
+    }
+
+    @Test
+    public void testRouterGetUri() {
+        String body = RestAssured.when().get("/router-uris").then()
+                .statusCode(200)
+                .extract().body().asString();
+        String[] expectedUris = {
+                // Primitive types
+                "/TypedController/withInt/42?q=99",
+                "/TypedController/withLong/123456789?q=7",
+                "/TypedController/withBoolean/true?q=false",
+                "/TypedController/withDouble/3.14?q=1.5",
+                "/TypedController/withFloat/2.5?q=9.81",
+                "/TypedController/withShort/100?q=5",
+                "/TypedController/withByte/6?q=3",
+                "/TypedController/withChar/7?q=y",
+                // Boxed types
+                "/TypedController/withBoxedInt/42?q=99",
+                "/TypedController/withBoxedLong/123456789?q=7",
+                "/TypedController/withBoxedBoolean/true?q=false",
+                "/TypedController/withBoxedDouble/3.14?q=1.5",
+                "/TypedController/withBoxedFloat/2.5?q=9.81",
+                "/TypedController/withBoxedShort/100?q=5",
+                "/TypedController/withBoxedByte/7?q=3",
+                "/TypedController/withBoxedChar/x?q=y",
+                // Reference types
+                "/TypedController/withUuid/550e8400-e29b-41d4-a716-446655440000?q=660e8400-e29b-41d4-a716-446655440000",
+                "/TypedController/withString/hello?q=world",
+                "/TypedController/withBigDecimal/99.99?q=123.45",
+                "/TypedController/withBigInteger/999999999999?q=123",
+                "/TypedController/withLocalDate/2025-06-15?q=2025-07-20",
+                "/TypedController/withLocalDateTime/2025-06-15T10:30?q=2025-07-20T14%3A00",
+                "/TypedController/withLocalTime/10:30?q=14%3A00",
+                "/TypedController/withInstant/2025-06-15T10:30:00Z?q=2025-07-20T14%3A00%3A00Z",
+                "/TypedController/withEnum/ACTIVE?q=INACTIVE",
+                // URL-encoded values
+                "/TypedController/withString/hello%20world?q=foo%26bar%3Dbaz",
+                "/TypedController/withUri/https:%2F%2Fexample.com%2Fpath%3Ffoo=bar?q=https%3A%2F%2Fother.com%3Fbaz%3D1%26x%3D2",
+                // Optional query param: present and absent
+                "/TypedController/withOptionalQuery/42?q=99",
+                "/TypedController/withOptionalQuery/42",
+        };
+        String[] lines = body.split("\n");
+        assertEquals(expectedUris.length, lines.length,
+                "Expected " + expectedUris.length + " URIs but got " + lines.length);
+        for (int i = 0; i < expectedUris.length; i++) {
+            assertEquals(expectedUris[i], lines[i], "URI mismatch at line " + i);
+        }
+    }
+
+    @Test
+    public void testRouterGetAbsoluteUri() {
+        String body = RestAssured.when().get("/router-absolute-uri").then()
+                .statusCode(200)
+                .extract().body().asString();
+        assertTrue(body.startsWith("http://"), "Absolute URI should start with http:// but was: " + body);
+        assertTrue(body.endsWith("/TypedController/withInt/42?q=99"),
+                "Absolute URI should end with expected path but was: " + body);
     }
 
     @Test
@@ -438,6 +498,63 @@ public class ParamConversionTest {
 
         public String withOptionalQuery(@RestPath int id, @RestQuery Optional<Integer> q) {
             return id + "|" + q.orElse(null);
+        }
+
+        @Path("/router-uris")
+        public String routerUris() {
+            return String.join("\n",
+                    // Primitive types
+                    Router.getURI(TypedController::withInt, 42, 99).toString(),
+                    Router.getURI(TypedController::withLong, 123456789L, 7L).toString(),
+                    Router.getURI(TypedController::withBoolean, true, false).toString(),
+                    Router.getURI(TypedController::withDouble, 3.14, 1.5).toString(),
+                    Router.getURI(TypedController::withFloat, 2.5f, 9.81f).toString(),
+                    Router.getURI(TypedController::withShort, (short) 100, (short) 5).toString(),
+                    Router.getURI(TypedController::withByte, (byte) 6, (byte) 3).toString(),
+                    Router.getURI(TypedController::withChar, '7', 'y').toString(),
+                    // Boxed types
+                    Router.getURI(TypedController::withBoxedInt, 42, 99).toString(),
+                    Router.getURI(TypedController::withBoxedLong, 123456789L, 7L).toString(),
+                    Router.getURI(TypedController::withBoxedBoolean, true, false).toString(),
+                    Router.getURI(TypedController::withBoxedDouble, 3.14, 1.5).toString(),
+                    Router.getURI(TypedController::withBoxedFloat, 2.5f, 9.81f).toString(),
+                    Router.getURI(TypedController::withBoxedShort, (short) 100, (short) 5).toString(),
+                    Router.getURI(TypedController::withBoxedByte, (byte) 7, (byte) 3).toString(),
+                    Router.getURI(TypedController::withBoxedChar, 'x', 'y').toString(),
+                    // Reference types
+                    Router.getURI(TypedController::withUuid,
+                            UUID.fromString("550e8400-e29b-41d4-a716-446655440000"),
+                            UUID.fromString("660e8400-e29b-41d4-a716-446655440000")).toString(),
+                    Router.getURI(TypedController::withString, "hello", "world").toString(),
+                    Router.getURI(TypedController::withBigDecimal,
+                            new BigDecimal("99.99"), new BigDecimal("123.45")).toString(),
+                    Router.getURI(TypedController::withBigInteger,
+                            new BigInteger("999999999999"), new BigInteger("123")).toString(),
+                    Router.getURI(TypedController::withLocalDate,
+                            LocalDate.of(2025, 6, 15), LocalDate.of(2025, 7, 20)).toString(),
+                    Router.getURI(TypedController::withLocalDateTime,
+                            LocalDateTime.of(2025, 6, 15, 10, 30),
+                            LocalDateTime.of(2025, 7, 20, 14, 0)).toString(),
+                    Router.getURI(TypedController::withLocalTime,
+                            LocalTime.of(10, 30), LocalTime.of(14, 0)).toString(),
+                    Router.getURI(TypedController::withInstant,
+                            Instant.parse("2025-06-15T10:30:00Z"),
+                            Instant.parse("2025-07-20T14:00:00Z")).toString(),
+                    Router.getURI(TypedController::withEnum,
+                            MyStatus.ACTIVE, MyStatus.INACTIVE).toString(),
+                    // URL-encoded values
+                    Router.getURI(TypedController::withString, "hello world", "foo&bar=baz").toString(),
+                    Router.getURI(TypedController::withUri,
+                            URI.create("https://example.com/path?foo=bar"),
+                            URI.create("https://other.com?baz=1&x=2")).toString(),
+                    // Optional query param: present and absent
+                    Router.getURI(TypedController::withOptionalQuery, 42, Optional.of(99)).toString(),
+                    Router.getURI(TypedController::withOptionalQuery, 42, Optional.empty()).toString());
+        }
+
+        @Path("/router-absolute-uri")
+        public String routerAbsoluteUri() {
+            return Router.getAbsoluteURI(TypedController::withInt, 42, 99).toString();
         }
     }
 }
