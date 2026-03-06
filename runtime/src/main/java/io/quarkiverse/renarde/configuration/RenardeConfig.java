@@ -45,6 +45,13 @@ public interface RenardeConfig {
         Redirect redirect();
 
         /**
+         * When true, authentication cookies use {@code quarkus.http.root-path} as their path.
+         * When false, cookies use {@code "/"}.
+         */
+        @WithDefault("true")
+        boolean scopeCookiesToRootPath();
+
+        /**
          * Please do not use and use <code>quarkus.renarde.auth.redirect.cookie</code> instead.
          *
          * @deprecated use {@link Redirect#cookie()}
