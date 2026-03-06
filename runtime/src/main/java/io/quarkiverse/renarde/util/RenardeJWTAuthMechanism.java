@@ -12,6 +12,7 @@ import org.jboss.logging.Logger;
 
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.quarkiverse.renarde.configuration.RenardeConfig;
+import io.quarkiverse.renarde.configuration.RenardeConfig.RenardeAuthConfig;
 import io.quarkiverse.renarde.impl.RenardeConfigBean;
 import io.quarkus.qute.TemplateGlobal;
 import io.quarkus.smallrye.jwt.runtime.auth.JWTAuthMechanism;
@@ -45,6 +46,12 @@ public class RenardeJWTAuthMechanism extends JWTAuthMechanism {
     @ConfigProperty(name = "quarkus.renarde.auth.redirect.type")
     RenardeConfig.RenardeAuthConfig.Redirect.Type redirectType;
 
+    @Inject
+    RenardeConfig renardeConfig;
+
+    @ConfigProperty(name = "quarkus.http.root-path", defaultValue = "/")
+    String rootPath;
+
     // for CDI proxy
     RenardeJWTAuthMechanism() {
         this(null);
@@ -61,7 +68,7 @@ public class RenardeJWTAuthMechanism extends JWTAuthMechanism {
 
     protected void storeInitialLocation(final RoutingContext exchange) {
         exchange.response().addCookie(Cookie.cookie(locationCookie, exchange.request().absoluteURI())
-                .setPath("/").setSecure(exchange.request().isSSL()));
+                .setPath(renardeConfig.auth().scopeCookiesToRootPath() ? rootPath : "/").setSecure(exchange.request().isSSL()));
     }
 
     static Uni<ChallengeData> getRedirect(final RoutingContext exchange, final String location) {

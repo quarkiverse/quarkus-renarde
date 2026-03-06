@@ -128,6 +128,7 @@ import io.quarkus.runtime.StartupEvent;
 import io.quarkus.smallrye.jwt.deployment.GenerateEncryptedDevModeJwtKeysBuildItem;
 import io.quarkus.smallrye.jwt.deployment.GeneratePersistentDevModeJwtKeysBuildItem;
 import io.quarkus.smallrye.jwt.runtime.auth.JWTAuthMechanism;
+import io.quarkus.vertx.http.deployment.HttpRootPathBuildItem;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 
@@ -766,7 +767,8 @@ public class RenardeProcessor {
     @Record(ExecutionTime.STATIC_INIT)
     void configureLoginPage(RenardeRecorder recorder,
             LoginPageBuildItem loginPageBuildItem,
-            BeanContainerBuildItem beanContainerBuildItem) {
+            BeanContainerBuildItem beanContainerBuildItem,
+            HttpRootPathBuildItem httpRootPath) {
         String loginPage;
         if (loginPageBuildItem != null) {
             loginPage = loginPageBuildItem.uri;
@@ -794,7 +796,32 @@ public class RenardeProcessor {
                 loginPage = "/";
             }
         }
+        loginPage = prependRootPath(httpRootPath.getRootPath(), loginPage);
         recorder.configureLoginPage(beanContainerBuildItem.getValue(), loginPage);
+    }
+
+    /**
+     * Prepends the HTTP root path to the given path.
+     * <p>
+     * If the root path is {@code "/"}, the path is returned unchanged.
+     * If the given path is {@code "/"}, only the root path is returned.
+     * Otherwise, the root path is prepended to the path, taking care to avoid double slashes.
+     *
+     * @param rootPath the HTTP root path (e.g. {@code "/my-app"} or {@code "/"})
+     * @param path the path to prepend the root path to (e.g. {@code "/_renarde/security/login"})
+     * @return the path with the root path prepended (e.g. {@code "/my-app/_renarde/security/login"})
+     */
+    private static String prependRootPath(String rootPath, String path) {
+        if (rootPath.equals("/")) {
+            return path;
+        }
+        if (rootPath.endsWith("/")) {
+            rootPath = rootPath.substring(0, rootPath.length() - 1);
+        }
+        if (path.equals("/")) {
+            return rootPath;
+        }
+        return rootPath + path;
     }
 
     @BuildStep

@@ -49,6 +49,27 @@ endif::add-copy-button-to-env-var[]
 |string
 |`+++quarkus-redirect-location+++`
 
+a|icon:lock[title=Fixed at build time] [[quarkus-renarde_quarkus-renarde-auth-scope-cookies-to-root-path]] [.property-path]##link:#quarkus-renarde_quarkus-renarde-auth-scope-cookies-to-root-path[`quarkus.renarde.auth.scope-cookies-to-root-path`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.renarde.auth.scope-cookies-to-root-path+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+When true, authentication cookies use `quarkus.http.root-path` as their path. When false, cookies use `"/"`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_RENARDE_AUTH_SCOPE_COOKIES_TO_ROOT_PATH+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_RENARDE_AUTH_SCOPE_COOKIES_TO_ROOT_PATH+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++true+++`
+
 a|icon:lock[title=Fixed at build time] [[quarkus-renarde_quarkus-renarde-auth-location-cookie]] [.property-path]##link:#quarkus-renarde_quarkus-renarde-auth-location-cookie[[.line-through]#`quarkus.renarde.auth.location-cookie`#]##
 ifdef::add-copy-button-to-config-props[]
 config_property_copy_button:+++quarkus.renarde.auth.location-cookie+++[]

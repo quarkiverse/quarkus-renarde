@@ -47,6 +47,9 @@ public class RenardeSecurity {
     @ConfigProperty(name = "quarkus.oidc.authentication.cookie-suffix", defaultValue = "q_session")
     String oidcCookie;
 
+    @ConfigProperty(name = "quarkus.http.root-path", defaultValue = "/")
+    String rootPath;
+
     @ConfigProperty(name = "quarkus.renarde.auth.redirect.cookie")
     String locationCookie;
 
@@ -91,7 +94,7 @@ public class RenardeSecurity {
         // FIXME: expiry, auto-refresh?
         return new NewCookie.Builder(jwtCookie)
                 .value(token)
-                .path("/")
+                .path(cookiePath())
                 .sameSite(SameSite.LAX)
                 .httpOnly(true)
                 .build();
@@ -140,6 +143,8 @@ public class RenardeSecurity {
 
     public Response makeLogoutResponse() {
         try {
+            // Use "/" rather than the root-path directly, because Response.seeOther()
+            // already resolves relative URIs against quarkus.http.root-path
             return this.makeLogoutResponse(new URI("/"));
         } catch (URISyntaxException e) {
             // can't happen
@@ -241,15 +246,20 @@ public class RenardeSecurity {
     }
 
     private NewCookie saveURICookie() {
-        return new NewCookie.Builder(locationCookie).path("/").value(request.absoluteURI()).secure(request.isSSL()).build();
+        return new NewCookie.Builder(locationCookie).path(cookiePath()).value(request.absoluteURI())
+                .secure(request.isSSL()).build();
     }
 
     public NewCookie invalidateCookie(String cookieName) {
-        return new NewCookie.Builder(cookieName).path("/").maxAge(0).build();
+        return new NewCookie.Builder(cookieName).path(cookiePath()).maxAge(0).build();
     }
 
     public boolean hasUserCookie() {
         return request.getCookie(jwtCookie) != null;
+    }
+
+    private String cookiePath() {
+        return renardeConfig.auth().scopeCookiesToRootPath() ? rootPath : "/";
     }
 
 }
