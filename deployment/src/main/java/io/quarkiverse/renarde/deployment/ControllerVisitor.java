@@ -89,12 +89,15 @@ public class ControllerVisitor implements BiFunction<String, ClassVisitor, Class
         public final String className;
         public final String superClass;
         public final boolean isAbstract;
+        public final boolean hasInheritedMethods;
         public final Map<String, ControllerMethod> methods;
 
-        public ControllerClass(String className, String superClass, boolean isAbstract, Map<String, ControllerMethod> methods) {
+        public ControllerClass(String className, String superClass, boolean isAbstract, boolean hasInheritedMethods,
+                Map<String, ControllerMethod> methods) {
             this.className = className;
             this.superClass = superClass;
             this.isAbstract = isAbstract;
+            this.hasInheritedMethods = hasInheritedMethods;
             this.methods = methods;
         }
 
