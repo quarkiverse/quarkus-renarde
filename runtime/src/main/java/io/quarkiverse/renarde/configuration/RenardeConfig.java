@@ -1,5 +1,7 @@
 package io.quarkiverse.renarde.configuration;
 
+import java.time.Duration;
+
 import io.quarkus.runtime.annotations.ConfigPhase;
 import io.quarkus.runtime.annotations.ConfigRoot;
 import io.smallrye.config.ConfigMapping;
@@ -50,6 +52,13 @@ public interface RenardeConfig {
          */
         @WithDefault("true")
         boolean scopeCookiesToRootPath();
+
+        /**
+         * The duration of the JWT token expiration. Defaults to 10 days.
+         * Uses ISO-8601 duration format (e.g. P30D for 30 days, PT12H for 12 hours).
+         */
+        @WithDefault("P10D")
+        Duration tokenExpiration();
 
         /**
          * Please do not use and use <code>quarkus.renarde.auth.redirect.cookie</code> instead.

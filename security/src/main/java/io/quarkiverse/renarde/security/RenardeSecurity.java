@@ -5,7 +5,6 @@ import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -88,8 +87,7 @@ public class RenardeSecurity {
         String token = Jwt.issuer(jwtIssuer)
                 .upn(user.userId())
                 .groups(roles)
-                // FIXME: config
-                .expiresIn(Duration.ofDays(10))
+                .expiresIn(renardeConfig.auth().tokenExpiration())
                 .innerSign().encrypt();
         // FIXME: expiry, auto-refresh?
         return new NewCookie.Builder(jwtCookie)
