@@ -10,8 +10,8 @@ import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.core.UriInfo;
 
 import org.jboss.logging.Logger;
+import org.jboss.resteasy.reactive.common.core.BlockingOperationSupport;
 import org.jboss.resteasy.reactive.server.ServerResponseFilter;
-import org.jboss.resteasy.reactive.server.core.BlockingOperationSupport;
 
 import com.openhtmltopdf.java2d.api.DefaultPageProcessor;
 import com.openhtmltopdf.java2d.api.FSPageOutputStreamSupplier;
