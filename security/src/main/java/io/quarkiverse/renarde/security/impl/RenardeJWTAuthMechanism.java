@@ -1,4 +1,4 @@
-package io.quarkiverse.renarde.util;
+package io.quarkiverse.renarde.security.impl;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -12,7 +12,6 @@ import org.jboss.logging.Logger;
 
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.quarkiverse.renarde.configuration.RenardeConfig;
-import io.quarkiverse.renarde.configuration.RenardeConfig.RenardeAuthConfig;
 import io.quarkiverse.renarde.impl.RenardeConfigBean;
 import io.quarkus.qute.TemplateGlobal;
 import io.quarkus.smallrye.jwt.runtime.auth.JWTAuthMechanism;
