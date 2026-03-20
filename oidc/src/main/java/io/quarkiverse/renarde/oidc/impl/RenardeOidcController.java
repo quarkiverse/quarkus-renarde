@@ -30,10 +30,12 @@ public class RenardeOidcController extends Controller {
     public void loginUsingOidc(@RestPath String provider) {
         // this can be called if we're authenticated on OIDC but the user didn't go through
         // with completion
-        JWTCallerPrincipal principal = (JWTCallerPrincipal) identity.getPrincipal();
+        JsonWebToken principal = (JWTCallerPrincipal) identity.getPrincipal();
         String tenantId = oidcSession.getTenantId();
         if (tenantId == null) {
             tenantId = "manual";
+        } else {
+            principal = oidcSession.getIdToken();
         }
         oidcHandler.loginWithOidcSession(tenantId, RenardeSecurity.getUserId(principal));
     }
