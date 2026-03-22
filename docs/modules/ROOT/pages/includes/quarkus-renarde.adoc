@@ -78,7 +78,7 @@ endif::add-copy-button-to-config-props[]
 
 [.description]
 --
-The duration of the JWT token expiration. Defaults to 10 days. Uses ISO-8601 duration format (e.g. P30D for 30 days, PT12H for 12 hours).
+The duration of the JWT token expiration. Defaults to 10 days.
 
 
 ifdef::add-copy-button-to-env-var[]

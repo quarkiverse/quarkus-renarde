@@ -55,7 +55,6 @@ public interface RenardeConfig {
 
         /**
          * The duration of the JWT token expiration. Defaults to 10 days.
-         * Uses ISO-8601 duration format (e.g. P30D for 30 days, PT12H for 12 hours).
          */
         @WithDefault("P10D")
         Duration tokenExpiration();
