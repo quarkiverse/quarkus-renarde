@@ -67,7 +67,6 @@ import io.quarkiverse.renarde.util.MyParamConverters;
 import io.quarkiverse.renarde.util.MyValidationInterceptor;
 import io.quarkiverse.renarde.util.QuteResolvers;
 import io.quarkiverse.renarde.util.RedirectExceptionMapper;
-import io.quarkiverse.renarde.util.RenardeJWTAuthMechanism;
 import io.quarkiverse.renarde.util.RenardeValidationLocaleResolver;
 import io.quarkiverse.renarde.util.RenderArgs;
 import io.quarkiverse.renarde.util.Validation;
@@ -146,6 +145,8 @@ public class RenardeProcessor {
     public static final DotName DOTNAME_USER_WITH_PASSWORD = DotName
             .createSimple("io.quarkiverse.renarde.security.RenardeUserWithPassword");
     public static final DotName DOTNAME_SECURITY = DotName.createSimple("io.quarkiverse.renarde.security.RenardeSecurity");
+    public static final DotName DOTNAME_RENARDE_JWT_AUTH_MECHANISM = DotName
+            .createSimple("io.quarkiverse.renarde.security.impl.RenardeJWTAuthMechanism");
     public static final DotName DOTNAME_AUTHENTICATION_HANDLER = DotName
             .createSimple("io.quarkiverse.renarde.security.impl.AuthenticationFailedExceptionMapper");
     public static final DotName DOTNAME_RENARDE_FORM_LOGIN_CONTROLLER = DotName
@@ -279,10 +280,11 @@ public class RenardeProcessor {
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(RenardeValidationLocaleResolver.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(JavaExtensions.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(MyValidationInterceptor.class));
-        additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(RenardeJWTAuthMechanism.class));
         additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(RenardeConfigBean.class));
         // If we have the renarde-security module, we'll see this class
         if (QuarkusClassLoader.isClassPresentAtRuntime(DOTNAME_AUTHENTICATION_HANDLER.toString())) {
+            additionalBeanBuildItems
+                    .produce(AdditionalBeanBuildItem.unremovableOf(DOTNAME_RENARDE_JWT_AUTH_MECHANISM.toString()));
             additionalBeanBuildItems.produce(AdditionalBeanBuildItem.unremovableOf(DOTNAME_AUTHENTICATION_HANDLER.toString()));
         }
 
