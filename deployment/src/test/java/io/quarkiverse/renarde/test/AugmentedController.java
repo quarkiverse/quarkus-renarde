@@ -2,8 +2,11 @@ package io.quarkiverse.renarde.test;
 
 import java.net.URI;
 
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriInfo;
 
+import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestPath;
 import org.jboss.resteasy.reactive.RestQuery;
 
@@ -39,10 +42,7 @@ public class AugmentedController extends Controller {
         AugmentedController.__urivarargs$hello(true, "foo", "bar");
     }
 
-    // FIXME: test with path param in @Path annotation
-    // FIXME: test with injected param like UriInfo
-    // FIXME: test with body param
-    // FIXME: test with bean param
+    // --- Example 1: Simple method with only path and query params ---
 
     /**
      * Sample action with path param and query param
@@ -85,6 +85,60 @@ public class AugmentedController extends Controller {
         paramVals[0] = param;
         uri.queryParam("param", paramVals);
 
+        return uri.build();
+    }
+
+    // --- Example 2: Method with non-URI params (injected @Context, @RestForm) ---
+    // Non-URI params are skipped in __urivarargs$ and receive null defaults.
+    // Only @RestPath and @RestQuery params consume varargs slots.
+
+    /**
+     * Action with a @Context param (UriInfo) and a @RestForm param between path and query.
+     */
+    public String mixed(@RestPath String id, @Context UriInfo uriInfo, @RestForm String formField, @RestQuery String q) {
+        return id + "|" + q;
+    }
+
+    /**
+     * Redirect: forwards ALL params (including non-URI ones) to __uri$mixed,
+     * which simply ignores them.
+     */
+    public static String __redirect$mixed(String id, UriInfo uriInfo, String formField, String q) {
+        Controller.seeOther(AugmentedController.__uri$mixed(true, id, uriInfo, formField, q));
+        return null;
+    }
+
+    /**
+     * Varargs URI builder: only path/query params (id at index 0, q at index 1) consume varargs slots.
+     * Non-URI params (uriInfo, formField) always get null.
+     */
+    public static URI __urivarargs$mixed(boolean absolute, Object... params) {
+        return AugmentedController.__uri$mixed(absolute,
+                // param 0 (id): URI param → varargs[0]
+                params.length > 0 ? (String) params[0] : null,
+                // param 1 (uriInfo): non-URI param → always null
+                null,
+                // param 2 (formField): non-URI param → always null
+                null,
+                // param 3 (q): URI param → varargs[1]
+                params.length > 1 ? (String) params[1] : null);
+    }
+
+    /**
+     * URI builder: takes all params in signature but only uses path/query ones.
+     * The uriInfo and formField params are unused.
+     */
+    public static URI __uri$mixed(boolean absolute, String id, UriInfo uriInfo, String formField, String q) {
+        UriBuilder uri = Router.getUriBuilder(absolute);
+        uri.path("Controller");
+        uri.path("mixed");
+        uri.path("{id}");
+        uri.resolveTemplate("id", id);
+        if (q != null) {
+            Object[] qVals = new Object[1];
+            qVals[0] = q;
+            uri.queryParam("q", qVals);
+        }
         return uri.build();
     }
 }
