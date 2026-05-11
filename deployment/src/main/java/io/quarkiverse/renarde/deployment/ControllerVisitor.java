@@ -1,9 +1,11 @@
 package io.quarkiverse.renarde.deployment;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 
 import org.jboss.jandex.DotName;
@@ -76,12 +78,35 @@ public class ControllerVisitor implements BiFunction<String, ClassVisitor, Class
         public final String descriptor;
         public final List<UriPart> parts;
         public final List<Type> parameters;
+        public final int uriParamCount;
 
         public ControllerMethod(String name, String descriptor, List<UriPart> parts, List<Type> parameters) {
             this.name = name;
             this.descriptor = descriptor;
             this.parts = parts;
             this.parameters = parameters;
+            this.uriParamCount = (int) parts.stream()
+                    .filter(p -> p instanceof PathParamUriPart || p instanceof QueryParamUriPart)
+                    .count();
+        }
+
+        /**
+         * Returns a string representation of the URI template for comparison.
+         * Two methods producing the same URI template are NOT ambiguous
+         * (e.g. GET login() and POST login(@RestForm ...)).
+         */
+        public String uriTemplate() {
+            StringBuilder sb = new StringBuilder();
+            for (UriPart part : parts) {
+                if (part instanceof StaticUriPart s) {
+                    sb.append(s.part);
+                } else if (part instanceof PathParamUriPart p) {
+                    sb.append("{").append(p.name).append("}");
+                } else if (part instanceof QueryParamUriPart q) {
+                    sb.append("?").append(q.name);
+                }
+            }
+            return sb.toString();
         }
     }
 
@@ -211,10 +236,29 @@ public class ControllerVisitor implements BiFunction<String, ClassVisitor, Class
 
             visitor.visitVarInsn(Opcodes.ILOAD, 0);
 
-            // FIXME: ignore non-path/query params
-            int index = 0;
-            for (Type parameterType : method.parameters) {
-                // varargs.length > paramIndex ? (cast)varargs[paramIndex] : null-value
+            // Collect parameter indices that are path or query params (URI-relevant).
+            // Non-URI params (e.g. @Context, @BeanParam, @RestForm) get default values
+            // and do not consume a varargs slot.
+            Set<Integer> uriParamIndices = new HashSet<>();
+            for (UriPart part : method.parts) {
+                if (part instanceof PathParamUriPart) {
+                    uriParamIndices.add(((PathParamUriPart) part).paramIndex);
+                } else if (part instanceof QueryParamUriPart) {
+                    uriParamIndices.add(((QueryParamUriPart) part).paramIndex);
+                }
+            }
+
+            int varargsIndex = 0;
+            for (int paramIdx = 0; paramIdx < method.parameters.size(); paramIdx++) {
+                Type parameterType = method.parameters.get(paramIdx);
+
+                if (!uriParamIndices.contains(paramIdx)) {
+                    // Non-URI parameter: always pass default value, don't consume a varargs slot
+                    pushDefaultValue(visitor, parameterType);
+                    continue;
+                }
+
+                // URI parameter: varargs.length > varargsIndex ? (cast)varargs[varargsIndex] : default-value
                 // load the varargs
                 visitor.visitVarInsn(Opcodes.ALOAD, 1);
                 // check the varargs length
@@ -222,11 +266,11 @@ public class ControllerVisitor implements BiFunction<String, ClassVisitor, Class
                 Label end = new Label();
                 Label elseBranch = new Label();
                 // if we don't have enough varargs, jump to else
-                visitor.visitIntInsn(Opcodes.BIPUSH, index);
+                visitor.visitIntInsn(Opcodes.BIPUSH, varargsIndex);
                 visitor.visitJumpInsn(Opcodes.IF_ICMPLE, elseBranch);
                 // load the varargs value
                 visitor.visitVarInsn(Opcodes.ALOAD, 1);
-                visitor.visitIntInsn(Opcodes.BIPUSH, index);
+                visitor.visitIntInsn(Opcodes.BIPUSH, varargsIndex);
                 visitor.visitInsn(Opcodes.AALOAD);
                 if (parameterType.name().equals(DOTNAME_OPTIONAL)) {
                     // wrap into an optional, unless already optional,
@@ -255,34 +299,9 @@ public class ControllerVisitor implements BiFunction<String, ClassVisitor, Class
                 visitor.visitJumpInsn(Opcodes.GOTO, end);
                 visitor.visitLabel(elseBranch);
                 // default value
-                if (parameterType.kind() == Kind.PRIMITIVE) {
-                    switch (parameterType.asPrimitiveType().primitive()) {
-                        case BOOLEAN:
-                        case BYTE:
-                        case SHORT:
-                        case INT:
-                        case CHAR:
-                            visitor.visitInsn(Opcodes.ICONST_0);
-                            break;
-                        case DOUBLE:
-                            visitor.visitInsn(Opcodes.DCONST_0);
-                            break;
-                        case FLOAT:
-                            visitor.visitInsn(Opcodes.FCONST_0);
-                            break;
-                        case LONG:
-                            visitor.visitInsn(Opcodes.LCONST_0);
-                            break;
-                    }
-                } else if (parameterType.name().equals(DOTNAME_OPTIONAL)) {
-                    visitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Optional", "empty",
-                            "()Ljava/util/Optional;", false);
-                } else {
-                    visitor.visitInsn(Opcodes.ACONST_NULL);
-                }
+                pushDefaultValue(visitor, parameterType);
                 visitor.visitLabel(end);
-                // this is a varargs index, not a parameter index
-                index++;
+                varargsIndex++;
             }
 
             visitor.visitMethodInsn(Opcodes.INVOKESTATIC, className, "__uri$" + method.name, uriDescriptor(method), false);
@@ -327,6 +346,34 @@ public class ControllerVisitor implements BiFunction<String, ClassVisitor, Class
         private static void unbox(MethodVisitor mv, String owner, String methodName, String returnTypeSignature) {
             mv.visitTypeInsn(Opcodes.CHECKCAST, owner);
             mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, owner, methodName, "()" + returnTypeSignature, false);
+        }
+
+        private static void pushDefaultValue(MethodVisitor visitor, Type parameterType) {
+            if (parameterType.kind() == Kind.PRIMITIVE) {
+                switch (parameterType.asPrimitiveType().primitive()) {
+                    case BOOLEAN:
+                    case BYTE:
+                    case SHORT:
+                    case INT:
+                    case CHAR:
+                        visitor.visitInsn(Opcodes.ICONST_0);
+                        break;
+                    case DOUBLE:
+                        visitor.visitInsn(Opcodes.DCONST_0);
+                        break;
+                    case FLOAT:
+                        visitor.visitInsn(Opcodes.FCONST_0);
+                        break;
+                    case LONG:
+                        visitor.visitInsn(Opcodes.LCONST_0);
+                        break;
+                }
+            } else if (parameterType.name().equals(DOTNAME_OPTIONAL)) {
+                visitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Optional", "empty",
+                        "()Ljava/util/Optional;", false);
+            } else {
+                visitor.visitInsn(Opcodes.ACONST_NULL);
+            }
         }
 
         static String uriVarargsName(String name, String descriptor) {
