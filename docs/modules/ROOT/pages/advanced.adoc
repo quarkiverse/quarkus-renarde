@@ -523,6 +523,20 @@ With parameters:
 {m:views_Application_index_greet(name)}
 ----
 
+NOTE: If you need to pass your localised message to another qute tag, or you need to invoke `String` methods on the
+rendered message, you can force the rendering of your message to a `String` by passing it parameters, such as in the
+previous example with `m:views_Application_index_greet(name)` but if your message does not require parameters you
+can force the rendering with the `$render` method:
+
+[source,txt]
+----
+This will be rendered in your document:
+{m:hello}
+But if you need to turn it into a String in your template expression, to pass it to a Qute tag, or to invoke String
+methods such as toUpperCase, you can use $render to render your message into a String:
+{m:hello.$render.toUpperCase}
+----
+
 === Selecting the language
 
 The current language for a request will depend on the following (in order):

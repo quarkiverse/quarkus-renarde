@@ -104,6 +104,9 @@ public class QuteResolvers {
                                 name = name.substring(1, name.length() - 1);
                             }
                         }
+                        if (name.equals("$render")) {
+                            return base.render();
+                        }
                         MessageKey key = base.append(name, !base.isPendingAppendOperation);
                         base.isPendingAppendOperation = false;
                         return key.renderIfParameters(ctx);
