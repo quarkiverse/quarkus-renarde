@@ -7,17 +7,8 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -32,15 +23,8 @@ import jakarta.ws.rs.Priorities;
 
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
-import org.jboss.jandex.AnnotationInstance;
-import org.jboss.jandex.AnnotationTarget;
+import org.jboss.jandex.*;
 import org.jboss.jandex.AnnotationTarget.Kind;
-import org.jboss.jandex.AnnotationValue;
-import org.jboss.jandex.ClassInfo;
-import org.jboss.jandex.DotName;
-import org.jboss.jandex.IndexView;
-import org.jboss.jandex.MethodInfo;
-import org.jboss.jandex.Type;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.common.processor.ResteasyReactiveDotNames;
 import org.jboss.resteasy.reactive.common.processor.transformation.AnnotationsTransformer;
@@ -119,6 +103,7 @@ import io.quarkus.gizmo.MethodDescriptor;
 import io.quarkus.gizmo.ResultHandle;
 import io.quarkus.hibernate.validator.runtime.jaxrs.ResteasyReactiveEndPointValidationInterceptor;
 import io.quarkus.qute.TemplateInstance;
+import io.quarkus.resteasy.reactive.common.deployment.ResourceScanningResultBuildItem;
 import io.quarkus.resteasy.reactive.server.spi.AnnotationsTransformerBuildItem;
 import io.quarkus.resteasy.reactive.spi.AdditionalResourceClassBuildItem;
 import io.quarkus.resteasy.reactive.spi.CustomExceptionMapperBuildItem;
@@ -396,20 +381,43 @@ public class RenardeProcessor {
         for (ExcludedControllerBuildItem excludedControllerBuildItem : excludedControllerBuildItems) {
             excludedControllers.add(excludedControllerBuildItem.excludedClass);
         }
+        IndexView index = indexBuildItem.getIndex();
+        // Collect all non-excluded controller names upfront (needed for inheritance walk in scanController)
         Set<DotName> controllers = new HashSet<>();
+        for (ClassInfo ci : index.getAllKnownSubclasses(DOTNAME_CONTROLLER)) {
+            if (!excludedControllers.contains(ci.name())) {
+                controllers.add(ci.name());
+            }
+        }
         Map<String, ControllerVisitor.ControllerClass> methodsByClass = new HashMap<>();
-        for (ClassInfo controllerInfo : indexBuildItem.getIndex().getAllKnownSubclasses(DOTNAME_CONTROLLER)) {
-            // skip excluded controllers
-            if (excludedControllers.contains(controllerInfo.name())) {
+        Set<DotName> controllersWithRelativePaths = new HashSet<>();
+        for (ClassInfo controllerInfo : index.getAllKnownSubclasses(DOTNAME_CONTROLLER)) {
+            if (!controllers.contains(controllerInfo.name())) {
                 continue;
             }
-            controllers.add(controllerInfo.name());
-            // do not register abstract controllers as beans or resources
-            if (!Modifier.isAbstract(controllerInfo.flags())) {
-                additionalResourceClassBuildItems.produce(new AdditionalResourceClassBuildItem(controllerInfo, ""));
-                unremovableBeans.produce(UnremovableBeanBuildItem.beanTypes(controllerInfo.name()));
+            if (Modifier.isAbstract(controllerInfo.flags())) {
+                // Abstract controllers need relative paths so inherited methods get correct @Path
+                // when the annotation transformer processes them (method.declaringClass() is the abstract parent)
+                controllersWithRelativePaths.add(controllerInfo.name());
+                methodsByClass.put(controllerInfo.name().toString(),
+                        scanController(controllerInfo, loginPageBuildItem, index, controllers));
+                continue;
             }
-            methodsByClass.put(controllerInfo.name().toString(), scanController(controllerInfo, loginPageBuildItem));
+            ControllerVisitor.ControllerClass scanned = scanController(controllerInfo, loginPageBuildItem, index,
+                    controllers);
+            methodsByClass.put(controllerInfo.name().toString(), scanned);
+            AnnotationInstance existingPath = controllerInfo.declaredAnnotation(ResteasyReactiveDotNames.PATH);
+            String resourcePath = "";
+            if (existingPath == null) {
+                String inheritedPath = findInheritedClassPath(controllerInfo, index, controllers);
+                if (inheritedPath != null || scanned.hasInheritedMethods) {
+                    resourcePath = inheritedPath != null ? inheritedPath : controllerInfo.simpleName();
+                    controllersWithRelativePaths.add(controllerInfo.name());
+                }
+            }
+            additionalResourceClassBuildItems
+                    .produce(new AdditionalResourceClassBuildItem(controllerInfo, resourcePath));
+            unremovableBeans.produce(UnremovableBeanBuildItem.beanTypes(controllerInfo.name()));
         }
         for (DotName controller : controllers) {
             bytecodeTransformers
@@ -424,7 +432,7 @@ public class RenardeProcessor {
         generateRouterInit(generatedBeans, methodsByClass);
         annotationTransformerBuildItems.produce(new AnnotationsTransformerBuildItem(
                 AnnotationsTransformer.builder().appliesTo(Kind.METHOD)
-                        .transform(ti -> transformControllerMethod(ti, controllers))));
+                        .transform(ti -> transformControllerMethod(ti, controllers, controllersWithRelativePaths, index))));
         annotationTransformerBuildItems.produce(new AnnotationsTransformerBuildItem(
                 AnnotationsTransformer.builder().appliesTo(Kind.CLASS).transform(ti -> transformController(ti, controllers))));
 
@@ -469,6 +477,33 @@ public class RenardeProcessor {
                     }
                 }));
 
+    }
+
+    /**
+     * Remove abstract controllers from RR's scanned resources so they don't get registered as endpoints.
+     * This must be a separate build step from collectControllers to avoid a dependency cycle
+     * (collectControllers produces AnnotationsTransformerBuildItem, which RR's scanResources also consumes).
+     */
+    @BuildStep
+    void filterAbstractControllersFromRRScanning(
+            Optional<ResourceScanningResultBuildItem> scanningResult,
+            CombinedIndexBuildItem indexBuildItem,
+            BuildProducer<AnnotationsTransformerBuildItem> annotationTransformerBuildItems) {
+        if (scanningResult.isEmpty())
+            return;
+        IndexView index = indexBuildItem.getIndex();
+        Set<DotName> abstractControllers = new HashSet<>();
+        for (ClassInfo ci : index.getAllKnownSubclasses(DOTNAME_CONTROLLER)) {
+            if (Modifier.isAbstract(ci.flags())) {
+                abstractControllers.add(ci.name());
+            }
+        }
+        scanningResult.get().getResult().getScannedResources().entrySet()
+                .removeIf(entry -> abstractControllers.contains(entry.getKey()));
+        // No-op transformer to establish build step ordering
+        annotationTransformerBuildItems.produce(new AnnotationsTransformerBuildItem(
+                AnnotationTransformation.forClasses().transform(ctx -> {
+                })));
     }
 
     protected boolean isAsync(Type type) {
@@ -533,14 +568,39 @@ public class RenardeProcessor {
     }
 
     private ControllerVisitor.ControllerClass scanController(ClassInfo controllerInfo,
-            BuildProducer<LoginPageBuildItem> loginPageBuildItem) {
+            BuildProducer<LoginPageBuildItem> loginPageBuildItem, IndexView index, Set<DotName> controllers) {
         Map<String, ControllerMethod> methods = new HashMap<>();
-        for (MethodInfo method : controllerInfo.methods()) {
+        // For concrete controllers, also include inherited methods from abstract parents
+        // so that URI generation uses the concrete class name in paths
+        List<MethodInfo> methodsToScan = new ArrayList<>(controllerInfo.methods());
+        boolean hasInheritedMethods = false;
+        if (!Modifier.isAbstract(controllerInfo.flags())) {
+            Set<String> ownKeys = new HashSet<>();
+            for (MethodInfo m : methodsToScan) {
+                if (isControllerMethod(m)) {
+                    ownKeys.add(m.name() + "/" + m.descriptor());
+                }
+            }
+            ClassInfo parent = index.getClassByName(controllerInfo.superName());
+            while (parent != null && controllers.contains(parent.name())) {
+                if (Modifier.isAbstract(parent.flags())) {
+                    for (MethodInfo m : parent.methods()) {
+                        if (isControllerMethod(m) && !ownKeys.contains(m.name() + "/" + m.descriptor())) {
+                            methodsToScan.add(m);
+                            ownKeys.add(m.name() + "/" + m.descriptor());
+                            hasInheritedMethods = true;
+                        }
+                    }
+                }
+                parent = index.getClassByName(parent.superName());
+            }
+        }
+        for (MethodInfo method : methodsToScan) {
             if (!isControllerMethod(method))
                 continue;
             List<UriPart> parts = new ArrayList<>();
 
-            String path = getMethodPath(controllerInfo, method);
+            String path = getMethodPath(controllerInfo, method, index, controllers);
             parts.add(new ControllerVisitor.StaticUriPart(path));
 
             // collect declared path params
@@ -597,20 +657,41 @@ public class RenardeProcessor {
                     method.parameterTypes()));
         }
         return new ControllerVisitor.ControllerClass(controllerInfo.name().toString(), controllerInfo.superName().toString(),
-                Modifier.isAbstract(controllerInfo.flags()), methods);
+                Modifier.isAbstract(controllerInfo.flags()), hasInheritedMethods, methods);
     }
 
-    private String getMethodPath(ClassInfo controllerInfo, MethodInfo method) {
-        AnnotationInstance classPath = method.declaringClass().declaredAnnotation(ResteasyReactiveDotNames.PATH);
-        String className = method.declaringClass().simpleName();
-        String classPathValue = classPath != null ? classPath.value().value().toString() : null;
+    /**
+     * Returns the effective method path: own @Path, inherited from parent, or method name.
+     */
+    private String resolveMethodPath(MethodInfo method, ClassInfo controllerInfo, IndexView index,
+            Set<DotName> controllers) {
+        AnnotationInstance methodPath = method.declaredAnnotation(ResteasyReactiveDotNames.PATH);
+        if (methodPath != null) {
+            return methodPath.value().value().toString();
+        }
+        String inherited = findInheritedMethodPath(method, controllerInfo, index, controllers);
+        return inherited != null ? inherited : method.name();
+    }
 
-        AnnotationInstance methodPath = method.annotation(ResteasyReactiveDotNames.PATH);
-        String methodPathValue = methodPath != null ? methodPath.value().value().toString() : method.name();
+    private String getMethodPath(ClassInfo controllerInfo, MethodInfo method, IndexView index, Set<DotName> controllers) {
+        AnnotationInstance classPath = controllerInfo.declaredAnnotation(ResteasyReactiveDotNames.PATH);
+        String className = controllerInfo.simpleName();
+        String classPathValue;
+        if (classPath != null) {
+            classPathValue = classPath.value().value().toString();
+        } else if (!Modifier.isAbstract(controllerInfo.flags())) {
+            classPathValue = findInheritedClassPath(controllerInfo, index, controllers);
+        } else {
+            classPathValue = null;
+        }
+
+        String methodPathValue = resolveMethodPath(method, controllerInfo, index, controllers);
 
         if (classPathValue == null) {
-            // defaults to className, unless method part is absolute
-            if (methodPathValue.startsWith("/")) {
+            // For absolute method paths (starting with /), only prepend class name
+            // when the method is inherited from a different (abstract) class
+            if (methodPathValue.startsWith("/")
+                    && method.declaringClass().name().equals(controllerInfo.name())) {
                 return methodPathValue;
             }
             classPathValue = className;
@@ -630,6 +711,52 @@ public class RenardeProcessor {
         return ret;
     }
 
+    /**
+     * Walk up the parent chain to find an abstract controller with @Path.
+     * Returns the @Path value if found, null otherwise.
+     */
+    private String findInheritedClassPath(ClassInfo controllerInfo, IndexView index, Set<DotName> controllers) {
+        ClassInfo parent = index.getClassByName(controllerInfo.superName());
+        while (parent != null && controllers.contains(parent.name())) {
+            if (Modifier.isAbstract(parent.flags())) {
+                AnnotationInstance path = parent.declaredAnnotation(ResteasyReactiveDotNames.PATH);
+                if (path != null) {
+                    return path.value().value().toString();
+                }
+            }
+            parent = index.getClassByName(parent.superName());
+        }
+        return null;
+    }
+
+    /**
+     * For an overriding method without @Path, walk up the parent chain to find
+     * the parent method's @Path. Only checks abstract parents.
+     * Returns null if the method is inherited (not an override) or no parent method @Path found.
+     */
+    private String findInheritedMethodPath(MethodInfo method, ClassInfo controllerInfo, IndexView index,
+            Set<DotName> controllers) {
+        // Only look for inherited @Path when the method is declared on controllerInfo (it's an override)
+        if (!method.declaringClass().name().equals(controllerInfo.name())) {
+            return null;
+        }
+        ClassInfo parent = index.getClassByName(controllerInfo.superName());
+        while (parent != null && controllers.contains(parent.name())) {
+            if (Modifier.isAbstract(parent.flags())) {
+                for (MethodInfo pm : parent.methods()) {
+                    if (pm.name().equals(method.name()) && pm.descriptor().equals(method.descriptor())) {
+                        AnnotationInstance path = pm.annotation(ResteasyReactiveDotNames.PATH);
+                        if (path != null) {
+                            return path.value().value().toString();
+                        }
+                    }
+                }
+            }
+            parent = index.getClassByName(parent.superName());
+        }
+        return null;
+    }
+
     private boolean isControllerMethod(MethodInfo method) {
         return !Modifier.isAbstract(method.flags())
                 && Modifier.isPublic(method.flags())
@@ -642,11 +769,17 @@ public class RenardeProcessor {
 
     private void transformController(TransformationContext ti, Set<DotName> controllers) {
         ClassInfo klass = ti.getTarget().asClass();
-        if (controllers.contains(klass.name()) && !Modifier.isAbstract(klass.flags())) {
-            /*
-             * Note that we can't change the class @Path annotation, since RR doesn't use AnnotationTransformer for class path
-             * scanning.
-             */
+        if (!controllers.contains(klass.name())) {
+            return;
+        }
+        if (Modifier.isAbstract(klass.flags())) {
+            // Remove @Path from abstract controllers so RR doesn't try to instantiate them
+            if (klass.declaredAnnotation(ResteasyReactiveDotNames.PATH) != null) {
+                ti.transform().remove(ai -> ai.name().equals(ResteasyReactiveDotNames.PATH)).done();
+            }
+        } else {
+            // Add @Path("") so the RR endpoint builder recognizes this class as a resource.
+            // Controllers using ARCBI get their class path from there; others use full method paths.
             if (klass.declaredAnnotation(ResteasyReactiveDotNames.PATH) == null) {
                 ti.transform()
                         .add(ResteasyReactiveDotNames.PATH, AnnotationValue.createStringValue("value", ""))
@@ -655,30 +788,30 @@ public class RenardeProcessor {
         }
     }
 
-    private void transformControllerMethod(TransformationContext ti, Set<DotName> controllers) {
+    private void transformControllerMethod(TransformationContext ti, Set<DotName> controllers,
+            Set<DotName> controllersWithRelativePaths, IndexView index) {
         MethodInfo method = ti.getTarget().asMethod();
         if (!isControllerMethod(method)) {
             return;
         }
         if (controllers.contains(method.declaringClass().name())) {
-            /*
-             * If the class path is not specified, collect both class path and method path and convert to a method path alone
-             * Note that we can't change the class @Path annotation, since RR doesn't use AnnotationTransformer for class path
-             * scanning.
-             */
+            // RR doesn't use AnnotationTransformer for class @Path scanning, so we can't change it.
+            // Two strategies: controllers with ARCBI class path use relative method paths;
+            // others get the full path baked into the method @Path.
             AnnotationInstance classPath = method.declaringClass().declaredAnnotation(ResteasyReactiveDotNames.PATH);
-            String path = getMethodPath(method.declaringClass(), method);
+            String path = getMethodPath(method.declaringClass(), method, index, controllers);
             AnnotationInstance methodPath = method.declaredAnnotation(ResteasyReactiveDotNames.PATH);
             String methodPathValue;
-            boolean setMethodPath = false;
-            if (classPath == null) {
+            boolean setMethodPath;
+            if (classPath == null && !controllersWithRelativePaths.contains(method.declaringClass().name())) {
+                // No class @Path and no ARCBI class path — full path goes in method @Path
                 methodPathValue = path;
                 setMethodPath = true;
-            } else if (methodPath != null) {
-                methodPathValue = methodPath.value().value().toString();
             } else {
-                methodPathValue = method.name();
-                setMethodPath = true;
+                // Class path exists (via @Path or ARCBI) — method path is relative
+                methodPathValue = resolveMethodPath(method, method.declaringClass(), index, controllers);
+                setMethodPath = methodPath == null
+                        || !methodPathValue.equals(methodPath.value().value().toString());
             }
 
             // collect declared path params
