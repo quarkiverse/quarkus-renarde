@@ -32,6 +32,18 @@ public class TransporterUtil {
         }
     }
 
+    public static void serialize(JsonGenerator gen, String name, java.time.Instant value,
+            Class<? extends PanacheEntity> entityType,
+            ValueTransformer transformer) throws IOException {
+        java.time.Instant transformed = (java.time.Instant) transformer.transform(entityType, name, value);
+        if (transformed != null) {
+            // make sure we serialise to UTC
+            String iso = DateTimeFormatter.ISO_LOCAL_DATE_TIME
+                    .format(LocalDateTime.ofInstant(transformed, ZoneOffset.UTC));
+            gen.writeStringField(name, iso);
+        }
+    }
+
     public static void serialize(JsonGenerator gen, String name, String value, Class<? extends PanacheEntity> entityType,
             ValueTransformer transformer) throws IOException {
         String transformed = (String) transformer.transform(entityType, name, value);
@@ -127,6 +139,15 @@ public class TransporterUtil {
         LocalDateTime localDateTime = LocalDateTime.parse(iso);
         // we serialise to UTC
         return java.util.Date.from(localDateTime.toInstant(ZoneOffset.UTC));
+    }
+
+    public static java.time.Instant deserializeInstant(JsonParser p) throws IOException {
+        String iso = deserializeText(p);
+        if (iso == null)
+            return null;
+        LocalDateTime localDateTime = LocalDateTime.parse(iso);
+        // we serialise to UTC
+        return localDateTime.toInstant(ZoneOffset.UTC);
     }
 
     public static long deserializeLong(JsonParser p) throws IOException {

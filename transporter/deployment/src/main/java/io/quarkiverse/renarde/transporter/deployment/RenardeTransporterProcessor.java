@@ -445,7 +445,18 @@ public class RenardeTransporterProcessor {
                                     methodName = "deserializeText";
                                     break;
                                 case DateTimeLocal:
-                                    methodName = "deserializeDate";
+                                    switch (modelField.entityField.descriptor) {
+                                        case "Ljava/util/Date;":
+                                            methodName = "deserializeDate";
+                                            break;
+                                        case "Ljava/time/Instant;":
+                                            methodName = "deserializeInstant";
+                                            break;
+                                        default:
+                                            throw new RuntimeException("don't know how to deserialise field " + entityModel.name
+                                                    + "."
+                                                    + modelField.name + " of type " + modelField.entityField.descriptor);
+                                    }
                                     break;
                                 case Number:
                                     switch (modelField.entityField.descriptor) {

@@ -179,7 +179,8 @@ public class ModelField {
                 this.type = Type.Text;
             }
         } else if (entityField.descriptor.equals("Ljava/util/Date;")
-                || entityField.descriptor.equals("Ljava/time/LocalDateTime;")) {
+                || entityField.descriptor.equals("Ljava/time/LocalDateTime;")
+                || entityField.descriptor.equals("Ljava/time/Instant;")) {
             this.type = Type.DateTimeLocal;
         } else if (entityField.descriptor.equals("Ljava/time/LocalDate;")) {
             this.type = Type.Date;
