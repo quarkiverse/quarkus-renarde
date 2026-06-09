@@ -13,7 +13,6 @@ import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.common.core.BlockingOperationSupport;
 import org.jboss.resteasy.reactive.server.ServerResponseFilter;
 
-import com.openhtmltopdf.java2d.api.DefaultPageProcessor;
 import com.openhtmltopdf.java2d.api.FSPageOutputStreamSupplier;
 import com.openhtmltopdf.java2d.api.Java2DRendererBuilder;
 import com.openhtmltopdf.pdfboxout.PdfBoxRenderer;
@@ -130,6 +129,7 @@ public class PdfResponseHandler {
         PdfBoxRenderer renderer = builder.buildPdfRenderer();
         try {
             renderer.createPDF();
+            renderer.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -143,13 +143,13 @@ public class PdfResponseHandler {
             if (pageNo == 0) {
                 return out;
             } else {
-                System.err.println(
+                logger.warn(
                         "Rendering PDF to image needs more than one page: this means your content overflows the page size, there will be clipping, and the pages after the first will be discarded");
                 return OutputStream.nullOutputStream();
             }
         };
 
-        DefaultPageProcessor pageProcessor = new DefaultPageProcessor(osSupplier, BufferedImage.TYPE_INT_RGB, "png");
+        DisposingPageProcessor pageProcessor = new DisposingPageProcessor(osSupplier, BufferedImage.TYPE_INT_RGB, "png");
 
         Java2DRendererBuilder builder = new Java2DRendererBuilder();
         builder.withHtmlContent(entity, baseURI);
