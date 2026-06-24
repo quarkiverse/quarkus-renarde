@@ -24,7 +24,8 @@
     <module>test</module>
     <module>backoffice</module>
     <module>transporter</module>
-  </modules>
+      <module>docs-rag</module>
+    </modules>
   <scm>
     <connection>:git:git@github.com:quarkiverse/quarkus-renarde.git</connection>
     <developerConnection>scm:git:git@github.com:quarkiverse/quarkus-renarde.git</developerConnection>
