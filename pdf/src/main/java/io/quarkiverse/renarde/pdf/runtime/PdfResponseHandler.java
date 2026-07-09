@@ -13,11 +13,14 @@ import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.common.core.BlockingOperationSupport;
 import org.jboss.resteasy.reactive.server.ServerResponseFilter;
 
+import com.openhtmltopdf.java2d.CachingJava2DFontResolver;
+import com.openhtmltopdf.java2d.Java2DRenderer;
 import com.openhtmltopdf.java2d.api.FSPageOutputStreamSupplier;
 import com.openhtmltopdf.java2d.api.Java2DRendererBuilder;
 import com.openhtmltopdf.pdfboxout.PdfBoxRenderer;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.openhtmltopdf.util.Diagnostic;
+import com.openhtmltopdf.util.ThreadCtx;
 import com.openhtmltopdf.util.XRLog;
 import com.openhtmltopdf.util.XRLogger;
 
@@ -154,11 +157,19 @@ public class PdfResponseHandler {
         Java2DRendererBuilder builder = new Java2DRendererBuilder();
         builder.withHtmlContent(entity, baseURI);
         builder.useFastMode();
-        builder.useEnvironmentFonts(true); // But see note below.
-
+        builder.useEnvironmentFonts(true);
         builder.toPageProcessor(pageProcessor);
-        try {
-            builder.runPaged();
+        // We use buildJava2DRenderer() + layout() + writePages() instead of
+        // runPaged() so we can replace the font resolver before layout.
+        try (Java2DRenderer renderer = builder.buildJava2DRenderer()) {
+            // Replace the font resolver with a caching version to avoid
+            // calling Font.createFont() on every render. Each Font.createFont()
+            // registers a new TrueTypeFont in SunFontManager's strike cache
+            // that is never released, leaking ~5 MB per render.
+            var ctx = ThreadCtx.get().sharedContext();
+            ctx.setFontResolver(new CachingJava2DFontResolver(ctx, true));
+            renderer.layout();
+            renderer.writePages();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

@@ -101,6 +101,7 @@ import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.HotDeploymentWatchedFileBuildItem;
 import io.quarkus.deployment.builditem.LaunchModeBuildItem;
 import io.quarkus.deployment.builditem.RunTimeConfigurationDefaultBuildItem;
+import io.quarkus.deployment.builditem.nativeimage.JniRuntimeAccessBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceDirectoryBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
@@ -184,7 +185,8 @@ public class RenardeProcessor {
     @BuildStep
     void setupPdfBox(BuildProducer<RuntimeInitializedClassBuildItem> runtimeInitializedClassBuildItem,
             BuildProducer<NativeImageResourceBuildItem> nativeImageResourceBuildItem,
-            BuildProducer<NativeImageResourceDirectoryBuildItem> resource) {
+            BuildProducer<NativeImageResourceDirectoryBuildItem> resource,
+            BuildProducer<JniRuntimeAccessBuildItem> jniRuntimeAccessBuildItem) {
         // If we have the renarde-pdf module, we'll see this class
         if (QuarkusClassLoader.isClassPresentAtRuntime(PDF_RESPONSE_HANDLER_CLASS)) {
             // This one needs to be initialised at runtime on jdk21/graalvm 23.1 because setting the logger starts the java2d disposer thread
@@ -200,6 +202,12 @@ public class RenardeProcessor {
                             "resources/schema/openhtmltopdf/char-entities-xhtml-only.ent",
                             "resources/schema/openhtmltopdf/char-entities-xhtml-mathml.ent")));
             resource.produce(new NativeImageResourceDirectoryBuildItem("org/apache/pdfbox/resources/ttf"));
+            // XToolkit native code calls FindClass("java/lang/Thread") — without
+            // this registration, the AWT-XAWT thread crashes with NoClassDefFoundError,
+            // corrupting AWT state and preventing the Java2D Disposer from cleaning
+            // up BufImgSurfaceData weak JNI global refs
+            jniRuntimeAccessBuildItem
+                    .produce(new JniRuntimeAccessBuildItem(true, true, true, "java.lang.Thread"));
 
         }
     }
