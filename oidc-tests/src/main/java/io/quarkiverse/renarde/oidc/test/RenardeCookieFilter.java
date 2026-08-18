@@ -28,16 +28,16 @@ public class RenardeCookieFilter implements Filter {
     private final BasicCookieStore cookieStore;
 
     /**
-     * Create an instance of {@link CookieFilter} that will prevent cookies with the same name to be sent twice.
+     * Create an instance of {@link RenardeCookieFilter} that will prevent cookies with the same name to be sent twice.
      *
-     * @see CookieFilter#CookieFilter(boolean)
+     * @see RenardeCookieFilter#RenardeCookieFilter(boolean)
      */
     public RenardeCookieFilter() {
         this(false);
     }
 
     /**
-     * Create an instance of {@link CookieFilter} that allows specifying whether or not it should accept (and thus send)
+     * Create an instance of {@link RenardeCookieFilter} that allows specifying whether or not it should accept (and thus send)
      * multiple cookies with the same name.
      * Default is <code>false</code>.
      *
