@@ -118,23 +118,15 @@ public class PdfResponseHandler {
 
     private void renderPdf(String entity, String baseURI, ContainerResponseContext responseContext) {
         PdfRendererBuilder builder = new PdfRendererBuilder();
-        // FIXME: use this to avoid going over HTTP for static files?
-        //            builder.useHttpStreamImplementation(new FSStreamFactory() {
-        //			@Override
-        //			public FSStream getUrl(String url) {
-        //				// TODO Auto-generated method stub
-        //				return null;
-        //			}
-        //		});
         builder.withHtmlContent(entity, baseURI);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         builder.toStream(out);
-        PdfBoxRenderer renderer = builder.buildPdfRenderer();
-        try {
+        try (PdfBoxRenderer renderer = builder.buildPdfRenderer()) {
             renderer.createPDF();
-            renderer.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
+        } finally {
+            ThreadCtx.cleanup();
         }
         responseContext.setEntity(out.toByteArray(), null, Pdf.APPLICATION_PDF_TYPE);
     }
@@ -162,16 +154,20 @@ public class PdfResponseHandler {
         // We use buildJava2DRenderer() + layout() + writePages() instead of
         // runPaged() so we can replace the font resolver before layout.
         try (Java2DRenderer renderer = builder.buildJava2DRenderer()) {
-            // Replace the font resolver with a caching version to avoid
-            // calling Font.createFont() on every render. Each Font.createFont()
-            // registers a new TrueTypeFont in SunFontManager's strike cache
-            // that is never released, leaking ~5 MB per render.
             var ctx = ThreadCtx.get().sharedContext();
             ctx.setFontResolver(new CachingJava2DFontResolver(ctx, true));
             renderer.layout();
             renderer.writePages();
         } catch (Exception e) {
             throw new RuntimeException(e);
+        } finally {
+            // Explicitly clean up ThreadCtx to release the SharedContext and
+            // its entire object graph (DOM, CSS, layout tree, BufferedImages).
+            // Java2DRenderer.close() calls ThreadCtx.cleanup() internally, but
+            // in GraalVM native image the ThreadLocal value is not always freed,
+            // causing each worker thread to retain ~5-15 MB from its last render.
+            ThreadCtx.get().setSharedContext(null);
+            ThreadCtx.cleanup();
         }
 
         responseContext.setEntity(out.toByteArray(), null, Pdf.IMAGE_PNG_TYPE);
