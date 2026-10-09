@@ -1,6 +1,5 @@
 package io.quarkiverse.renarde.transporter.deployment;
 
-import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,16 +20,6 @@ import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.traverse.TopologicalOrderIterator;
 import org.objectweb.asm.Opcodes;
-
-import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 
 import io.quarkiverse.renarde.jpa.deployment.ModelField;
 import io.quarkiverse.renarde.transporter.EntityTransporter;
@@ -63,14 +52,22 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.deployment.EntityModel;
 import io.quarkus.panache.hibernate.common.deployment.HibernateMetamodelForFieldAccessBuildItem;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.module.SimpleModule;
 
 public class RenardeTransporterProcessor {
 
     private static final DotName DOTNAME_ENTITY = DotName.createSimple(Entity.class.getName());
     private static final String SERIALIZER_POSTFIX = "__RenardeTransporterSerializer";
     private static final String DESERIALIZER_POSTFIX = "__RenardeTransporterDeserializer";
-    private static final DotName DOTNAME_JSON_SERIALIZER = DotName.createSimple(JsonSerializer.class);
-    private static final DotName DOTNAME_JSON_DESERIALIZER = DotName.createSimple(JsonDeserializer.class);
+    private static final DotName DOTNAME_JSON_SERIALIZER = DotName.createSimple(ValueSerializer.class);
+    private static final DotName DOTNAME_JSON_DESERIALIZER = DotName.createSimple(ValueDeserializer.class);
 
     @BuildStep
     public void processModel(HibernateMetamodelForFieldAccessBuildItem metamodel,
@@ -160,7 +157,7 @@ public class RenardeTransporterProcessor {
                     String deserializerClassName = entityModel.name + DESERIALIZER_POSTFIX;
                     m.invokeVirtualMethod(
                             MethodDescriptor.ofMethod(SimpleModule.class, "addDeserializer", SimpleModule.class, Class.class,
-                                    JsonDeserializer.class),
+                                    ValueDeserializer.class),
                             m.getMethodParam(0),
                             m.loadClass(entityModel.name),
                             m.newInstance(MethodDescriptor.ofConstructor(deserializerClassName, InstanceResolver.class),
@@ -174,7 +171,7 @@ public class RenardeTransporterProcessor {
                     String serializerClassName = entityModel.name + SERIALIZER_POSTFIX;
                     m.invokeVirtualMethod(
                             MethodDescriptor.ofMethod(SimpleModule.class, "addSerializer", SimpleModule.class, Class.class,
-                                    JsonSerializer.class),
+                                    ValueSerializer.class),
                             m.getMethodParam(0),
                             m.loadClass(entityModel.name),
                             m.newInstance(MethodDescriptor.ofConstructor(serializerClassName, ValueTransformer.class),
@@ -211,7 +208,7 @@ public class RenardeTransporterProcessor {
                 .classOutput(new GeneratedClassGizmoAdaptor(output, true)).className(
                         className)
                 .signature(SignatureBuilder.forClass().setSuperClass(
-                        Type.parameterizedType(Type.classType(JsonSerializer.class), Type.classType(entityClassInfo.name()))))
+                        Type.parameterizedType(Type.classType(ValueSerializer.class), Type.classType(entityClassInfo.name()))))
                 .build()) {
             // private ValueTransformer transformer;
             c.getFieldCreator("transformer", ValueTransformer.class);
@@ -223,7 +220,7 @@ public class RenardeTransporterProcessor {
              */
             try (MethodCreator m = c.getMethodCreator("<init>", void.class, ValueTransformer.class)
                     .setModifiers(Modifier.PUBLIC)) {
-                m.invokeSpecialMethod(MethodDescriptor.ofConstructor(JsonSerializer.class), m.getThis());
+                m.invokeSpecialMethod(MethodDescriptor.ofConstructor(ValueSerializer.class), m.getThis());
                 m.writeInstanceField(FieldDescriptor.of(className, "transformer", ValueTransformer.class), m.getThis(),
                         m.getMethodParam(0));
                 m.returnVoid();
@@ -232,12 +229,11 @@ public class RenardeTransporterProcessor {
             // bridge
             try (MethodCreator m = c
                     .getMethodCreator("serialize", void.class, Object.class, JsonGenerator.class,
-                            SerializerProvider.class)
-                    .addException(IOException.class)
+                            SerializationContext.class)
                     .setModifiers(Modifier.PUBLIC | Opcodes.ACC_BRIDGE)) {
                 m.invokeVirtualMethod(
                         MethodDescriptor.ofMethod(className, "serialize", void.class, entityClassInfo.name().toString(),
-                                JsonGenerator.class, SerializerProvider.class),
+                                JsonGenerator.class, SerializationContext.class),
                         m.getThis(),
                         m.checkCast(m.getMethodParam(0), entityClassInfo.name().toString()),
                         m.getMethodParam(1),
@@ -247,8 +243,7 @@ public class RenardeTransporterProcessor {
             // real method
             try (MethodCreator m = c
                     .getMethodCreator("serialize", void.class, entityClassInfo.name().toString(), JsonGenerator.class,
-                            SerializerProvider.class)
-                    .addException(IOException.class)
+                            SerializationContext.class)
                     .setModifiers(Modifier.PUBLIC)) {
                 ResultHandle valueParam = m.getMethodParam(0);
                 ResultHandle genParam = m.getMethodParam(1);
@@ -260,7 +255,8 @@ public class RenardeTransporterProcessor {
                  */
                 BranchResult b = m.ifNull(valueParam);
                 try (BytecodeCreator isNullBranch = b.trueBranch()) {
-                    isNullBranch.invokeVirtualMethod(MethodDescriptor.ofMethod(JsonGenerator.class, "writeNull", void.class),
+                    isNullBranch.invokeVirtualMethod(
+                            MethodDescriptor.ofMethod(JsonGenerator.class, "writeNull", JsonGenerator.class),
                             genParam);
                     isNullBranch.returnVoid();
                 }
@@ -268,7 +264,8 @@ public class RenardeTransporterProcessor {
 
                 // gen.writeStartObject(value);
                 m.invokeVirtualMethod(
-                        MethodDescriptor.ofMethod(JsonGenerator.class, "writeStartObject", void.class, Object.class), genParam,
+                        MethodDescriptor.ofMethod(JsonGenerator.class, "writeStartObject", JsonGenerator.class, Object.class),
+                        genParam,
                         valueParam);
 
                 NEXT_FIELD: for (ModelField modelField : modelFields) {
@@ -310,7 +307,8 @@ public class RenardeTransporterProcessor {
                 }
 
                 // gen.writeEndObject();
-                m.invokeVirtualMethod(MethodDescriptor.ofMethod(JsonGenerator.class, "writeEndObject", void.class), genParam);
+                m.invokeVirtualMethod(MethodDescriptor.ofMethod(JsonGenerator.class, "writeEndObject", JsonGenerator.class),
+                        genParam);
                 m.returnVoid();
             }
         }
@@ -323,7 +321,8 @@ public class RenardeTransporterProcessor {
                 .classOutput(new GeneratedClassGizmoAdaptor(output, true)).className(
                         className)
                 .signature(SignatureBuilder.forClass().setSuperClass(
-                        Type.parameterizedType(Type.classType(JsonDeserializer.class), Type.classType(entityClassInfo.name()))))
+                        Type.parameterizedType(Type.classType(ValueDeserializer.class),
+                                Type.classType(entityClassInfo.name()))))
                 .build()) {
 
             // private InstanceResolver resolver;
@@ -336,7 +335,7 @@ public class RenardeTransporterProcessor {
              */
             try (MethodCreator m = c.getMethodCreator("<init>", void.class, InstanceResolver.class)
                     .setModifiers(Modifier.PUBLIC)) {
-                m.invokeSpecialMethod(MethodDescriptor.ofConstructor(JsonDeserializer.class), m.getThis());
+                m.invokeSpecialMethod(MethodDescriptor.ofConstructor(ValueDeserializer.class), m.getThis());
                 m.writeInstanceField(FieldDescriptor.of(className, "resolver", InstanceResolver.class), m.getThis(),
                         m.getMethodParam(0));
                 m.returnVoid();
@@ -345,8 +344,6 @@ public class RenardeTransporterProcessor {
             // bridge
             try (MethodCreator m = c
                     .getMethodCreator("deserialize", Object.class, JsonParser.class, DeserializationContext.class)
-                    .addException(IOException.class)
-                    .addException(JacksonException.class)
                     .setModifiers(Modifier.PUBLIC | Opcodes.ACC_BRIDGE)) {
                 m.returnValue(m.invokeVirtualMethod(
                         MethodDescriptor.ofMethod(className, "deserialize", entityClassInfo.name().toString(), JsonParser.class,
@@ -360,8 +357,6 @@ public class RenardeTransporterProcessor {
             try (MethodCreator m = c
                     .getMethodCreator("deserialize", entityClassInfo.name().toString(), JsonParser.class,
                             DeserializationContext.class)
-                    .addException(IOException.class)
-                    .addException(JacksonException.class)
                     .setModifiers(Modifier.PUBLIC)) {
                 ResultHandle parserParam = m.getMethodParam(0);
                 /*
@@ -419,7 +414,7 @@ public class RenardeTransporterProcessor {
                 AssignableResultHandle fieldNameVariable = m.createVariable(String.class);
                 WhileLoop whileLoop = m.whileLoop(creator -> {
                     ResultHandle nextFieldName = creator.invokeVirtualMethod(
-                            MethodDescriptor.ofMethod(JsonParser.class, "nextFieldName", String.class), parserParam);
+                            MethodDescriptor.ofMethod(JsonParser.class, "nextName", String.class), parserParam);
                     creator.assign(fieldNameVariable, nextFieldName);
                     return creator.ifNotNull(fieldNameVariable);
                 });

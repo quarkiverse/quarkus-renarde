@@ -1,8 +1,6 @@
 package io.quarkiverse.renarde.transporter;
 
-import java.io.IOException;
 import java.io.StringWriter;
-import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,14 +8,15 @@ import java.util.Map;
 
 import org.jboss.logging.Logger;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-
 import io.quarkus.arc.Arc;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 
 public class DatabaseTransporter {
 
@@ -62,37 +61,36 @@ public class DatabaseTransporter {
     //	};
 
     public static Map<Class<?>, List<? extends PanacheEntityBase>> importEntities(String json) {
-        ObjectMapper mapper = new ObjectMapper();
         InstanceResolver resolver = new InstanceResolver();
         SimpleModule module = new SimpleModule();
         EntityTransporter entityTransporter = Arc.container().instance(EntityTransporter.class).get();
         entityTransporter.addDeserializers(module, resolver);
-        mapper.registerModule(module);
+        // we read many values from the same parser
+        ObjectMapper mapper = JsonMapper.builder().addModule(module)
+                .disable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS).build();
 
         log.infof("Loading json: %s chars", json.length());
         Map<Class<?>, List<? extends PanacheEntityBase>> ret = new HashMap<>();
 
-        try {
+        {
             JsonParser parser = mapper.createParser(json);
 
             assertt(parser.nextToken() == JsonToken.START_OBJECT);
             int count = 0;
             String fieldName;
-            while ((fieldName = parser.nextFieldName()) != null) {
+            while ((fieldName = parser.nextName()) != null) {
                 Class<?> type = entityTransporter.getEntityClass(fieldName);
                 List<PanacheEntityBase> entities = new ArrayList<>();
                 ret.put(type, entities);
                 log.infof("Reading type %s", fieldName);
                 assertt(parser.nextToken() == JsonToken.START_ARRAY);
                 while (parser.nextToken() != JsonToken.END_ARRAY) {
-                    PanacheEntityBase readEntity = (PanacheEntityBase) parser.readValueAs(type);
+                    PanacheEntityBase readEntity = (PanacheEntityBase) mapper.readValue(parser, type);
                     log.infof("Read entity [%s] %s", count++, type);
                     entities.add(readEntity);
                 }
             }
             return ret;
-        } catch (IOException x) {
-            throw new UncheckedIOException(x);
         }
     }
 
@@ -103,13 +101,12 @@ public class DatabaseTransporter {
 
     public static String export(ValueTransformer transformer,
             @SuppressWarnings("unchecked") List<? extends PanacheEntityBase>... entities) {
-        ObjectMapper mapper = new ObjectMapper();
         SimpleModule module = new SimpleModule();
         EntityTransporter entityTransporter = Arc.container().instance(EntityTransporter.class).get();
         entityTransporter.addSerializers(module, transformer);
-        mapper.registerModule(module);
+        ObjectMapper mapper = JsonMapper.builder().addModule(module).build();
         StringWriter writer = new StringWriter();
-        try {
+        {
             JsonGenerator generator = mapper.createGenerator(writer);
             log.info("Generating json");
             generator.writeStartObject();
@@ -121,9 +118,9 @@ public class DatabaseTransporter {
                 if (list.isEmpty())
                     continue;
                 Class<? extends PanacheEntityBase> klass = list.get(0).getClass();
-                generator.writeArrayFieldStart(klass.getName());
+                generator.writeArrayPropertyStart(klass.getName());
                 for (PanacheEntityBase entity : list) {
-                    generator.writeObject(entity);
+                    generator.writePOJO(entity);
                     written++;
                 }
                 generator.writeEndArray();
@@ -133,8 +130,6 @@ public class DatabaseTransporter {
 
             log.infof("Wrote %s entries", written);
             return writer.toString();
-        } catch (IOException x) {
-            throw new UncheckedIOException(x);
         }
     }
 
