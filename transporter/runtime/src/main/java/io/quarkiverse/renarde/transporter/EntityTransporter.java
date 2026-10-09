@@ -1,8 +1,7 @@
 package io.quarkiverse.renarde.transporter;
 
-import com.fasterxml.jackson.databind.module.SimpleModule;
-
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import tools.jackson.databind.module.SimpleModule;
 
 public interface EntityTransporter {
     Class<? extends PanacheEntityBase>[] sortedEntityTypes();

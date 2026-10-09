@@ -409,7 +409,7 @@ public class RenardeBackofficeTest {
     }
 
     private void checkInvalidItem(Document document, String type, String name, String help, String invalid, boolean required) {
-        Assertions.assertEquals(1, document.select(type + "[name='" + name + "'][class='form-control is-invalid']").size());
+        Assertions.assertEquals(1, document.select(type + "[name='" + name + "'].form-control.is-invalid").size());
         Assertions.assertEquals(help,
                 document.select(type + "[name='" + name + "'] ~ small.form-text").text());
         Assertions.assertEquals(invalid,

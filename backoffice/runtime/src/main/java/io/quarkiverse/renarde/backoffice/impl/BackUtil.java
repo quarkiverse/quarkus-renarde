@@ -1,7 +1,6 @@
 package io.quarkiverse.renarde.backoffice.impl;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
@@ -25,9 +24,6 @@ import org.hibernate.engine.spi.ManagedEntity;
 import org.jboss.resteasy.reactive.common.util.types.TypeSignatureParser;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.quarkiverse.renarde.jpa.NamedBlob;
 import io.quarkiverse.renarde.util.FileUtils;
 import io.quarkiverse.renarde.util.JavaExtensions;
@@ -35,6 +31,8 @@ import io.quarkus.hibernate.orm.panache.Panache;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.qute.TemplateData;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 @TemplateData
 public class BackUtil {
@@ -160,29 +158,17 @@ public class BackUtil {
     public static <T> T jsonField(String typeSignature, String value) {
         if (!isSet(value))
             return null;
-        ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+        ObjectMapper mapper = JsonMapper.builder().findAndAddModules().build();
         Type type = TypeSignatureParser.parse(typeSignature);
-        try {
-            return mapper.readValue(value, mapper.constructType(type));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        return mapper.readValue(value, mapper.constructType(type));
     }
 
     public static String toJson(Object value) {
         if (value == null) {
             return "";
         }
-        ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
-        try {
-            StringWriter w = new StringWriter();
-            mapper.writeValue(w, value);
-            return w.toString();
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        ObjectMapper mapper = JsonMapper.builder().findAndAddModules().build();
+        return mapper.writeValueAsString(value);
     }
 
     public static Map<String, String> enumPossibleValues(Enum<?>[] values) {

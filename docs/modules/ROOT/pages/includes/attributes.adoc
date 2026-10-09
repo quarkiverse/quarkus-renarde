@@ -1,4 +1,4 @@
-:quarkus-version: 3.35.3
+:quarkus-version: 4.0.0.Beta1
 :quarkus-renarde-version: 3.1.8
 :maven-version: 3.8.1+
 

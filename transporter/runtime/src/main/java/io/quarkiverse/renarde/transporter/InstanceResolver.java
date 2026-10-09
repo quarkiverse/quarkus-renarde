@@ -1,13 +1,11 @@
 package io.quarkiverse.renarde.transporter;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-
 import io.quarkus.arc.Arc;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
 
 public class InstanceResolver {
 
@@ -29,11 +27,11 @@ public class InstanceResolver {
         return (T) instance;
     }
 
-    public <T> T resolveReference(JsonParser p) throws IOException {
+    public <T> T resolveReference(JsonParser p) {
         return resolveReference(p, false);
     }
 
-    public <T> T resolveReference(JsonParser p, boolean alreadyReadStartToken) throws IOException {
+    public <T> T resolveReference(JsonParser p, boolean alreadyReadStartToken) {
         if (!alreadyReadStartToken) {
             p.nextToken();
         }
@@ -44,13 +42,13 @@ public class InstanceResolver {
         String type = null;
 
         String fieldName;
-        while ((fieldName = p.nextFieldName()) != null) {
+        while ((fieldName = p.nextName()) != null) {
             switch (fieldName) {
                 case "id":
                     id = p.nextLongValue(0);
                     break;
                 case "_type":
-                    type = p.nextTextValue();
+                    type = p.nextStringValue();
                     break;
             }
         }
