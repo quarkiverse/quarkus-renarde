@@ -33,9 +33,5 @@
       <groupId>io.rest-assured</groupId>
       <artifactId>rest-assured</artifactId>
     </dependency>
-    <dependency>
-        <groupId>io.quarkus</groupId>
-        <artifactId>quarkus-core</artifactId>
-    </dependency>
   </dependencies>
 </project>
