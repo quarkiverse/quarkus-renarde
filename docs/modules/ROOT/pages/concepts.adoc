@@ -192,6 +192,49 @@ public class Orders extends Controller {
 }
 ----
 
+=== Controller inheritance
+
+You can share endpoints between controllers by declaring them in an abstract controller. Abstract controllers are not
+endpoints themselves: their methods are served, and reverse-routed, under the path of each concrete controller that extends
+them:
+
+[source,java]
+----
+public abstract class Items extends Controller {
+
+    public TemplateInstance list() {
+        // ...
+    }
+}
+
+// list() is served at Books/list
+public class Books extends Items {
+}
+
+// list() is served at shop/list
+@Path("shop")
+public class Shop extends Items {
+}
+----
+
+The following rules apply:
+
+- A controller without `@Path` uses the `@Path` of its nearest parent controller with a `@Path`, if that parent is abstract,
+  or else its class name.
+- A method overriding a controller method without `@Path` keeps the `@Path` of the overridden method, if the overridden method
+  is declared in an abstract controller, in a controller annotated with `@Path`, or in a controller using its own class path
+  (see below).
+- A controller which inherits endpoints, or which extends a controller annotated with `@Path`, always uses its own class path.
+  In that case, `@Path` annotations with an absolute path on its methods are relative to that class path: `@Path("/bar")`
+  in such a controller `Foo` is served at `Foo/bar`.
+- Two controllers cannot serve the same endpoints under the same path, such as two subclasses, or a controller and its
+  subclass, inheriting the same `@Path`: declare a different `@Path` on each.
+- There can only be a single `@LoginPage` method, so it cannot be inherited by several controllers.
+- A path parameter of an inherited method cannot be declared in the class `@Path` of only one of the two controllers:
+  the one declaring the method or the one inheriting it. Declare it in the method `@Path` instead.
+
+These last three cases fail the build with an explanatory error.
+
 [#views]
 == Views
 
