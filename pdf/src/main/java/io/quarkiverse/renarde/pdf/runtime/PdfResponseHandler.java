@@ -13,7 +13,6 @@ import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.common.core.BlockingOperationSupport;
 import org.jboss.resteasy.reactive.server.ServerResponseFilter;
 
-import com.openhtmltopdf.java2d.CachingJava2DFontResolver;
 import com.openhtmltopdf.java2d.Java2DRenderer;
 import com.openhtmltopdf.java2d.api.FSPageOutputStreamSupplier;
 import com.openhtmltopdf.java2d.api.Java2DRendererBuilder;
@@ -150,12 +149,12 @@ public class PdfResponseHandler {
         builder.withHtmlContent(entity, baseURI);
         builder.useFastMode();
         builder.useEnvironmentFonts(true);
+        // Each render would otherwise call Font.createFont() for every @font-face, which registers a new
+        // TrueTypeFont in SunFontManager that is never released: that leaks ~5 MB per render. This keeps the fonts
+        // of the @font-face rules (with their weight and style) in a cache shared by all the renders.
+        builder.cacheFonts(true);
         builder.toPageProcessor(pageProcessor);
-        // We use buildJava2DRenderer() + layout() + writePages() instead of
-        // runPaged() so we can replace the font resolver before layout.
         try (Java2DRenderer renderer = builder.buildJava2DRenderer()) {
-            var ctx = ThreadCtx.get().sharedContext();
-            ctx.setFontResolver(new CachingJava2DFontResolver(ctx, true));
             renderer.layout();
             renderer.writePages();
         } catch (Exception e) {
