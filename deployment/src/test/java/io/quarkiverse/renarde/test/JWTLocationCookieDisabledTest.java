@@ -35,7 +35,7 @@ import io.quarkiverse.renarde.security.RenardeUserWithPassword;
 import io.quarkiverse.renarde.util.Flash;
 import io.quarkus.elytron.security.common.BcryptUtil;
 import io.quarkus.security.Authenticated;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.restassured.response.Response;
 import io.smallrye.jwt.build.Jwt;
@@ -43,7 +43,7 @@ import io.smallrye.jwt.build.Jwt;
 public class JWTLocationCookieDisabledTest {
 
     @RegisterExtension
-    static final QuarkusUnitTest config = new QuarkusUnitTest()
+    static final QuarkusExtensionTest config = new QuarkusExtensionTest()
             .setArchiveProducer(() -> ShrinkWrap.create(JavaArchive.class)
                     .addClasses(MyUser.class, MyUserProvider.class, MyController.class)
                     .addAsResource(new StringAsset("quarkus.renarde.auth.redirect.type=query"),

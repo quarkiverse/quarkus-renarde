@@ -21,12 +21,12 @@ import io.quarkus.mailer.Mail;
 import io.quarkus.mailer.MailTemplate;
 import io.quarkus.mailer.MockMailbox;
 import io.quarkus.qute.CheckedTemplate;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 
 public class UriBuilderWithoutPrefixTest {
 
     @RegisterExtension
-    static final QuarkusUnitTest config = new QuarkusUnitTest()
+    static final QuarkusExtensionTest config = new QuarkusExtensionTest()
             .setArchiveProducer(() -> ShrinkWrap.create(JavaArchive.class)
                     .addClasses(TestService.class)
                     .addAsResource(new StringAsset(

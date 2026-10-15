@@ -33,7 +33,7 @@ import io.quarkiverse.renarde.Controller;
 import io.quarkiverse.renarde.router.Router;
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 import io.restassured.RestAssured;
 
 /**
@@ -43,7 +43,7 @@ import io.restassured.RestAssured;
 public class ParamConversionTest {
 
     @RegisterExtension
-    static final QuarkusUnitTest config = new QuarkusUnitTest()
+    static final QuarkusExtensionTest config = new QuarkusExtensionTest()
             .setArchiveProducer(() -> ShrinkWrap.create(JavaArchive.class)
                     .addClasses(TypedController.class, MyStatus.class)
                     .addAsResource(new StringAsset(

@@ -13,7 +13,7 @@ import io.quarkus.test.ExclusivityChecker;
 
 /*
  * We want BeforeAllCallback, but the TCCL isn't properly set up at this point
- * This works for QuarkusUnitTest.
+ * This works for QuarkusExtensionTest.
  */
 public class RenardeTestExtension implements BeforeEachCallback {
 
@@ -23,7 +23,7 @@ public class RenardeTestExtension implements BeforeEachCallback {
         Class<?> testType = store.get(ExclusivityChecker.IO_QUARKUS_TESTING_TYPE, Class.class);
         // We need the QuarkusClassLoader, which is not the current class' CL
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        // For QuarkusUnitTest, the TCCL is set properly
+        // For QuarkusExtensionTest, the TCCL is set properly
         // For DevModeTest, no luck so far
         Class<?> csrfFilterClass = cl.loadClass(CSRFFilter.class.getName());
         // make sure we use the proper annotation class for the lookup (using the QCL)

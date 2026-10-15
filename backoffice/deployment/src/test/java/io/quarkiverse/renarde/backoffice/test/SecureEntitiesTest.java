@@ -14,14 +14,14 @@ import io.quarkiverse.renarde.backoffice.BackofficeController;
 import io.quarkiverse.renarde.backoffice.BackofficeIndexController;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import io.quarkus.security.Authenticated;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.restassured.RestAssured;
 
 public class SecureEntitiesTest {
 
     @RegisterExtension
-    static final QuarkusUnitTest config = new QuarkusUnitTest()
+    static final QuarkusExtensionTest config = new QuarkusExtensionTest()
             .setArchiveProducer(() -> ShrinkWrap.create(JavaArchive.class)
                     .addClasses(Order.class, User.class, Orders.class, Index.class)
                     .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml"));

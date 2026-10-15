@@ -32,7 +32,7 @@ import io.quarkus.qute.Qute;
 import io.quarkus.qute.TemplateInstance;
 import io.quarkus.qute.i18n.Message;
 import io.quarkus.qute.i18n.MessageBundle;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.restassured.RestAssured;
 import io.restassured.filter.cookie.CookieFilter;
@@ -41,7 +41,7 @@ import io.smallrye.mutiny.Uni;
 public class LanguageTest {
 
     @RegisterExtension
-    static final QuarkusUnitTest config = new QuarkusUnitTest()
+    static final QuarkusExtensionTest config = new QuarkusExtensionTest()
             .setArchiveProducer(() -> ShrinkWrap.create(JavaArchive.class)
                     .addClasses(MyController.class, MyBundle.class)
                     // Type-safe

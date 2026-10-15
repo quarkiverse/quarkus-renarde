@@ -15,14 +15,14 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import io.quarkiverse.renarde.Controller;
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.restassured.RestAssured;
 
 public class CsrfTest {
 
     @RegisterExtension
-    static final QuarkusUnitTest config = new QuarkusUnitTest()
+    static final QuarkusExtensionTest config = new QuarkusExtensionTest()
             .setArchiveProducer(() -> ShrinkWrap.create(JavaArchive.class)
                     .addClasses(MyController.class)
                     .addAsResource(new StringAsset("{#authenticityToken/}"), "templates/MyController/csrf.txt")

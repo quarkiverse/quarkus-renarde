@@ -14,14 +14,14 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import io.quarkiverse.renarde.htmx.HxController;
 import io.quarkus.qute.Qute;
 import io.quarkus.qute.TemplateInstance;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.restassured.RestAssured;
 
 public class HxControllerTest {
 
     @RegisterExtension
-    static final QuarkusUnitTest config = new QuarkusUnitTest()
+    static final QuarkusExtensionTest config = new QuarkusExtensionTest()
             .setArchiveProducer(() -> ShrinkWrap.create(JavaArchive.class)
                     .addClasses(MyHxController.class)
                     .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml"));

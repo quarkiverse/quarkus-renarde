@@ -29,7 +29,7 @@ import com.jayway.jsonpath.PathNotFoundException;
 import io.quarkiverse.renarde.transporter.DatabaseTransporter;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 import io.quarkus.test.common.http.TestHTTPResource;
 
 public class TransporterTest {
@@ -38,7 +38,7 @@ public class TransporterTest {
     private final static String USERS = "$['" + User.class.getName() + "']";
 
     @RegisterExtension
-    static final QuarkusUnitTest config = new QuarkusUnitTest()
+    static final QuarkusExtensionTest config = new QuarkusExtensionTest()
             .setArchiveProducer(() -> ShrinkWrap.create(JavaArchive.class)
                     .addClasses(Order.class, User.class)
                     .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml"));

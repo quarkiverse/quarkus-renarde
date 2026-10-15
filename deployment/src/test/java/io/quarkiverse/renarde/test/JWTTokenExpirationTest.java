@@ -30,7 +30,7 @@ import io.quarkiverse.renarde.security.RenardeUserProvider;
 import io.quarkiverse.renarde.security.RenardeUserWithPassword;
 import io.quarkus.elytron.security.common.BcryptUtil;
 import io.quarkus.security.Authenticated;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 import io.smallrye.jwt.build.Jwt;
 
 /**
@@ -41,7 +41,7 @@ import io.smallrye.jwt.build.Jwt;
 public class JWTTokenExpirationTest {
 
     @RegisterExtension
-    static final QuarkusUnitTest config = new QuarkusUnitTest()
+    static final QuarkusExtensionTest config = new QuarkusExtensionTest()
             .setArchiveProducer(() -> ShrinkWrap.create(JavaArchive.class)
                     .addClasses(MyUser.class, MyUserProvider.class, MyController.class)
                     .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml"))

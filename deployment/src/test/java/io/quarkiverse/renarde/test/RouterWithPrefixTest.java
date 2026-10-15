@@ -16,14 +16,14 @@ import io.quarkiverse.renarde.Controller;
 import io.quarkiverse.renarde.router.Router;
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.restassured.RestAssured;
 
 public class RouterWithPrefixTest {
 
     @RegisterExtension
-    static final QuarkusUnitTest config = new QuarkusUnitTest()
+    static final QuarkusExtensionTest config = new QuarkusExtensionTest()
             .setArchiveProducer(() -> ShrinkWrap.create(JavaArchive.class)
                     .addClasses(MyController.class)
                     .addAsResource(new StringAsset("quarkus.http.root-path=/support"), "application.properties")

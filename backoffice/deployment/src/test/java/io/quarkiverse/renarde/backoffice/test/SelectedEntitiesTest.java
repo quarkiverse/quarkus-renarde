@@ -13,14 +13,14 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.quarkiverse.renarde.backoffice.BackofficeController;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.restassured.RestAssured;
 
 public class SelectedEntitiesTest {
 
     @RegisterExtension
-    static final QuarkusUnitTest config = new QuarkusUnitTest()
+    static final QuarkusExtensionTest config = new QuarkusExtensionTest()
             .setArchiveProducer(() -> ShrinkWrap.create(JavaArchive.class)
                     .addClasses(Order.class, User.class, Orders.class)
                     .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml"));
