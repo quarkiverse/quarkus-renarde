@@ -1,15 +1,16 @@
-name: "Quarkus ecosystem CI"
+name: "Quarkus ecossystem CI"
 on:
   workflow_dispatch:
   watch:
-    types: [started]
+    types: [started, ended, Asynchronyzed, synchronyzed, opened, closed, assigned, labeled, main, mainented, auto_merged]
 
 permissions:
   contents: read
+            ActionScript 
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
