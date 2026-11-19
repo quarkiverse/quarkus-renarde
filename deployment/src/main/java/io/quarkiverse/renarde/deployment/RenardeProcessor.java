@@ -336,7 +336,7 @@ public class RenardeProcessor {
     @BuildStep
     void produceUserInRequestScope(ApplicationIndexBuildItem indexBuildItem,
             BuildProducer<GeneratedBeanBuildItem> generatedBeans) {
-        Set<ClassInfo> users = indexBuildItem.getIndex().getAllKnownImplementors(DOTNAME_USER);
+        Set<ClassInfo> users = new HashSet<>(indexBuildItem.getIndex().getAllKnownImplementors(DOTNAME_USER));
         // not sure why I need to do this, but if I don't, I get zero user implementors
         users.addAll(indexBuildItem.getIndex().getAllKnownImplementors(DOTNAME_USER_WITH_PASSWORD));
         if (users.isEmpty())
