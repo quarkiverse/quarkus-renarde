@@ -8,7 +8,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.UUID;
 
 import org.eclipse.microprofile.jwt.Claims;
@@ -232,8 +231,8 @@ public class MockMicrosoftOidcTestResource extends MockOidcTestResource<MockMicr
      */
     private void getKeys(RoutingContext rc) {
         RSAPublicKey pub = (RSAPublicKey) kp.getPublic();
-        String modulus = Base64.getUrlEncoder().encodeToString(pub.getModulus().toByteArray());
-        String exponent = Base64.getUrlEncoder().encodeToString(pub.getPublicExponent().toByteArray());
+        String modulus = base64UrlUInt(pub.getModulus());
+        String exponent = base64UrlUInt(pub.getPublicExponent());
         String data = "{\n"
                 + "  \"keys\": [\n"
                 + "    {\n"
@@ -245,7 +244,7 @@ public class MockMicrosoftOidcTestResource extends MockOidcTestResource<MockMicr
                 + "      \"k5t\": \"KEYID\",\n"
                 + "      \"issuer\": \"" + baseURI + "/{tenantid}/v2.0\",\n"
                 + "      \"e\": \"" + exponent + "\"\n"
-                + "    },\n"
+                + "    }\n"
                 + "  ]\n"
                 + "}";
         rc.response()

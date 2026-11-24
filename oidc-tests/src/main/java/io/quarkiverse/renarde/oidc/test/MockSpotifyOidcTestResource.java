@@ -6,7 +6,6 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
-import java.util.Base64;
 import java.util.Map;
 import java.util.UUID;
 
@@ -298,8 +297,8 @@ public class MockSpotifyOidcTestResource extends MockOidcTestResource<MockTwitte
 
     private void getKeys(RoutingContext rc) {
         RSAPublicKey pub = (RSAPublicKey) kp.getPublic();
-        String modulus = Base64.getUrlEncoder().encodeToString(pub.getModulus().toByteArray());
-        String exponent = Base64.getUrlEncoder().encodeToString(pub.getPublicExponent().toByteArray());
+        String modulus = base64UrlUInt(pub.getModulus());
+        String exponent = base64UrlUInt(pub.getPublicExponent());
         String data = "{\n"
                 + "   \"keys\":[\n"
                 + "      {\n"
