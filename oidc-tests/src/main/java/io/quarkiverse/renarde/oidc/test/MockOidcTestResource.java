@@ -1,6 +1,7 @@
 package io.quarkiverse.renarde.oidc.test;
 
 import java.lang.annotation.Annotation;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -71,6 +72,20 @@ public abstract class MockOidcTestResource<ConfigAnnotation extends Annotation>
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    /**
+     * Encodes a positive integer as a JWK "Base64urlUInt": big-endian, without the sign byte that
+     * {@link BigInteger#toByteArray()} adds, and without padding (RFC 7518, section 2).
+     */
+    protected static String base64UrlUInt(BigInteger value) {
+        byte[] bytes = value.toByteArray();
+        if (bytes.length > 1 && bytes[0] == 0) {
+            byte[] stripped = new byte[bytes.length - 1];
+            System.arraycopy(bytes, 1, stripped, 0, stripped.length);
+            bytes = stripped;
+        }
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
 }

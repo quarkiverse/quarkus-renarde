@@ -227,8 +227,8 @@ public class MockAppleOidcTestResource extends MockOidcTestResource<MockAppleOid
      */
     private void getKeys(RoutingContext rc) {
         RSAPublicKey pub = (RSAPublicKey) kp.getPublic();
-        String modulus = Base64.getUrlEncoder().encodeToString(pub.getModulus().toByteArray());
-        String exponent = Base64.getUrlEncoder().encodeToString(pub.getPublicExponent().toByteArray());
+        String modulus = base64UrlUInt(pub.getModulus());
+        String exponent = base64UrlUInt(pub.getPublicExponent());
         String data = "{\n"
                 + "  \"keys\": [\n"
                 + "    {\n"
@@ -238,7 +238,7 @@ public class MockAppleOidcTestResource extends MockOidcTestResource<MockAppleOid
                 + "      \"alg\": \"RS256\",\n"
                 + "      \"n\": \"" + modulus + "\",\n"
                 + "      \"e\": \"" + exponent + "\"\n"
-                + "    },\n"
+                + "    }\n"
                 + "  ]\n"
                 + "}";
         rc.response()
