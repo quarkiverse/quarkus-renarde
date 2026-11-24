@@ -6,7 +6,6 @@ import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
 
 import org.eclipse.microprofile.jwt.Claims;
-import org.jose4j.jwt.JwtClaims;
 
 import io.quarkus.oidc.UserInfo;
 import io.quarkus.oidc.runtime.OidcUtils;
@@ -15,6 +14,7 @@ import io.quarkus.security.identity.SecurityIdentity;
 import io.quarkus.security.identity.SecurityIdentityAugmentor;
 import io.quarkus.security.runtime.QuarkusSecurityIdentity;
 import io.smallrye.jwt.auth.principal.DefaultJWTCallerPrincipal;
+import io.smallrye.jwt.common.JwtClaims;
 import io.smallrye.mutiny.Uni;
 
 /**
