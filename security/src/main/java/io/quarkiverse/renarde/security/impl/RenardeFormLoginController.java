@@ -22,7 +22,6 @@ import io.quarkiverse.renarde.security.LoginPage;
 import io.quarkiverse.renarde.security.RenardeSecurity;
 import io.quarkiverse.renarde.security.RenardeUserProvider;
 import io.quarkiverse.renarde.security.RenardeUserWithPassword;
-import io.quarkiverse.renarde.util.RenardeJWTAuthMechanism;
 import io.quarkus.elytron.security.common.BcryptUtil;
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
