@@ -592,17 +592,30 @@ In DEV mode, your private/public keys will be generated for you at startup if th
 are not specified. Cleaning your project will remove those keys, so previous JWT tokens won't be valid
 anymore on restart.
 
-In production environments you will need to generate and specify your private and public keys using the following
-commands:
+In production environments you will need to generate and specify your private and public keys.
+You can do this with the Quarkus CLI, or with OpenSSL:
 
-[source,shell]
+[source,shell,role="primary asciidoc-tabs-target-sync-cli"]
+.Quarkus CLI
+----
+$ quarkus jwt generate-key
+----
+
+[source,shell,role="secondary asciidoc-tabs-target-sync-openssl"]
+.OpenSSL
 ----
 $ openssl genrsa -out rsaPrivateKey.pem 2048
 $ openssl rsa -pubout -in rsaPrivateKey.pem -out src/main/resources/publicKey.pem
 $ openssl pkcs8 -topk8 -nocrypt -inform pem -in rsaPrivateKey.pem -outform pem -out src/main/resources/privateKey.pem
 ----
 
-You can then point to those files in your `application.properties` Quarkus configuration:
+The Quarkus CLI command generates a 2048-bit RSA key pair by default, in PKCS#8 format, and writes it to
+`src/main/resources/privateKey.pem` and `src/main/resources/publicKey.pem`. It also adds the configuration below
+to your `application.properties`. You can use `--size` to choose a different key size, and `--force` to overwrite
+existing keys.
+
+If you generated the keys with OpenSSL, you need to point to those files in your `application.properties` Quarkus configuration
+(the Quarkus CLI does this for you):
 
 [source,properties]
 ----
