@@ -1,0 +1,94 @@
+name: Assign Milestone
+
+# Runs in the context of the base branch and never checks out or runs PR code,
+# so it is safe to use pull_request_target to get a write token on fork PRs.
+on:
+  pull_request_target:
+    types: [ closed ]
+    branches: [ main ]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  assign-milestone:
+    name: Assign milestone to PR and fixed issues
+    if: ${{ github.event.pull_request.merged == true }}
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      - name: Checkout base branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/project.yml
+          sparse-checkout-cone-mode: false
+
+      - name: Determine milestone
+        id: milestone
+        run: |
+          # next-version is e.g. 4.0.1-SNAPSHOT, the milestone is named 4.0.1
+          version=$(sed -nE 's/^[[:space:]]*next-version:[[:space:]]*"?([^"[:space:]]+)"?.*/\1/p' .github/project.yml)
+          milestone="${version%-SNAPSHOT}"
+          if [ -z "$milestone" ]; then
+            echo "::error::Could not read next-version from .github/project.yml"
+            exit 1
+          fi
+          # Only use the milestone if it exists and is open
+          exists=$(gh api "repos/$GH_REPO/milestones?state=open&per_page=100" --paginate \
+            --jq ".[] | select(.title == \"$milestone\") | .title")
+          if [ -z "$exists" ]; then
+            echo "::warning::Milestone '$milestone' does not exist or is closed, not assigning"
+            exit 0
+          fi
+          echo "title=$milestone" >> "$GITHUB_OUTPUT"
+
+      - name: Assign milestone to the PR
+        if: ${{ steps.milestone.outputs.title != '' }}
+        env:
+          MILESTONE: ${{ steps.milestone.outputs.title }}
+        run: |
+          current=$(gh pr view "$PR_NUMBER" --json milestone --jq '.milestone.title // ""')
+          if [ -n "$current" ]; then
+            echo "PR #$PR_NUMBER already has milestone '$current', leaving it alone"
+          else
+            gh pr edit "$PR_NUMBER" --milestone "$MILESTONE"
+          fi
+
+      - name: Assign milestone to issues fixed by the PR
+        if: ${{ steps.milestone.outputs.title != '' }}
+        env:
+          MILESTONE: ${{ steps.milestone.outputs.title }}
+        run: |
+          owner="${GH_REPO%%/*}"
+          repo="${GH_REPO##*/}"
+          # Issues linked via "Fixes #123" / "Closes #123" etc. or the sidebar
+          issues=$(gh api graphql \
+            -F owner="$owner" -F repo="$repo" -F pr="$PR_NUMBER" \
+            -f query='
+              query($owner: String!, $repo: String!, $pr: Int!) {
+                repository(owner: $owner, name: $repo) {
+                  pullRequest(number: $pr) {
+                    closingIssuesReferences(first: 50) {
+                      nodes { number repository { nameWithOwner } milestone { title } }
+                    }
+                  }
+                }
+              }' \
+            --jq ".data.repository.pullRequest.closingIssuesReferences.nodes[]
+                   | select(.repository.nameWithOwner == \"$GH_REPO\")
+                   | select(.milestone == null)
+                   | .number")
+          if [ -z "$issues" ]; then
+            echo "No issues without a milestone to update"
+            exit 0
+          fi
+          for issue in $issues; do
+            echo "Setting milestone '$MILESTONE' on issue #$issue"
+            gh issue edit "$issue" --milestone "$MILESTONE"
+          done
