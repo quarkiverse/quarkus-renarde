@@ -9,11 +9,11 @@ import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.core.Response;
 
 import org.jboss.resteasy.reactive.server.ServerExceptionMapper;
-import org.jose4j.jwt.consumer.ErrorCodes;
-import org.jose4j.jwt.consumer.InvalidJwtException;
 
 import io.quarkiverse.renarde.security.RenardeSecurity;
 import io.quarkus.security.AuthenticationFailedException;
+import io.smallrye.jwt.auth.InvalidJWTException;
+import io.smallrye.jwt.auth.TokenExpiredException;
 import io.vertx.core.http.HttpServerResponse;
 
 @ApplicationScoped
@@ -33,9 +33,8 @@ public class AuthenticationFailedExceptionMapper {
         Throwable throwable = ex;
         while (throwable.getCause() != null)
             throwable = throwable.getCause();
-        if (throwable instanceof InvalidJwtException) {
-            InvalidJwtException x = (InvalidJwtException) throwable;
-            if (x.hasErrorCode(ErrorCodes.EXPIRED)) {
+        if (throwable instanceof InvalidJWTException) {
+            if (throwable instanceof TokenExpiredException) {
                 return renardeSecurity.makeRedirectToLogin("Login expired, you've been logged out");
             }
             return renardeSecurity.makeRedirectToLogin("Invalid session (bad JWT), you've been logged out");
